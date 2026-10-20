@@ -450,7 +450,8 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .hapwrap>.btn{position:relative;z-index:4;pointer-events:none}
   .hapwrap>.btn.ghost:not(:disabled){background:var(--bg)}
 }
-.authfoot{margin:28px 0 8px;text-align:center;font-size:12px;color:var(--muted)}
+.wrap:has(>#authFoot){padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
+.authfoot{margin:6px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 .authfoot button{font:inherit;border:0;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px;padding:6px 4px;cursor:pointer}
 .authfoot .err{color:var(--bad)}
 </style>
