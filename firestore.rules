@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null && request.auth.uid == "BD8l6QXbUThSwdUG83lD16cu2tx1";
+    }
+    // orders and the service backup: everyone can read, only the owner can change
+    match /orders/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /meta/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    // each signed-in person's own view settings (lock, folded cards)
+    match /prefs/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
