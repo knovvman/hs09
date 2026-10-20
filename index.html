@@ -471,6 +471,27 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 }
 /* phone: a long status line keeps a little air before the round buttons */
 @media (max-width:899px){header .status{margin-right:6px}}
+/* phone (test variant): the lock and the service key sit as two round icons at the right end of the
+   "Развернуть все / Свернуть все" row, so the separate lock row is gone */
+@media (max-width:899px){
+  .tools .tools-gap{flex:1 1 auto}
+  body:not(.ui-b) .tools:has(>.tools-gap){flex-wrap:nowrap;gap:6px}
+  body:not(.ui-b) .tools:has(>.tools-gap) .btn{padding:8px 10px;white-space:nowrap}
+  body:not(.ui-b) .tools:has(>.tools-gap)>.hapwrap{flex-shrink:1;min-width:0}
+  .tools>.lock,.tools>.svc-toggle{width:38px;height:38px;min-height:38px;padding:0;border-radius:999px;justify-content:center;flex-shrink:0}
+  .tools>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tools>.lock svg{width:20px;height:20px}
+}
+/* phone, layout b: floating buttons bottom-right; they lift above the service panel when it is open */
+@media (max-width:899px){
+  .admin-fab{position:fixed;z-index:21;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;transition:bottom .3s cubic-bezier(.2,.8,.2,1)}
+  .admin-fab:not(:has(>button:not([hidden]))){display:none}
+  body.svc-open .admin-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .admin-fab>.lock,.admin-fab>.svc-toggle{width:50px;height:50px;min-height:50px;padding:0;border-radius:999px;justify-content:center;display:inline-flex;align-items:center;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+  .admin-fab>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .admin-fab>.lock svg{width:22px;height:22px}
+  .admin-fab>.svc-toggle{background:var(--card);border:1px solid var(--line)}
+}
 </style>
 
 <div id="app"></div>
@@ -594,6 +615,32 @@ function syncSubOn(){
   if(other){other.style.height="";if(other.firstElementChild)other.firstElementChild.style.transform=""}
 }
 placeOrdersHead();
+// phone, two test layouts for the owner's lock + service key (pick with ?ui=a or ?ui=b, remembered here):
+//  a — two round icons at the right end of the "Развернуть все / Свернуть все" row
+//  b — two floating round buttons in the bottom-right corner, over everything
+// on the computer they always stay in their own row
+let adminUI="a";
+try{const q=new URLSearchParams(location.search).get("ui");if(q==="a"||q==="b")localStorage.setItem("hs09-adminui",q);adminUI=localStorage.getItem("hs09-adminui")||"a"}catch(_){}
+function placeAdminBtns(){
+  const lb=document.getElementById("lockBtn"),tools=document.querySelector(".tools"),row=document.querySelector(".lock-row"),svc=document.getElementById("svcToggle");
+  if(!lb||!tools||!row||!svc)return;
+  let gap=tools.querySelector(".tools-gap"),fab=document.getElementById("adminFab");
+  document.body.classList.toggle("ui-b",adminUI==="b");
+  if(!deskNow()&&adminUI==="a"){
+    if(!gap){gap=document.createElement("span");gap.className="tools-gap"}
+    tools.append(gap,lb,svc);
+  }else if(!deskNow()){
+    if(!fab){fab=document.createElement("div");fab.id="adminFab";fab.className="admin-fab";document.body.append(fab)}
+    fab.append(lb,svc);
+  }else{
+    if(lb.parentNode!==row)row.prepend(lb);
+    if(svc.parentNode!==row)row.append(svc);
+  }
+  if(gap&&(deskNow()||adminUI!=="a"))gap.remove();
+  if(fab)fab.hidden=deskNow()||adminUI!=="b";
+}
+placeAdminBtns();
+try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}catch(_){}
 // desktop: mark the column title of the cell under the mouse
 {
   const mark=i=>{document.querySelectorAll("#dtHeadClone th.col-on").forEach(e=>e.classList.remove("col-on"));if(i<0)return;const r=document.querySelector("#dtHeadClone tr"),c=r&&r.children[i];if(c)c.classList.add("col-on")};
