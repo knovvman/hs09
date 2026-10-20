@@ -1489,6 +1489,9 @@ function authFoot(u,err,ctx){
 }
 setSvc(false,false);
 updateBulkUI();
+// the lock is an owner control: hidden while the page is still finding out who is looking
+function showLock(on){lockBtn.hidden=!on;if(lockBtn.parentNode&&lockBtn.parentNode.classList.contains("hapwrap"))lockBtn.parentNode.hidden=!on}
+showLock(false);
 (async()=>{
   let user=null;
   try{
@@ -1533,7 +1536,7 @@ updateBulkUI();
   try{const b=await db.doc("meta/markBackup").get();if(b.exists){markBackup=(b.data()||{}).orders||null}}catch(_){}
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
-  if(!canWrite){lockBtn.hidden=true;if(lockBtn.parentNode&&lockBtn.parentNode.classList.contains("hapwrap"))lockBtn.parentNode.hidden=true}
+  showLock(canWrite);
   db.collection("orders").onSnapshot(snap=>{
     // first sign-in of the owner on an empty database: fill it from the embedded copy
     if(snap.empty&&!snap.fromCache&&canWrite&&!seeded&&SNAP.orders&&Object.keys(SNAP.orders).length){seeded=true;FBX.seed(SNAP.orders).then(()=>setStatus("Заказы перенесены"),handleErr);return}
