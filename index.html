@@ -858,6 +858,35 @@ setInd(0,false);paintTabs(0);
 ["expandAll","collapseAll"].forEach(id=>hapticize(document.getElementById(id)));
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",e=>{if(e.target.classList&&e.target.classList.contains("tab-hit"))return;setTab(b.dataset.tab)}));
 // desktop: touchpad swipe uses the same native scroll-snap paging as the phone (no custom wheel handling)
+// Windows/Linux touchpads: the browser gets no "finger still down" signal, so a pause mid-swipe looked like
+// the end of the swipe and native snapping jumped to a page. There the page follows the fingers itself and
+// picks the page only after the movement has stopped for a moment. Mac keeps the native behaviour.
+if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
+  let wheelT=0,startX=null;
+  viewsEl.addEventListener("wheel",e=>{
+    if(!isDesk())return;
+    const dx=e.deltaX||(e.shiftKey?e.deltaY:0);
+    if(!dx||(!e.shiftKey&&Math.abs(dx)<Math.abs(e.deltaY)))return; // vertical scrolling stays with the page
+    // a wide table that scrolls sideways on its own keeps its own scrolling
+    for(let el=e.target;el&&el!==viewsEl;el=el.parentElement){if(el.scrollWidth>el.clientWidth+1&&/(auto|scroll)/.test(getComputedStyle(el).overflowX))return}
+    e.preventDefault();
+    cancelAnimationFrame(scrollAnim);
+    if(startX===null)startX=viewsEl.scrollLeft;
+    viewsEl.style.scrollSnapType="none";
+    const k=e.deltaMode===1?16:e.deltaMode===2?pageW():1;
+    const max=viewsEl.scrollWidth-viewsEl.clientWidth;
+    viewsEl.scrollLeft=Math.max(0,Math.min(max,viewsEl.scrollLeft+dx*k));
+    clearTimeout(wheelT);
+    wheelT=setTimeout(()=>{
+      const w=pageW(),from=startX/w,moved=viewsEl.scrollLeft/w-from;startX=null;
+      let i=Math.round(from);
+      if(moved>0.15)i=Math.round(from)+1;else if(moved<-0.15)i=Math.round(from)-1;
+      i=Math.max(0,Math.min(TABS.length-1,i));
+      if(Math.abs(viewsEl.scrollLeft-i*w)<1){viewsEl.scrollLeft=i*w;viewsEl.style.scrollSnapType="";return}
+      animScroll(i*w,260,t=>1-Math.pow(1-t,3));
+    },220);
+  },{passive:false});
+}
 document.querySelectorAll(".tab-hit").forEach(h=>{
   h.addEventListener("click",e=>{e.stopPropagation()});
   h.addEventListener("change",()=>setTab(h.dataset.tab));
