@@ -1,0 +1,18 @@
+# Publishes the site to Firebase Hosting (https://dyson-hs09.web.app) on every push to main.
+# Needs the repository secret FIREBASE_SERVICE_ACCOUNT (service-account JSON from the Firebase console).
+name: Deploy to Firebase Hosting
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: dyson-hs09
+          channelId: live
