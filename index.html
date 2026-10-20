@@ -253,7 +253,7 @@ body.svc-open .wrap{padding-bottom:110px}
 .svc-btn:disabled{opacity:.35;cursor:default}
 /* Desktop layout (wide screens only; phone layout untouched) */
 @media (min-width:900px){
-  .wrap{padding-block:0 48px;max-width:1400px}
+  .wrap{padding-block:0 16px;max-width:1400px}
   header{flex-wrap:nowrap;gap:24px;padding-block:2px 14px}
   header .title-row{order:1;flex:0 0 auto}
   header .tabs{order:2;flex:0 0 300px;flex-basis:300px}
@@ -381,7 +381,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   header.sub-on~.views #view-orders>.hdr-orders{display:block;flex:0 0 calc(100% + var(--edge-l) + var(--edge-r))}
   header.sub-on~.views #view-orders{padding-top:0;row-gap:0}
   #view-stats{padding-top:12px;align-content:start}
-  .views>.view{padding-bottom:48px}
+  .views>.view{padding-bottom:16px}
 }
 /* Parts page: the two left blocks live in one column that is exactly as tall as the right block.
    On phones the column dissolves and the order stays: can-build, all parts, what's missing. */
@@ -413,12 +413,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (min-width:900px){#view-orders{align-content:flex-start}}
 /* phone: the browser must not shift the list by itself when a card folds */
 @media (max-width:899px){.views>.view{overflow-anchor:none}}
-/* desktop: overall progress comes first and starts at the same height as the Parts page (40.2px under the header);
+/* desktop: overall progress comes first and starts at the same height as the Parts page (16px under the header);
    once everything is checked it hides, the legend moves up and the table starts at that same height */
 @media (min-width:900px){
   .hdr-in>.legend{padding-left:14px}
-  #hdrOrdersIn:has(>#overall:not([hidden])){padding-top:40.2px}
-  #view-stats{padding-top:40.2px}
+  #hdrOrdersIn:has(>#overall:not([hidden])){padding-top:16px}
+  #view-stats{padding-top:16px}
 }
 /* desktop table: the title of the hovered cell's column lights up; once everything is checked,
    the part columns get a bit more air (the comment column gives up the space) */
@@ -450,10 +450,19 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .hapwrap>.btn{position:relative;z-index:4;pointer-events:none}
   .hapwrap>.btn.ghost:not(:disabled){background:var(--bg)}
 }
-.wrap:has(>#authFoot){padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
-.authfoot{margin:6px 0 0;text-align:center;font-size:12px;color:var(--muted)}
-.authfoot button{font:inherit;border:0;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px;padding:6px 4px;cursor:pointer}
-.authfoot .err{color:var(--bad)}
+/* sign-in button in the header: outline person = not signed in, filled accent = owner, arrow = tap again to sign out */
+.acct-btn{position:relative;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .15s ease}
+.acct-btn:active{transform:scale(.9)}
+.acct-btn .ic-out{display:none}
+.acct-btn.in{color:var(--accent);border-color:var(--accent)}
+.acct-btn.in .ic-user circle{fill:currentColor}
+.acct-btn.ask{color:var(--bad);border-color:var(--bad)}
+.acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
+@media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}}
+@media (min-width:900px){header .acct-btn{order:5;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
+  header .acct-btn.in{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+  header .acct-btn.ask{background:var(--bad-bg)}}
+@media (hover:hover){.acct-btn:hover{color:var(--fg)}}
 </style>
 
 <div id="app"></div>
@@ -476,6 +485,7 @@ const MARKUP=`<div class="wrap">
       <button role="radio" data-mode="dark" title="Тёмная" aria-label="Тёмная тема"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
     </div>
     <button class="theme-btn" id="themeBtn" aria-label="Тема: как в системе"><span class="tbi" data-i="auto"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></span><span class="tbi" data-i="light"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span><span class="tbi" data-i="dark"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></span></button>
+    <button class="acct-btn" id="acctBtn" hidden aria-label="Вход для владельца" title="Вход для владельца"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g class="ic-user"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></g><g class="ic-out"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l5-5-5-5"/><path d="M15 12H4"/></g></svg></button>
     <div class="hdr-orders" id="hdrOrders"><div class="hdr-in" id="hdrOrdersIn"><div class="dhead-wrap" id="dheadWrap"><table class="dtable dtable-head" id="dtHeadTable" aria-hidden="true"><thead id="dtHeadClone"></thead></table></div></div></div>
     <nav class="tabs" role="tablist" aria-label="Разделы">
       <span class="tab-ind" id="tabInd" aria-hidden="true"></span>
@@ -1445,29 +1455,29 @@ async function fbInit(){
   return{db:{doc,collection},seed,user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
 }
 function authFoot(u,err,ctx){
-  let el=document.getElementById("authFoot");
-  if(!el){el=document.createElement("div");el.id="authFoot";el.className="authfoot";(document.querySelector(".wrap")||document.body).append(el)}
-  if(err){let e=el.querySelector(".err");if(!e){e=document.createElement("div");e.className="err";el.prepend(e)}e.textContent=err;return}
+  const btn=document.getElementById("acctBtn");if(!btn)return;
+  if(err){setStatus(err);return}
   if(!ctx)return;
   const {auth,Au,isAdmin}=ctx;
-  const btn=document.createElement("button");
-  if(u){
-    const t=document.createElement("span");t.textContent=(isAdmin?"Владелец: ":"Вошёл: ")+(u.email||"")+(isAdmin?"":" — только просмотр")+" · ";
-    btn.textContent="Выйти";btn.onclick=()=>Au.signOut(auth);
-    el.replaceChildren(t,btn);
-  }else{
-    btn.textContent="Вход для владельца";
-    btn.onclick=async()=>{
-      const p=new Au.GoogleAuthProvider();
-      try{await Au.signInWithPopup(auth,p)}
-      catch(e){
-        const c=e&&e.code;
-        if(c==="auth/popup-blocked"||c==="auth/operation-not-supported-in-this-environment"){try{await Au.signInWithRedirect(auth,p)}catch(e2){authFoot(null,"Вход не удался: "+(e2&&e2.code||""))}}
-        else if(c!=="auth/popup-closed-by-user"&&c!=="auth/cancelled-popup-request")authFoot(null,"Вход не удался: "+(c||""));
-      }
-    };
-    el.replaceChildren(btn);
-  }
+  btn.hidden=false;
+  const label=t=>{btn.title=t;btn.setAttribute("aria-label",t)};
+  let askT=0;
+  const idle=()=>{btn.classList.remove("ask");label(u?(isAdmin?"Владелец: ":"Вошёл: ")+(u.email||"")+(isAdmin?"":" — только просмотр")+". Нажми, чтобы выйти":"Вход для владельца")};
+  btn.classList.toggle("in",!!u);idle();
+  btn.onclick=async()=>{
+    if(u){
+      // two taps to sign out, so a stray tap does not log the owner out
+      if(!btn.classList.contains("ask")){btn.classList.add("ask");label("Нажми ещё раз, чтобы выйти");clearTimeout(askT);askT=setTimeout(idle,3000);return}
+      clearTimeout(askT);Au.signOut(auth);return;
+    }
+    const p=new Au.GoogleAuthProvider();
+    try{await Au.signInWithPopup(auth,p)}
+    catch(e){
+      const c=e&&e.code;
+      if(c==="auth/popup-blocked"||c==="auth/operation-not-supported-in-this-environment"){try{await Au.signInWithRedirect(auth,p)}catch(e2){setStatus("Вход не удался: "+(e2&&e2.code||""))}}
+      else if(c!=="auth/popup-closed-by-user"&&c!=="auth/cancelled-popup-request")setStatus("Вход не удался: "+(c||""));
+    }
+  };
 }
 setSvc(false,false);
 updateBulkUI();
