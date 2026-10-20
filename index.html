@@ -482,7 +482,21 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .tools>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .tools>.lock svg{width:20px;height:20px}
 }
+/* computer: lock and service key as small round icons in the header, before the theme switch */
+@media (min-width:900px){
+  header>.lock,header>.svc-toggle{order:4;width:28px;height:28px;min-height:28px;padding:0;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;position:relative;top:7px;flex-shrink:0;cursor:pointer}
+  header>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  header>.lock svg{width:16px;height:16px}
+  header>.svc-toggle svg{width:15px;height:15px}
+  header>.lock[aria-pressed="true"]{background:var(--accent);color:var(--card)}
+  header>.svc-toggle[aria-pressed="true"]{background:var(--purple);color:var(--card)}
+  header>.lock[hidden],header>.svc-toggle[hidden]{display:none}
+  /* one tight group on the right: lock, key, theme, sign-in (header gap is 24px, pulled in to 8px) */
+  header>.lock,header>.svc-toggle{margin:0 -16px 0 0}
+  header .acct-btn{margin-left:-16px}
+  header .theme{order:4}
 }
+@media (min-width:900px) and (hover:hover){header>.lock:not([aria-pressed="true"]):hover,header>.svc-toggle:not([aria-pressed="true"]):hover{color:var(--fg)}}
 </style>
 
 <div id="app"></div>
@@ -606,8 +620,8 @@ function syncSubOn(){
   if(other){other.style.height="";if(other.firstElementChild)other.firstElementChild.style.transform=""}
 }
 placeOrdersHead();
-// phone: the lock and the service key sit as two round icons at the right end of the tools row;
-// on the computer they stay in their own row
+// the lock and the service key are two round icons: on the phone at the right end of the tools row,
+// on the computer in the header next to the theme switch
 function placeAdminBtns(){
   const lb=document.getElementById("lockBtn"),tools=document.querySelector(".tools"),row=document.querySelector(".lock-row"),svc=document.getElementById("svcToggle");
   if(!lb||!tools||!row||!svc)return;
@@ -616,9 +630,11 @@ function placeAdminBtns(){
     if(!gap){gap=document.createElement("span");gap.className="tools-gap"}
     tools.append(gap,lb,svc);
   }else{
+    // computer: the same two round icons sit in the header, just before the theme switch
     if(gap)gap.remove();
-    if(lb.parentNode!==row)row.prepend(lb);
-    if(svc.parentNode!==row)row.append(svc);
+    const hdr=document.querySelector("header"),theme=hdr&&hdr.querySelector(".theme");
+    if(hdr&&theme){hdr.insertBefore(lb,theme);hdr.insertBefore(svc,theme)}
+    else{if(lb.parentNode!==row)row.prepend(lb);if(svc.parentNode!==row)row.append(svc)}
   }
 }
 placeAdminBtns();
@@ -909,21 +925,6 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",e=>{if(e
 // the end of the swipe and native snapping jumped to a page. There the page follows the fingers itself and
 // picks the page only after the movement has stopped for a moment. Mac keeps the native behaviour.
 if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
-  let wheelT=0,startX=null,lastT=0,hist=[],peak=0,vel=0,coastT=0,coasting=false;
-  // finish the swipe: pick the page and glide there, starting at the speed the fingers had
-  const finish=()=>{
-    clearTimeout(wheelT);
-    if(startX===null)return;
-    const w=pageW(),from=startX/w,moved=viewsEl.scrollLeft/w-from;startX=null;hist=[];peak=0;
-    let i=Math.round(from);
-    if(moved>0.15)i=Math.round(from)+1;else if(moved<-0.15)i=Math.round(from)-1;
-    i=Math.max(0,Math.min(TABS.length-1,i));
-    const left=Math.abs(i*w-viewsEl.scrollLeft);
-    if(left<1){viewsEl.scrollLeft=i*w;viewsEl.style.scrollSnapType="";return}
-    // ease-out cubic starts at 3x its average speed: match that to the finger speed (px/ms)
-    const dur=Math.max(110,Math.min(260,3*left/Math.max(Math.abs(vel),0.6)));
-    animScroll(i*w,dur,t=>1-Math.pow(1-t,3));
-  };
   // diagnostics: open the page with #swipe-debug to see the raw touchpad events of each swipe
   if(location.hash==="#swipe-debug"){
     const box=document.createElement("div");
@@ -936,11 +937,46 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
       const n=performance.now();
       if(!t0||n-last>600){t0=n;lines.push("--- новый жест");}
       last=n;
-      lines.push(`${Math.round(n-t0)}мс dx=${e.deltaX.toFixed(1)} dy=${e.deltaY.toFixed(1)} mode=${e.deltaMode}`);
+      lines.push(`${Math.round(n-t0)}мс dx=${e.deltaX.toFixed(1)} dy=${e.deltaY.toFixed(1)} mode=${e.deltaMode}${coasting?" (инерция)":""}`);
       if(lines.length>400)lines=lines.slice(-400);
       out.textContent=lines.slice(-60).join("\n");box.scrollTop=1e9;
     },{passive:true,capture:true});
   }
+  // How it works (Windows/Linux touchpads only; Mac keeps the browser's own snapping):
+  //  1. while the fingers move, the page follows them smoothly: each event moves a target, and the
+  //     content eases toward it every frame (Windows sends uneven steps like 12.5/25/37.5, which looked jerky);
+  //  2. the swipe ends when the speed falls under half its peak (the touchpad's fading "coast" after
+  //     the fingers leave) or after 220 ms of silence;
+  //  3. the page is picked like on the phone: a flick goes to the next tab, a slow drag needs 15% of the way;
+  //  4. the content glides there, starting at the finger speed;
+  //  5. the rest of the coast is ignored, but a new swipe that starts during it is picked up at once.
+  let wheelT=0,startX=null,target=0,follow=0,hist=[],peak=0,vel=0;
+  let coasting=false,coastT=0,coastDir=0,coastSpeed=0;
+  const maxX=()=>viewsEl.scrollWidth-viewsEl.clientWidth;
+  const speedOf=now=>{while(hist.length&&now-hist[0][0]>90)hist.shift();if(!hist.length)return 0;const span=Math.max(30,now-hist[0][0]+16);return hist.reduce((a,h)=>a+h[1],0)/span};
+  const followStep=()=>{
+    const cur=viewsEl.scrollLeft,d=target-cur;
+    if(Math.abs(d)<0.5){viewsEl.scrollLeft=target;follow=0;return}
+    viewsEl.scrollLeft=cur+d*0.38;
+    follow=requestAnimationFrame(followStep);
+  };
+  const endCoast=()=>{coasting=false};
+  const finish=()=>{
+    clearTimeout(wheelT);
+    if(startX===null)return;
+    cancelAnimationFrame(follow);follow=0;
+    const w=pageW(),pos=target/w,from=startX/w,moved=pos-from;startX=null;
+    const v=vel,pk=peak;hist=[];peak=0;
+    let i=Math.round(from);
+    if(pk>0.9&&Math.abs(moved)>0.04)i=Math.round(from)+Math.sign(moved); // a flick
+    else if(moved>0.15)i=Math.round(from)+1;else if(moved<-0.15)i=Math.round(from)-1;
+    i=Math.max(0,Math.min(TABS.length-1,i));
+    const to=i*w,left=Math.abs(to-viewsEl.scrollLeft);
+    if(left<1){viewsEl.scrollLeft=to;viewsEl.style.scrollSnapType="";return}
+    // ease-out cubic starts at 3x its average speed: match that to the finger speed (px/ms)
+    const dur=Math.max(140,Math.min(320,3*left/Math.max(Math.abs(v),0.7)));
+    animScroll(to,dur,t=>1-Math.pow(1-t,3));
+  };
   viewsEl.addEventListener("wheel",e=>{
     if(!isDesk())return;
     const dx=e.deltaX||(e.shiftKey?e.deltaY:0);
@@ -948,25 +984,31 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
     // a wide table that scrolls sideways on its own keeps its own scrolling
     for(let el=e.target;el&&el!==viewsEl;el=el.parentElement){if(el.scrollWidth>el.clientWidth+1&&/(auto|scroll)/.test(getComputedStyle(el).overflowX))return}
     e.preventDefault();
-    const now=performance.now();
-    // after a flick the touchpad keeps sending a fading "coast"; the page is already gliding, so it is ignored
-    if(coasting){clearTimeout(coastT);coastT=setTimeout(()=>{coasting=false},120);return}
-    cancelAnimationFrame(scrollAnim);
-    if(startX===null){startX=viewsEl.scrollLeft;lastT=0;hist=[];peak=0;vel=0}
-    viewsEl.style.scrollSnapType="none";
-    const k=e.deltaMode===1?16:e.deltaMode===2?pageW():1;
-    const max=viewsEl.scrollWidth-viewsEl.clientWidth;
-    viewsEl.scrollLeft=Math.max(0,Math.min(max,viewsEl.scrollLeft+dx*k));
-    // speed over the last ~90 ms (Windows sends uneven steps like 12.5/25/37.5, so single steps lie)
-    hist.push([now,dx*k]);while(hist.length&&now-hist[0][0]>90)hist.shift();
-    const span=Math.max(30,now-hist[0][0]+16);
-    vel=hist.reduce((a,h)=>a+h[1],0)/span;
-    const sp=Math.abs(vel);if(sp>peak)peak=sp;
-    lastT=now;
-    // the touchpad keeps sending a slowly fading "coast" after the fingers leave; once the speed has
-    // dropped to under half of its peak, the swipe is over: finish right away instead of riding the coast
-    const moved=Math.abs(viewsEl.scrollLeft-startX)/pageW();
-    if(hist.length>=4&&moved>0.15&&sp<peak*0.5){finish();coasting=true;clearTimeout(coastT);coastT=setTimeout(()=>{coasting=false},150);return}
+    const now=performance.now(),k=e.deltaMode===1?16:e.deltaMode===2?pageW():1,step=dx*k;
+    hist.push([now,step]);
+    const sp=speedOf(now);
+    if(coasting){
+      // the fading coast is ignored; speeding up again or a reversal means a new swipe has started
+      const reversed=Math.sign(step)!==coastDir&&Math.abs(step)>4;
+      if(!reversed&&Math.abs(sp)<=Math.max(coastSpeed*1.5,0.8)){clearTimeout(coastT);coastT=setTimeout(endCoast,150);return}
+      coasting=false;clearTimeout(coastT);hist=[[now,step]];
+    }
+    if(startX===null){
+      cancelAnimationFrame(scrollAnim);
+      startX=viewsEl.scrollLeft;target=startX;peak=0;
+      viewsEl.style.scrollSnapType="none";
+    }
+    target=Math.max(0,Math.min(maxX(),target+step));
+    if(!follow)follow=requestAnimationFrame(followStep);
+    vel=speedOf(now);
+    const a=Math.abs(vel);if(a>peak)peak=a;
+    const moved=Math.abs(target-startX)/pageW();
+    if(hist.length>=4&&moved>0.04&&a<peak*0.5){
+      coastDir=Math.sign(vel)||Math.sign(step);coastSpeed=a;
+      finish();
+      coasting=true;clearTimeout(coastT);coastT=setTimeout(endCoast,150);
+      return;
+    }
     clearTimeout(wheelT);
     wheelT=setTimeout(finish,220);
   },{passive:false});
