@@ -465,10 +465,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 /* iPhone home-screen app only: iOS blurs a band under the status bar there, so the header starts lower
    and that band is filled with the plain page background (experiment; Safari is not affected) */
 @media (display-mode: standalone) and (max-width:899px){
-  :root{--app-top:6px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
+  :root{--app-top:2px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   body::before{height:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   header{top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
 }
+/* phone: a long status line keeps a little air before the round buttons */
+@media (max-width:899px){header .status{margin-right:6px}}
 </style>
 
 <div id="app"></div>
@@ -483,7 +485,7 @@ const MARKUP=`<div class="wrap">
     <div class="title-row">
       <h1>Dyson HS09</h1>
     </div>
-    <span class="status" id="status">Подключаюсь к хранилищу…</span>
+    <span class="status" id="status">Подключаюсь…</span>
     <div class="theme" role="radiogroup" aria-label="Тема">
       <span class="theme-ind" aria-hidden="true"></span>
       <button role="radio" data-mode="auto" title="Как в системе" aria-label="Тема как в системе"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
