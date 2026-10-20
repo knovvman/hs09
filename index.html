@@ -949,35 +949,22 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
   //     the fingers leave) or after 220 ms of silence;
   //  3. the page is picked like on the phone: a flick goes to the next tab, a slow drag needs 15% of the way;
   //  4. the content glides there, starting at the finger speed;
-  //  5. the rest of the coast is ignored, but a new swipe that starts during it is picked up at once;
-  //  6. past the first or last tab the content stretches with growing resistance and springs back (like iOS).
-  let wheelT=0,startX=null,target=0,cur=0,follow=0,hist=[],peak=0,vel=0;
-  const clampX=x=>Math.max(0,Math.min(maxX(),x));
-  // iOS-style rubber band: the further past the edge, the less it moves (never more than ~half a screen)
-  const rubber=o=>{const d=viewsEl.clientWidth||1,a=Math.abs(o);return Math.sign(o)*(1-1/(a*0.55/d+1))*d};
-  const paint=()=>{const c=clampX(cur),o=cur-c;viewsEl.scrollLeft=c;viewsEl.style.transform=o?"translateX("+(-rubber(o)).toFixed(1)+"px)":""};
-  let coasting=false,coastT=0,coastDir=0,coastSpeed=0,coastHist=[],carry=null;
+  //  5. the rest of the coast is ignored, but a new swipe that starts during it is picked up at once.
+  let wheelT=0,startX=null,target=0,follow=0,hist=[],peak=0,vel=0;
+  let coasting=false,coastT=0,coastDir=0,coastSpeed=0;
   const maxX=()=>viewsEl.scrollWidth-viewsEl.clientWidth;
   const speedOf=now=>{while(hist.length&&now-hist[0][0]>90)hist.shift();if(!hist.length)return 0;const span=Math.max(30,now-hist[0][0]+16);return hist.reduce((a,h)=>a+h[1],0)/span};
   const followStep=()=>{
-    const d=target-cur;
-    if(Math.abs(d)<0.5){cur=target;paint();follow=0;return}
-    cur+=d*0.5;paint();
+    const cur=viewsEl.scrollLeft,d=target-cur;
+    if(Math.abs(d)<0.5){viewsEl.scrollLeft=target;follow=0;return}
+    viewsEl.scrollLeft=cur+d*0.38;
     follow=requestAnimationFrame(followStep);
-  };
-  // spring back from past the edge
-  const springBack=()=>{
-    const tr=viewsEl.style.transform;if(!tr)return;
-    viewsEl.style.transition="transform .42s cubic-bezier(.22,.9,.3,1)";
-    requestAnimationFrame(()=>{viewsEl.style.transform="";setTimeout(()=>{viewsEl.style.transition=""},450)});
   };
   const endCoast=()=>{coasting=false};
   const finish=()=>{
     clearTimeout(wheelT);
     if(startX===null)return;
     cancelAnimationFrame(follow);follow=0;
-    const over=cur-clampX(cur);cur=clampX(cur);viewsEl.scrollLeft=cur;target=clampX(target);
-    if(over)springBack();
     const w=pageW(),pos=target/w,from=startX/w,moved=pos-from;startX=null;
     const v=vel,pk=peak;hist=[];peak=0;
     let i=Math.round(from);
@@ -1001,33 +988,25 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
     hist.push([now,step]);
     const sp=speedOf(now);
     if(coasting){
-      // the fading coast is ignored. A new swipe shows up as speed that grows again (the coast only ever
-      // fades) or as a reversal; then the steps of its start are kept and it is followed from here
-      coastHist.push([now,step]);while(coastHist.length&&now-coastHist[0][0]>200)coastHist.shift();
-      const win=(a,b)=>{let x=0;for(const h of coastHist){const age=now-h[0];if(age>=a&&age<b)x+=h[1]}return x/(b-a)};
-      const w0=win(0,60),w1=win(60,120);
+      // the fading coast is ignored; speeding up again or a reversal means a new swipe has started
       const reversed=Math.sign(step)!==coastDir&&Math.abs(step)>4;
-      const rising=coastHist.length>=5&&Math.sign(w0)===coastDir&&Math.abs(w0)>Math.abs(w1)*1.4+0.2&&Math.abs(w0)>coastSpeed;
-      if(!reversed&&!rising){clearTimeout(coastT);coastT=setTimeout(endCoast,150);return}
-      coasting=false;clearTimeout(coastT);
-      carry=reversed?step:coastHist.filter(h=>now-h[0]<60).reduce((a,h)=>a+h[1],0);
-      hist=[[now,carry]];
+      if(!reversed&&Math.abs(sp)<=Math.max(coastSpeed*1.5,0.8)){clearTimeout(coastT);coastT=setTimeout(endCoast,150);return}
+      coasting=false;clearTimeout(coastT);hist=[[now,step]];
     }
     if(startX===null){
       cancelAnimationFrame(scrollAnim);
-      startX=viewsEl.scrollLeft;target=startX;cur=startX;peak=0;
-      viewsEl.style.transition="";viewsEl.style.transform="";
+      startX=viewsEl.scrollLeft;target=startX;peak=0;
       viewsEl.style.scrollSnapType="none";
     }
-    target+=carry!==null?carry:step;carry=null;
+    target=Math.max(0,Math.min(maxX(),target+step));
     if(!follow)follow=requestAnimationFrame(followStep);
     vel=speedOf(now);
     const a=Math.abs(vel);if(a>peak)peak=a;
-    const moved=Math.abs(clampX(target)-startX)/pageW();
-    if(hist.length>=4&&(moved>0.04||target!==clampX(target))&&a<peak*0.5){
+    const moved=Math.abs(target-startX)/pageW();
+    if(hist.length>=4&&moved>0.04&&a<peak*0.5){
       coastDir=Math.sign(vel)||Math.sign(step);coastSpeed=a;
       finish();
-      coasting=true;coastHist=[];clearTimeout(coastT);coastT=setTimeout(endCoast,150);
+      coasting=true;clearTimeout(coastT);coastT=setTimeout(endCoast,150);
       return;
     }
     clearTimeout(wheelT);
