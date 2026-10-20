@@ -465,7 +465,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 /* iPhone home-screen app only: iOS blurs a band under the status bar there, so the header starts lower
    and that band is filled with the plain page background (experiment; Safari is not affected) */
 @media (display-mode: standalone) and (max-width:899px){
-  :root{--app-top:5px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
+  :root{--app-top:6px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   body::before{height:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   header{top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
 }
