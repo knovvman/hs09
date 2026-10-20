@@ -956,13 +956,13 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
   // iOS-style rubber band: the further past the edge, the less it moves (never more than ~half a screen)
   const rubber=o=>{const d=viewsEl.clientWidth||1,a=Math.abs(o);return Math.sign(o)*(1-1/(a*0.55/d+1))*d};
   const paint=()=>{const c=clampX(cur),o=cur-c;viewsEl.scrollLeft=c;viewsEl.style.transform=o?"translateX("+(-rubber(o)).toFixed(1)+"px)":""};
-  let coasting=false,coastT=0,coastDir=0,coastSpeed=0;
+  let coasting=false,coastT=0,coastDir=0,coastSpeed=0,coastHist=[],carry=null;
   const maxX=()=>viewsEl.scrollWidth-viewsEl.clientWidth;
   const speedOf=now=>{while(hist.length&&now-hist[0][0]>90)hist.shift();if(!hist.length)return 0;const span=Math.max(30,now-hist[0][0]+16);return hist.reduce((a,h)=>a+h[1],0)/span};
   const followStep=()=>{
     const d=target-cur;
     if(Math.abs(d)<0.5){cur=target;paint();follow=0;return}
-    cur+=d*0.38;paint();
+    cur+=d*0.5;paint();
     follow=requestAnimationFrame(followStep);
   };
   // spring back from past the edge
@@ -1001,10 +1001,17 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
     hist.push([now,step]);
     const sp=speedOf(now);
     if(coasting){
-      // the fading coast is ignored; speeding up again or a reversal means a new swipe has started
+      // the fading coast is ignored. A new swipe shows up as speed that grows again (the coast only ever
+      // fades) or as a reversal; then the steps of its start are kept and it is followed from here
+      coastHist.push([now,step]);while(coastHist.length&&now-coastHist[0][0]>200)coastHist.shift();
+      const win=(a,b)=>{let x=0;for(const h of coastHist){const age=now-h[0];if(age>=a&&age<b)x+=h[1]}return x/(b-a)};
+      const w0=win(0,60),w1=win(60,120);
       const reversed=Math.sign(step)!==coastDir&&Math.abs(step)>4;
-      if(!reversed&&Math.abs(sp)<=Math.max(coastSpeed*1.5,0.8)){clearTimeout(coastT);coastT=setTimeout(endCoast,150);return}
-      coasting=false;clearTimeout(coastT);hist=[[now,step]];
+      const rising=coastHist.length>=5&&Math.sign(w0)===coastDir&&Math.abs(w0)>Math.abs(w1)*1.4+0.2&&Math.abs(w0)>coastSpeed;
+      if(!reversed&&!rising){clearTimeout(coastT);coastT=setTimeout(endCoast,150);return}
+      coasting=false;clearTimeout(coastT);
+      carry=reversed?step:coastHist.filter(h=>now-h[0]<60).reduce((a,h)=>a+h[1],0);
+      hist=[[now,carry]];
     }
     if(startX===null){
       cancelAnimationFrame(scrollAnim);
@@ -1012,7 +1019,7 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
       viewsEl.style.transition="";viewsEl.style.transform="";
       viewsEl.style.scrollSnapType="none";
     }
-    target+=step;
+    target+=carry!==null?carry:step;carry=null;
     if(!follow)follow=requestAnimationFrame(followStep);
     vel=speedOf(now);
     const a=Math.abs(vel);if(a>peak)peak=a;
@@ -1020,7 +1027,7 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
     if(hist.length>=4&&(moved>0.04||target!==clampX(target))&&a<peak*0.5){
       coastDir=Math.sign(vel)||Math.sign(step);coastSpeed=a;
       finish();
-      coasting=true;clearTimeout(coastT);coastT=setTimeout(endCoast,150);
+      coasting=true;coastHist=[];clearTimeout(coastT);coastT=setTimeout(endCoast,150);
       return;
     }
     clearTimeout(wheelT);
