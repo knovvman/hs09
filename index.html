@@ -895,6 +895,23 @@ if(!/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent)){
     const dur=Math.max(110,Math.min(260,3*left/Math.max(Math.abs(vel),0.6)));
     animScroll(i*w,dur,t=>1-Math.pow(1-t,3));
   };
+  // diagnostics: open the page with #swipe-debug to see the raw touchpad events of each swipe
+  if(location.hash==="#swipe-debug"){
+    const box=document.createElement("div");
+    box.style.cssText="position:fixed;right:12px;bottom:12px;z-index:99;width:360px;max-height:50vh;overflow:auto;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:11px/1.35 ui-monospace,Consolas,monospace;white-space:pre-wrap;box-shadow:0 4px 16px rgba(0,0,0,.25)";
+    const btn=document.createElement("button");btn.textContent="Скопировать журнал";btn.style.cssText="font:inherit;margin-bottom:6px";
+    const out=document.createElement("div");box.append(btn,out);document.body.append(box);
+    let t0=0,last=0,lines=[];
+    btn.onclick=()=>{navigator.clipboard.writeText(navigator.userAgent+"\n"+lines.join("\n")).then(()=>btn.textContent="Скопировано",()=>btn.textContent="Не скопировалось")};
+    viewsEl.addEventListener("wheel",e=>{
+      const n=performance.now();
+      if(!t0||n-last>600){t0=n;lines.push("--- новый жест");}
+      last=n;
+      lines.push(`${Math.round(n-t0)}мс dx=${e.deltaX.toFixed(1)} dy=${e.deltaY.toFixed(1)} mode=${e.deltaMode}`);
+      if(lines.length>400)lines=lines.slice(-400);
+      out.textContent=lines.slice(-60).join("\n");box.scrollTop=1e9;
+    },{passive:true,capture:true});
+  }
   viewsEl.addEventListener("wheel",e=>{
     if(!isDesk())return;
     const dx=e.deltaX||(e.shiftKey?e.deltaY:0);
