@@ -419,6 +419,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .hdr-in>.legend{padding-left:14px}
   #hdrOrdersIn:has(>#overall:not([hidden])){padding-top:16px}
   #view-stats{padding-top:16px}
+  /* everything checked: the progress card hides and the Orders table starts lower (under the legend),
+     so the Parts page starts at that same height as the table */
+  body:has(#overall[hidden]) #view-stats{padding-top:40.2px}
 }
 /* desktop table: the title of the hovered cell's column lights up; once everything is checked,
    the part columns get a bit more air (the comment column gives up the space) */
