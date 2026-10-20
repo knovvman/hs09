@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HS09 — тест базы</title>
+<style>
+:root{--bg:#eef1f3;--card:#fff;--fg:#1b2329;--muted:#5d6b75;--line:#d5dce1;--ok:#1e8a4c;--ok-bg:#dff3e7;--bad:#c23b2e;--bad-bg:#fbe3e0;--accent:#1f6f8b}
+@media (prefers-color-scheme:dark){:root{--bg:#12171b;--card:#1b2228;--fg:#e4eaee;--muted:#93a1ab;--line:#2c363e;--ok:#4fcf86;--ok-bg:#173a27;--bad:#ff7b6d;--bad-bg:#45201c;--accent:#5bb4d3}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
+.btn{font:inherit;font-weight:600;padding:10px 16px;border-radius:9px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;margin:4px 6px 4px 0}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.step{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.st{flex-shrink:0;font-size:13px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--line);color:var(--muted)}
+.st.ok{background:var(--ok-bg);color:var(--ok)}.st.bad{background:var(--bad-bg);color:var(--bad)}
+#log{white-space:pre-wrap;font:12px/1.4 ui-monospace,Consolas,monospace;color:var(--muted);max-height:260px;overflow:auto}
+#live{font-family:ui-monospace,Consolas,monospace;font-size:20px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Тест базы Firebase</h1>
+  <p>Открывай без VPN. Проверяются по очереди: загрузка библиотеки, вход через Google, запись, чтение и живое обновление.</p>
+
+  <div class="card" id="steps">
+    <div class="step"><span>1. Библиотека Firebase загрузилась</span><span class="st" id="s1">—</span></div>
+    <div class="step"><span>2. Вход через Google</span><span class="st" id="s2">—</span></div>
+    <div class="step"><span>3. Запись в базу</span><span class="st" id="s3">—</span></div>
+    <div class="step"><span>4. Чтение из базы</span><span class="st" id="s4">—</span></div>
+    <div class="step"><span>5. Живое обновление</span><span class="st" id="s5">—</span></div>
+  </div>
+
+  <div class="card">
+    <div id="who">Не выполнен вход</div>
+    <button class="btn" id="login" disabled>Войти через Google</button>
+    <button class="btn ghost" id="logout" hidden>Выйти</button>
+  </div>
+
+  <div class="card">
+    <div>Счётчик в базе (общий для всех устройств):</div>
+    <div id="live">—</div>
+    <button class="btn" id="plus" disabled>+1 и записать</button>
+    <p style="font-size:13px;color:var(--muted);margin:6px 0 0">Открой эту страницу на телефоне и компьютере одновременно. Нажми +1 на одном — число должно поменяться на другом само, без обновления.</p>
+  </div>
+
+  <div class="card">
+    <div id="log"></div>
+    <button class="btn ghost" id="copy">Скопировать журнал</button>
+  </div>
+</div>
+
+<script type="module">
+// Firebase JS SDK 10.12.2 from Google's CDN (modular API).
+const V = "10.12.2";
+const cfg = {
+  apiKey: "AIzaSyAJffB7mOHpmdBoo06dajn70eiTUcEciRI",
+  authDomain: "dyson-hs09.firebaseapp.com",
+  projectId: "dyson-hs09",
+  storageBucket: "dyson-hs09.firebasestorage.app",
+  messagingSenderId: "74869124738",
+  appId: "1:74869124738:web:34f8438002353401fb0e9b"
+};
+const $ = id => document.getElementById(id);
+const logEl = $("log");
+function log(m){ const t=new Date().toLocaleTimeString("ru-RU"); logEl.textContent += `[${t}] ${m}\n`; logEl.scrollTop = 1e9; }
+function mark(id, ok, text){ const e=$(id); e.className = "st " + (ok ? "ok" : "bad"); e.textContent = text || (ok ? "✓" : "✗"); }
+log(navigator.userAgent);
+
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(logEl.textContent); $("copy").textContent = "Скопировано"; }
+  catch { const r=document.createRange(); r.selectNodeContents(logEl); getSelection().removeAllRanges(); getSelection().addRange(r); $("copy").textContent = "Выделил — скопируй вручную"; }
+  setTimeout(() => $("copy").textContent = "Скопировать журнал", 2500);
+};
+
+let A, F, Au;
+try {
+  [A, Au, F] = await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+  ]);
+  mark("s1", true); log("Библиотека загружена");
+} catch (e) {
+  mark("s1", false); log("Не загрузилась библиотека: " + (e && e.message)); throw e;
+}
+
+const app = A.initializeApp(cfg);
+const auth = Au.getAuth(app);
+const db = F.getFirestore(app);
+const ref = F.doc(db, "test", "counter");
+let unsub = null;
+
+$("login").disabled = false;
+$("login").onclick = async () => {
+  try {
+    await Au.signInWithPopup(auth, new Au.GoogleAuthProvider());
+  } catch (e) {
+    mark("s2", false); log("Вход не удался: " + e.code + " — " + e.message);
+  }
+};
+$("logout").onclick = () => Au.signOut(auth);
+
+Au.onAuthStateChanged(auth, user => {
+  if (unsub) { unsub(); unsub = null; }
+  if (!user) {
+    $("who").textContent = "Не выполнен вход";
+    $("login").hidden = false; $("logout").hidden = true; $("plus").disabled = true;
+    return;
+  }
+  mark("s2", true);
+  $("who").textContent = "Вошёл: " + user.email;
+  log("Вход: " + user.email + ", uid " + user.uid);
+  $("login").hidden = true; $("logout").hidden = false; $("plus").disabled = false;
+  let first = true;
+  unsub = F.onSnapshot(ref, snap => {
+    const v = snap.exists() ? snap.data().n : 0;
+    $("live").textContent = v;
+    if (first) { mark("s4", true); log("Чтение: n = " + v); first = false; }
+    else if (!snap.metadata.hasPendingWrites) { mark("s5", true, "✓ пришло"); log("Обновление с сервера: n = " + v); }
+  }, e => { mark("s4", false); log("Чтение не удалось: " + e.code + " — " + e.message); });
+});
+
+$("plus").onclick = async () => {
+  $("plus").disabled = true;
+  try {
+    await F.setDoc(ref, { n: F.increment(1), at: F.serverTimestamp(), by: auth.currentUser.email }, { merge: true });
+    mark("s3", true); log("Запись прошла");
+  } catch (e) {
+    mark("s3", false); log("Запись не удалась: " + e.code + " — " + e.message);
+  } finally { $("plus").disabled = false; }
+};
+</script>
+</body>
+</html>
