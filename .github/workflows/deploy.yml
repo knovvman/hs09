@@ -22,8 +22,9 @@ jobs:
           if [ -z "$SA" ]; then echo "::error::Secret FIREBASE_SERVICE_ACCOUNT is empty or missing"; exit 1; fi
           printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          # pinned to 15.34.0: 15.34.1 (2026-10-21) asks Google for a permission our deploy key does not have
           # the CLI's own messages go to the log; on failure the last lines are also shown as annotations
-          if ! npx --yes firebase-tools@latest deploy --only hosting --project dyson-hs09 --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"; then
+          if ! npx --yes firebase-tools@15.34.0 deploy --only hosting --project dyson-hs09 --non-interactive 2>&1 | tee "$RUNNER_TEMP/deploy.log"; then
             grep -iE "error|denied|permission|expired|invalid|disabled|not found|unauth" "$RUNNER_TEMP/deploy.log" | tail -n 6 | while IFS= read -r l; do echo "::error::$l"; done
             tail -n 3 "$RUNNER_TEMP/deploy.log" | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
