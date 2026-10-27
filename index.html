@@ -500,6 +500,56 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   header .theme{order:4}
 }
 @media (min-width:900px) and (hover:hover){header>.lock:not([aria-pressed="true"]):hover,header>.svc-toggle:not([aria-pressed="true"]):hover{color:var(--fg)}}
+/* adding, editing and deleting orders (owner only) */
+.ord-chip{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex-shrink:0;box-sizing:border-box;padding:0;border-radius:999px;border:1px dashed color-mix(in srgb,var(--accent) 65%,transparent);background:transparent;color:var(--accent);cursor:pointer;-webkit-tap-highlight-color:transparent;vertical-align:middle;transition:transform .15s ease}
+.ord-chip svg{width:15px;height:15px}
+.ord-chip:active{transform:scale(.88)}
+.ord-chip.edit{display:none;border-style:solid;border-color:color-mix(in srgb,var(--purple) 70%,transparent);color:var(--purple)}
+.svc-open .ord-chip.edit{display:inline-flex}
+.dtable td.c-num .ord-chip{width:24px;height:24px;margin-left:6px;position:relative;top:-2px}
+/* table: every owner row keeps the chip's place (the pencil is only invisible outside service mode), so the numbers stay lined up */
+.dtable td.c-num .ord-chip.edit{display:inline-flex;visibility:hidden}
+.svc-open .dtable td.c-num .ord-chip.edit{visibility:visible}
+.dtable td.c-num .ord-chip svg{width:13px;height:13px}
+@media (hover:hover){.ord-chip:hover{background:color-mix(in srgb,currentColor 10%,transparent)}}
+.svc-btn.svc-add{background:var(--purple);color:var(--card)}
+.odlg{border:0;padding:0;background:transparent;color:var(--fg);max-width:none;max-height:none;overflow:visible;margin:auto}
+.odlg::backdrop{background:rgba(10,14,18,.42)}
+.odlg-box{box-sizing:border-box;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.28);font-family:var(--font-body)}
+.odlg-title{margin:0 0 14px;font-size:18px;font-weight:600}
+.odlg-title .num{font-size:inherit}
+.odlg-field{display:block;margin-bottom:12px}
+.odlg-field>label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.odlg-field>label i{font-style:normal;opacity:.75}
+.odlg-row{display:flex;gap:6px}
+.odlg input{flex:1;min-width:0;box-sizing:border-box;width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none}
+.odlg input#ordNum{font-family:var(--font-mono);letter-spacing:.03em}
+.odlg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.odlg input.bad{border-color:var(--bad)}
+.odlg input.good{border-color:var(--ok)}
+.odlg-sm{flex-shrink:0;font:inherit;font-size:14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--accent);padding:0 12px;cursor:pointer;white-space:nowrap}
+.odlg-hint{font-size:12.5px;line-height:1.4;color:var(--muted);margin-top:6px}
+.odlg-hint a{color:var(--accent)}
+.odlg-check{font-size:12.5px;margin-top:6px;min-height:0}
+.odlg-check:empty{display:none}
+.odlg-check.good{color:var(--ok)}
+.odlg-check.bad{color:var(--bad)}
+.odlg-msg{font-size:13px;color:var(--bad);margin:2px 0 10px}
+.odlg-msg:empty{display:none}
+.odlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.odlg-btn{font:inherit;font-size:15px;font-weight:500;border-radius:10px;padding:9px 16px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
+.odlg-btn.ghost{background:transparent;color:var(--accent)}
+.odlg-btn:disabled{opacity:.5;cursor:default}
+.odlg-del{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);background:transparent;color:var(--bad);cursor:pointer;transition:background-color .2s ease,color .2s ease}
+.odlg-del.ask{background:var(--bad);color:var(--card);border-color:var(--bad)}
+.odlg-del[hidden]{display:none}
+@media (max-width:899px){.odlg{margin:max(24px,calc(env(safe-area-inset-top,0px) + 12px)) auto auto}}
+.toast{position:fixed;z-index:30;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:10px 12px 10px 16px;border-radius:12px;background:var(--fg);color:var(--bg);font-size:14px;box-shadow:0 8px 26px rgba(0,0,0,.25);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .25s ease,visibility 0s linear .25s}
+.toast.show{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);transition:opacity .2s ease,transform .25s ease,visibility 0s}
+.svc-open .toast{bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+.toast button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--accent);padding:4px 6px;cursor:pointer;white-space:nowrap}
+.toast button[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.toast,.toast.show,.ord-chip{transition:none}}
 </style>
 
 <div id="app"></div>
@@ -573,6 +623,7 @@ const MARKUP=`<div class="wrap">
   <div id="grid" class="grid"></div>
   <div class="svc" id="bulkTools" aria-hidden="true">
     <span class="svc-label">Сервис</span>
+    <button class="svc-btn svc-add" id="addOrder">+ Добавить заказ</button>
     <button class="svc-btn" id="markAll">Отметить все</button>
     <button class="svc-btn" id="restoreAll">Вернуть как было</button>
   </div>
@@ -600,6 +651,25 @@ const MARKUP=`<div class="wrap">
     </section>
   </div>
   </div>
+  <dialog id="ordDlg" class="odlg" aria-labelledby="ordTitle">
+    <form id="ordForm" class="odlg-box" novalidate>
+      <h2 id="ordTitle" class="odlg-title">Новый заказ</h2>
+      <div class="odlg-field" id="ordNumField">
+        <label for="ordNum">Номер заказа</label>
+        <input id="ordNum" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Например, 63120">
+      </div>
+      <div class="odlg-field">
+        <label for="ordLink">Ссылка на заказ в HelloClient <i>· необязательно</i></label>
+        <div class="odlg-row"><input id="ordLink" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://app.helloclient.by/order/…"><button type="button" class="odlg-sm" id="ordPaste">Вставить</button></div>
+        <div class="odlg-check" id="ordCheck" role="status"></div>
+        <div class="odlg-hint">Открой заказ в <a href="https://app.helloclient.by/" target="_blank" rel="noopener noreferrer">HelloClient</a>, скопируй адрес его страницы и вставь сюда. Можно добавить и позже: значок со ссылкой рядом с номером.</div>
+      </div>
+      <div class="odlg-msg" id="ordMsg" role="alert"></div>
+      <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="ordCancel">Отмена</button><button type="submit" class="odlg-btn" id="ordSave">Добавить</button></div>
+      <button type="button" class="odlg-del" id="ordDel" hidden>Удалить заказ</button>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button type="button" id="toastBtn" hidden></button></div>
 </div>`;
 document.getElementById("app").innerHTML=MARKUP;
 // the lock / copy / service row lives in the header (under the tabs on phones, after the tabs on desktop)
@@ -1073,7 +1143,8 @@ function renderTable(ids){
     const o=orders[id],tr=document.createElement("tr");
     const td=(cls,...kids)=>{const e=document.createElement("td");if(cls)e.className=cls;e.append(...kids);return e};
     const num=numEl("span",id,o);
-    tr.append(td("c-num",num),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
+    const ch=ordChip(id,o);
+    tr.append(ch?td("c-num",num,ch):td("c-num",num),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
     PARTS.forEach(([k,label])=>tr.append(td("c-part c-k-"+k,partCell(id,o,k,label))));
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f===PARTS.length?"":f+"/"+PARTS.length;
@@ -1195,6 +1266,7 @@ function card(id,o){
   tg.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>';
   if(!isCol&&justOpened.has(id)&&!reduceMotion()){const sv=tg.querySelector("svg");if(sv&&sv.animate)sv.animate([{transform:"rotate(-90deg)"},{transform:"none"}],{duration:400,easing:"ease"})}
   const left=document.createElement("div");left.className="head-left";left.append(tg,n);
+  {const ch=ordChip(id,o);if(ch)left.append(ch)}
   head.append(left,p);c.append(head);
 
   head.addEventListener("click",()=>{
@@ -1390,7 +1462,8 @@ let markBackup=null;
 function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
   const w=!!db&&canWrite;
-  ["markAll","restoreAll"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
+  ["addOrder","markAll","restoreAll"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
+  document.getElementById("addOrder").disabled=!editable();
   document.getElementById("markAll").disabled=!!markBackup||!editable();
   document.getElementById("restoreAll").disabled=!markBackup||!editable();
 }
@@ -1544,7 +1617,7 @@ document.getElementById("importCancel").addEventListener("click",()=>{document.g
 const FB_VER="10.12.2";
 const FB_CFG={apiKey:"AIzaSyAJffB7mOHpmdBoo06dajn70eiTUcEciRI",authDomain:"dyson-hs09.firebaseapp.com",projectId:"dyson-hs09",storageBucket:"dyson-hs09.firebasestorage.app",messagingSenderId:"74869124738",appId:"1:74869124738:web:34f8438002353401fb0e9b"};
 const ADMIN_UID="BD8l6QXbUThSwdUG83lD16cu2tx1";
-let FBX=null,seeded=false;
+let FBX=null;
 async function fbInit(){
   const base="https://www.gstatic.com/firebasejs/"+FB_VER+"/";
   const [A,Au,F]=await Promise.all([import(base+"firebase-app.js"),import(base+"firebase-auth.js"),import(base+"firebase-firestore.js")]);
@@ -1570,8 +1643,7 @@ async function fbInit(){
     delete:()=>F.deleteDoc(r).catch(tr)}};
   const collection=n=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.collection(fs,n),{includeMetadataChanges:true},
     q=>cb({docs:q.docs.map(wrap),empty:q.empty,fromCache:q.metadata.fromCache,metadata:{hasPendingWrites:q.metadata.hasPendingWrites}}),eb)});
-  const seed=async src=>{const w=F.writeBatch(fs);for(const id of Object.keys(src)){if(/^\d{3,8}$/.test(id))w.set(F.doc(fs,"orders/"+id),src[id])}await w.commit().catch(tr)};
-  return{db:{doc,collection},seed,user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
+  return{db:{doc,collection},user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
 }
 function authFoot(u,err,ctx){
   const btn=document.getElementById("acctBtn");if(!btn)return;
@@ -1598,6 +1670,143 @@ function authFoot(u,err,ctx){
     }
   };
 }
+// ---- adding, editing and deleting orders (owner only; the database rules allow writes only for the owner)
+const ICON_LINK='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
+const ICON_EDIT='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const isOwnerUI=()=>document.body.classList.contains("admin");
+const hasCrm=o=>!!o&&typeof o.crm==="string"&&CRM_RE.test(o.crm);
+// next to the order number: "add a CRM link" while the order has none; "edit / delete" in service mode
+function ordChip(id,o){
+  if(!isOwnerUI()||!editable())return null;
+  const has=hasCrm(o);
+  const b=document.createElement("button");b.type="button";b.className="ord-chip "+(has?"edit":"add");
+  const t=has?"Изменить или удалить заказ #"+id:"Добавить ссылку на HelloClient для заказа #"+id;
+  b.title=t;b.setAttribute("aria-label",t);b.innerHTML=has?ICON_EDIT:ICON_LINK;
+  b.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();openOrderDlg(id)});
+  return b;
+}
+// a HelloClient order link holds the order's id (a uuid); a bare id is accepted too
+const UUID_G=/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+function parseCrm(raw){
+  const s=String(raw||"").trim();
+  if(!s)return{empty:true};
+  if(s.length>600)return{bad:"Слишком длинная строка — вставь только адрес страницы заказа"};
+  const all=s.match(UUID_G)||[];
+  if(!all.length)return{bad:"В этой ссылке нет номера заказа HelloClient. Скопируй адрес именно страницы заказа"};
+  const looksUrl=/^[a-z]+:\/\//i.test(s)||/\.[a-z]{2,}\//i.test(s);
+  if(looksUrl&&!/helloclient\./i.test(s))return{bad:"Это ссылка не на HelloClient"};
+  const after=s.match(/order[s]?[/=]([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  return{id:(after?after[1]:all[all.length-1]).toLowerCase()};
+}
+const dlg=document.getElementById("ordDlg"),dlgNum=document.getElementById("ordNum"),dlgLink=document.getElementById("ordLink");
+const dlgCheck=document.getElementById("ordCheck"),dlgMsg=document.getElementById("ordMsg"),dlgDel=document.getElementById("ordDel"),dlgSave=document.getElementById("ordSave");
+let dlgId=null,delAskT=0;
+function dlgShowCheck(){
+  const r=parseCrm(dlgLink.value);
+  dlgLink.classList.toggle("bad",!!r.bad);dlgLink.classList.toggle("good",!!r.id);
+  dlgCheck.className="odlg-check"+(r.bad?" bad":r.id?" good":"");
+  dlgCheck.textContent=r.bad?r.bad:r.id?"✓ Ссылка подходит":(dlgId&&hasCrm(orders[dlgId])?"Поле пустое — ссылка будет удалена":"");
+  return r;
+}
+function resetDel(){clearTimeout(delAskT);dlgDel.classList.remove("ask");dlgDel.textContent="Удалить заказ"}
+function openOrderDlg(id){
+  if(!db||!editable()){setStatus("Изменения закрыты замком");return}
+  dlgId=id||null;
+  const o=id?orders[id]:null;
+  if(id&&!o)return;
+  const title=document.getElementById("ordTitle");
+  if(id){title.textContent="Заказ ";const n=el("span","num");n.innerHTML="<small>#</small>";n.append(String(id));title.append(n)}
+  else title.textContent="Новый заказ";
+  document.getElementById("ordNumField").hidden=!!id;
+  dlgNum.value="";dlgNum.classList.remove("bad");
+  dlgLink.value=hasCrm(o)?"https://app.helloclient.by/order/"+o.crm:"";
+  dlgSave.textContent=id?"Сохранить":"Добавить";dlgSave.disabled=false;
+  dlgDel.hidden=!id;resetDel();
+  dlgMsg.textContent="";dlgShowCheck();
+  try{dlg.showModal()}catch(_){dlg.setAttribute("open","")}
+  // a new order starts with the number; an existing one with the link (unless it already has one)
+  const f=id?(hasCrm(o)?null:dlgLink):dlgNum;
+  if(f)setTimeout(()=>{try{f.focus({preventScroll:true})}catch(_){f.focus()}},30);
+}
+function closeOrderDlg(){resetDel();try{dlg.close()}catch(_){dlg.removeAttribute("open")}dlgId=null}
+let toastT=0;
+function toast(text,action,fn){
+  const t=document.getElementById("toast"),b=document.getElementById("toastBtn");
+  document.getElementById("toastText").textContent=text;
+  b.hidden=!action;b.textContent=action||"";b.onclick=null;
+  if(action)b.onclick=()=>{t.classList.remove("show");clearTimeout(toastT);fn()};
+  t.classList.add("show");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),action?9000:3200);
+}
+function writeErr(text){return e=>{handleErr(e);toast(text)}}
+function addOrder(){
+  const n=dlgNum.value.trim().replace(/^#/,"");
+  if(!/^\d{3,8}$/.test(n)){dlgNum.classList.add("bad");dlgMsg.textContent="Номер — только цифры, от 3 до 8";dlgNum.focus();return}
+  if(orders[n]){dlgNum.classList.add("bad");dlgMsg.textContent="Заказ #"+n+" уже есть";dlgNum.focus();return}
+  const r=parseCrm(dlgLink.value);
+  if(r.bad){dlgMsg.textContent=r.bad;dlgLink.focus();return}
+  const doc={num:Number(n)};if(r.id)doc.crm=r.id;
+  // shown open right away; the write is queued even without network and sent when it comes back
+  seenIds.add(n);collapsed.delete(n);justOpened.add(n);
+  orders[n]=doc;
+  closeOrderDlg();render();
+  db.doc("orders/"+n).set(doc).then(()=>setStatus("Сохранено"),e=>{delete orders[n];render();writeErr("Не удалось добавить заказ #"+n)(e)});
+  toast("Заказ #"+n+" добавлен");
+  requestAnimationFrame(()=>{
+    const target=isDesk()?[...document.querySelectorAll("#dtbody tr")].find(tr=>tr.querySelector(".num")&&tr.querySelector(".num").textContent==="#"+n):[...grid.children].find(c=>{const x=c.querySelector(".card-head .num");return x&&x.textContent==="#"+n});
+    const beh=reduceMotion()?"auto":"smooth";
+    if(target&&!isDesk()){
+      // phone: the new card's head lands just under the pinned header
+      const v=VIEW.orders,hm=document.getElementById("hdrMob");
+      const top=hm&&hm.offsetParent?hm.getBoundingClientRect().bottom:v.getBoundingClientRect().top;
+      try{v.scrollBy({top:target.getBoundingClientRect().top-top-10,behavior:beh})}catch(_){v.scrollTop+=target.getBoundingClientRect().top-top-10}
+    }else if(target)try{target.scrollIntoView({block:"center",behavior:beh})}catch(_){}
+    if(target&&target.animate&&!reduceMotion())target.animate([{boxShadow:"0 0 0 3px var(--accent)"},{boxShadow:"0 0 0 3px transparent"}],{duration:1600,easing:"ease-out"});
+  });
+}
+function saveOrderLink(){
+  const id=dlgId,o=orders[id];if(!o){closeOrderDlg();return}
+  const r=parseCrm(dlgLink.value);
+  if(r.bad){dlgMsg.textContent=r.bad;dlgLink.focus();return}
+  const val=r.id||null,before=hasCrm(o)?o.crm:null;
+  closeOrderDlg();
+  if(val===before)return;
+  setPart(id,"crm",val);
+  toast(val?(before?"Ссылка заменена":"Ссылка добавлена")+" — нажми на номер, чтобы проверить":"Ссылка удалена");
+}
+function deleteOrder(){
+  const id=dlgId,o=orders[id];if(!o){closeOrderDlg();return}
+  if(!dlgDel.classList.contains("ask")){
+    // two taps, so a stray tap does not delete an order
+    dlgDel.classList.add("ask");dlgDel.textContent="Нажми ещё раз, чтобы удалить #"+id;
+    clearTimeout(delAskT);delAskT=setTimeout(resetDel,3500);return;
+  }
+  const copy=JSON.parse(JSON.stringify(o));
+  if(id in drafts){if(typeof drafts[id]==="string")copy.comment=drafts[id];clearTimeout(commentTimers[id]);delete drafts[id]}
+  closeOrderDlg();
+  // a copy stays in the database (meta/deleted-N), so a mistaken delete can always be undone
+  db.doc("meta/deleted-"+id).set({order:copy,at:new Date().toISOString()}).catch(()=>{});
+  delete orders[id];collapsed.delete(id);render();
+  db.doc("orders/"+id).delete().then(()=>setStatus("Сохранено"),e=>{orders[id]=copy;render();writeErr("Не удалось удалить заказ #"+id)(e)});
+  toast("Заказ #"+id+" удалён","Вернуть",()=>{
+    if(orders[id]){toast("Заказ #"+id+" уже есть");return}
+    seenIds.add(id);orders[id]=copy;render();
+    db.doc("orders/"+id).set(copy).then(()=>{setStatus("Сохранено");db.doc("meta/deleted-"+id).delete().catch(()=>{})},writeErr("Не удалось вернуть заказ #"+id));
+    toast("Заказ #"+id+" возвращён");
+  });
+}
+document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||!editable()){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderLink();else addOrder()});
+document.getElementById("ordCancel").addEventListener("click",closeOrderDlg);
+dlgDel.addEventListener("click",()=>{if(db&&editable())deleteOrder()});
+dlg.addEventListener("click",e=>{if(e.target===dlg)closeOrderDlg()}); // tap outside the box closes it
+dlg.addEventListener("close",()=>{resetDel();dlgId=null});
+dlgNum.addEventListener("input",()=>{const v=dlgNum.value.replace(/\D/g,"");if(v!==dlgNum.value)dlgNum.value=v;dlgNum.classList.remove("bad");dlgMsg.textContent=""});
+dlgLink.addEventListener("input",()=>{dlgMsg.textContent="";dlgShowCheck()});
+document.getElementById("ordPaste").addEventListener("click",async()=>{
+  let t=null;try{t=await navigator.clipboard.readText()}catch(_){}
+  if(typeof t==="string"&&t.trim()){dlgLink.value=t.trim();dlgMsg.textContent="";dlgShowCheck()}
+  else{dlgLink.focus();dlgCheck.className="odlg-check";dlgCheck.textContent="Не получилось вставить кнопкой — нажми в поле и выбери «Вставить»"}
+});
+document.getElementById("addOrder").addEventListener("click",()=>openOrderDlg(null));
 setSvc(false,false);
 updateBulkUI();
 // the lock is an owner control: hidden while the page is still finding out who is looking
@@ -1649,8 +1858,6 @@ showLock(false);
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
   db.collection("orders").onSnapshot(snap=>{
-    // first sign-in of the owner on an empty database: fill it from the embedded copy
-    if(snap.empty&&!snap.fromCache&&canWrite&&!seeded&&SNAP.orders&&Object.keys(SNAP.orders).length){seeded=true;FBX.seed(SNAP.orders).then(()=>setStatus("Заказы перенесены"),handleErr);return}
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
     orders=next;render();
     if(!snap.metadata.hasPendingWrites)setStatus(canWrite?"Синхронизировано":"Только просмотр");
