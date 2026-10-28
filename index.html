@@ -550,6 +550,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .toast button{font:inherit;font-size:14px;font-weight:600;border:0;background:transparent;color:var(--accent);padding:4px 6px;cursor:pointer;white-space:nowrap}
 .toast button[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.toast,.toast.show,.ord-chip{transition:none}}
+/* computer: a 16px "footer" strip of page background at the bottom of the window; the list scrolls
+   behind its edge like it does under the header, and the end of the list rests on it */
+@media (min-width:900px){
+  .wrap{padding-bottom:16px!important}
+  .views>.view{padding-bottom:0}
+}
 </style>
 
 <div id="app"></div>
@@ -659,10 +665,9 @@ const MARKUP=`<div class="wrap">
         <input id="ordNum" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Например, 63120">
       </div>
       <div class="odlg-field">
-        <label for="ordLink">Ссылка на заказ в HelloClient <i>· необязательно</i></label>
+        <label for="ordLink">Ссылка на заказ в HelloClient</label>
         <div class="odlg-row"><input id="ordLink" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://app.helloclient.by/order/…"><button type="button" class="odlg-sm" id="ordPaste">Вставить</button></div>
         <div class="odlg-check" id="ordCheck" role="status"></div>
-        <div class="odlg-hint">Открой заказ в <a href="https://app.helloclient.by/" target="_blank" rel="noopener noreferrer">HelloClient</a>, скопируй адрес его страницы и вставь сюда. Можно добавить и позже: значок со ссылкой рядом с номером.</div>
       </div>
       <div class="odlg-msg" id="ordMsg" role="alert"></div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="ordCancel">Отмена</button><button type="submit" class="odlg-btn" id="ordSave">Добавить</button></div>
