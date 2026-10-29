@@ -556,6 +556,38 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .wrap{padding-bottom:16px!important}
   .views>.view{padding-bottom:0}
 }
+
+/* EXPERIMENT part-notes: start (a note per part of each order; shown on hover and gathered into the comment) */
+.dtable td.c-part.has-note>*{position:relative}
+.dtable td.c-part.has-note>*::after{content:"";position:absolute;top:-3px;right:-5px;width:6px;height:6px;border-radius:50%;background:var(--accent);pointer-events:none}
+.odlg-field>label .num{font-size:inherit}
+.dtable td.c-part.has-note>.seg::after{visibility:visible;opacity:1;top:50%;right:50%;transform:translate(50%,-50%)}
+body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5px;transform:none}
+.admin:not(.locked) .dtable td.c-part{cursor:context-menu}
+.row .label .note-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent);vertical-align:middle;position:relative;top:-1px}
+.admin:not(.locked) .row .label{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cbox.has-notes{box-sizing:border-box;margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.cbox.has-notes>.comment{margin-top:0;border:0;background:transparent;outline:none;min-height:0;padding-top:2px}
+.cbox.has-notes:focus-within{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.cbox.has-notes>.comment[readonly]:placeholder-shown{display:none}
+.cnotes{padding:8px 10px 4px;font-size:16px;line-height:1.4}
+.cnote{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
+.cnote b{font-weight:500;color:var(--muted)}
+.admin:not(.locked) .cnote{cursor:pointer;border-radius:4px}
+@media (hover:hover){.admin:not(.locked) .cnote:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+@media (min-width:900px){
+  .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
+  .dtable .cnotes{padding:6px 8px 0;font-size:14px}
+  .dtable .cbox.has-notes>.comment{padding-top:0}
+}
+.card-body.anim .cbox.has-notes{animation:rowIn .4s ease-out .261s both}
+.card-body.anim .cbox.has-notes>.comment{animation:none}
+@media (prefers-reduced-motion:reduce){.card-body.anim .cbox.has-notes{animation:none}}
+.note-tip{position:fixed;z-index:40;max-width:280px;padding:7px 10px;border-radius:8px;background:var(--fg);color:var(--bg);font-size:13px;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 6px 18px rgba(0,0,0,.22);pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s ease,transform .12s ease}
+.note-tip.show{opacity:1;transform:none}
+.note-tip small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}
+.note-tip i{font-style:normal;opacity:.7}
+/* EXPERIMENT part-notes: end */
 </style>
 
 <div id="app"></div>
@@ -674,6 +706,20 @@ const MARKUP=`<div class="wrap">
       <button type="button" class="odlg-del" id="ordDel" hidden>Удалить заказ</button>
     </form>
   </dialog>
+  <!-- EXPERIMENT part-notes: start -->
+  <dialog id="noteDlg" class="odlg" aria-labelledby="noteTitle">
+    <form id="noteForm" class="odlg-box" novalidate>
+      <h2 id="noteTitle" class="odlg-title">Заметка</h2>
+      <div class="odlg-field">
+        <label for="noteText" id="noteSub"></label>
+        <input id="noteText" autocomplete="off" maxlength="300">
+      </div>
+      <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="noteCancel">Отмена</button><button type="submit" class="odlg-btn" id="noteSave">Сохранить</button></div>
+      <button type="button" class="odlg-del" id="noteDel" hidden>Удалить заметку</button>
+    </form>
+  </dialog>
+  <div class="note-tip" id="noteTip" role="tooltip"></div>
+  <!-- EXPERIMENT part-notes: end -->
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button type="button" id="toastBtn" hidden></button></div>
 </div>`;
 document.getElementById("app").innerHTML=MARKUP;
@@ -1150,10 +1196,10 @@ function renderTable(ids){
     const num=numEl("span",id,o);
     const ch=ordChip(id,o);
     tr.append(ch?td("c-num",num,ch):td("c-num",num),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
-    PARTS.forEach(([k,label])=>tr.append(td("c-part c-k-"+k,partCell(id,o,k,label))));
+    PARTS.forEach(([k,label])=>tr.append(noteCell(td("c-part c-k-"+k,partCell(id,o,k,label)),id,o,k,label)));
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f===PARTS.length?"":f+"/"+PARTS.length;
-    tr.append(td("c-prog",pr),td("c-com",commentBox(id,o,"t")));
+    tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
     return tr;
   }));
   const cnt=ids.filter(id=>!notCounted(orders[id]));
@@ -1350,7 +1396,7 @@ function card(id,o){
       ic.setAttribute("aria-label",`${label}: ${st[2]}. Сбросить`);
       ic.disabled=!editable();
       ic.addEventListener("click",()=>setPart(id,k,null));
-      r.append(l,ic);body.append(r);continue;
+      r.append(l,ic);noteRow(l,id,o,k,label);body.append(r);continue;
     }
     const seg=document.createElement("div");seg.className="seg";seg.setAttribute("role","group");seg.setAttribute("aria-label",label);
     for(const [v,sym,title] of STATES){
@@ -1361,7 +1407,7 @@ function card(id,o){
       b.addEventListener("click",()=>setPart(id,k,o[k]===v?null:v));
       seg.append(b);
     }
-    r.append(l,seg);body.append(r);
+    r.append(l,seg);noteRow(l,id,o,k,label);body.append(r);
   }
   {
     const t=document.createElement("textarea");
@@ -1376,7 +1422,7 @@ function card(id,o){
       commentTimers[id]=setTimeout(()=>saveComment(id),700);
     });
     t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
-    body.append(t);
+    body.append(withNotes(t,id,o));
   }
   {
     // phone: a small arrow at the very end of an open card; the whole strip folds the card
@@ -1812,6 +1858,88 @@ document.getElementById("ordPaste").addEventListener("click",async()=>{
   else{dlgLink.focus();dlgCheck.className="odlg-check";dlgCheck.textContent="Не получилось вставить кнопкой — нажми в поле и выбери «Вставить»"}
 });
 document.getElementById("addOrder").addEventListener("click",()=>openOrderDlg(null));
+// EXPERIMENT part-notes: start — a short note for each part of an order (stored as o.notes = {part: text});
+// it pops up over the mark on hover (computer) and all notes are listed, in part order, at the top of the comment
+const notesOf=o=>{const n=o&&o.notes;return n&&typeof n==="object"?n:{}};
+const noteText=(o,k)=>{const v=notesOf(o)[k];return typeof v==="string"&&v.trim()?v.trim():""};
+const partLabel=k=>{const p=PARTS.find(x=>x[0]===k);return p?p[1]:k};
+const canNote=()=>isOwnerUI()&&editable();
+function noteCell(cell,id,o,k,label){
+  const t=noteText(o,k);
+  if(t){cell.classList.add("has-note");cell.dataset.note=t;cell.dataset.noteLabel=label;cell.querySelectorAll("button[title]").forEach(b=>{b.dataset.title=b.title;b.removeAttribute("title")})}
+  cell.addEventListener("contextmenu",e=>{if(!canNote())return;e.preventDefault();hideTip();openNoteDlg(id,k)});
+  return cell;
+}
+function noteRow(l,id,o,k,label){
+  if(noteText(o,k)){const d=el("span","note-dot");d.setAttribute("aria-label","есть заметка");l.append(d)}
+  l.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
+}
+function withNotes(t,id,o){
+  const lines=PARTS.filter(([k])=>noteText(o,k));
+  if(!lines.length)return t;
+  const box=el("div","cbox has-notes"),list=el("div","cnotes");
+  lines.forEach(([k,label])=>{
+    const line=el("span","cnote");const b=el("b",null,label+": ");line.append(b,noteText(o,k));
+    line.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
+    list.append(line);
+  });
+  box.append(list,t);
+  return box;
+}
+// hover popup (computer)
+const tipEl=document.getElementById("noteTip");let tipFor=null;
+function hideTip(){tipFor=null;tipEl.classList.remove("show")}
+function showTip(cell){
+  tipFor=cell;tipEl.replaceChildren();
+  const h=el("small",null,(cell.dataset.noteLabel||"")+(cell.querySelector(".chosen")?" · "+(cell.querySelector(".chosen").dataset.title||""):""));
+  tipEl.append(h,cell.dataset.note||"");
+  if(canNote()){tipEl.append(document.createElement("br"));tipEl.append(el("i",null,"правый клик — изменить"))}
+  tipEl.style.left="0px";tipEl.style.top="0px";tipEl.classList.add("show");
+  const r=cell.getBoundingClientRect(),w=tipEl.offsetWidth,hh=tipEl.offsetHeight;
+  let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(x,innerWidth-w-8));
+  let y=r.top-hh-6;if(y<8)y=r.bottom+6;
+  tipEl.style.left=x+"px";tipEl.style.top=y+"px";
+}
+document.addEventListener("mouseover",e=>{
+  const c=e.target.closest&&e.target.closest("td.has-note");
+  if(c===tipFor)return;
+  if(c)showTip(c);else if(tipFor)hideTip();
+});
+window.addEventListener("scroll",hideTip,true);
+// note editor
+const nDlg=document.getElementById("noteDlg"),nText=document.getElementById("noteText"),nDel=document.getElementById("noteDel");
+let nFor=null;
+function openNoteDlg(id,k){
+  if(!db||!canNote()||!orders[id])return;
+  nFor={id,k};
+  document.getElementById("noteTitle").textContent=partLabel(k);
+  const sub=document.getElementById("noteSub");sub.textContent="Заметка к заказу ";const n=el("span","num");n.innerHTML="<small>#</small>";n.append(String(id));sub.append(n);
+  const cur=noteText(orders[id],k);nText.value=cur;nDel.hidden=!cur;
+  try{nDlg.showModal()}catch(_){nDlg.setAttribute("open","")}
+  setTimeout(()=>{try{nText.focus({preventScroll:true})}catch(_){nText.focus()}},30);
+}
+function closeNoteDlg(){try{nDlg.close()}catch(_){nDlg.removeAttribute("open")}nFor=null}
+async function setNote(id,k,val){
+  if(!db||!orders[id])return;
+  const before=orders[id].notes??null;
+  const next={...notesOf(orders[id])};
+  if(val)next[k]=val;else delete next[k];
+  Object.keys(next).forEach(x=>{if(typeof next[x]!=="string"||!next[x].trim())delete next[x]});
+  const store=Object.keys(next).length?next:null;
+  orders[id]={...orders[id],notes:store};render();
+  try{await enqueue(id,()=>db.doc("orders/"+id).update({notes:store}));setStatus("Сохранено")}
+  catch(e){orders[id]={...orders[id],notes:before};render();handleErr(e)}
+}
+document.getElementById("noteForm").addEventListener("submit",e=>{
+  e.preventDefault();if(!nFor)return;const {id,k}=nFor;
+  const v=nText.value.replace(/\s+/g," ").trim().slice(0,300);
+  closeNoteDlg();if(v!==noteText(orders[id],k))setNote(id,k,v||null);
+});
+document.getElementById("noteCancel").addEventListener("click",closeNoteDlg);
+nDel.addEventListener("click",()=>{if(!nFor)return;const {id,k}=nFor;closeNoteDlg();setNote(id,k,null)});
+nDlg.addEventListener("click",e=>{if(e.target===nDlg)closeNoteDlg()});
+nDlg.addEventListener("close",()=>{nFor=null});
+// EXPERIMENT part-notes: end
 setSvc(false,false);
 updateBulkUI();
 // the lock is an owner control: hidden while the page is still finding out who is looking
