@@ -567,18 +567,21 @@ body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5
 .row .label .note-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent);vertical-align:middle;position:relative;top:-1px}
 .admin:not(.locked) .row .label,.row .label.has-note{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .cbox.has-notes{box-sizing:border-box;margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
-.cbox.has-notes>.comment{margin-top:0;border:0;background:transparent;outline:none;min-height:0;padding-top:2px}
+.cbox.has-notes>.comment{margin-top:0;border:0;background:transparent;outline:none;min-height:0;padding-bottom:2px}
 .cbox.has-notes:focus-within{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
 .cbox.has-notes>.comment[readonly]:placeholder-shown{display:none}
-.cnotes{padding:8px 10px 4px;font-size:16px;line-height:1.4}
+.cnotes{padding:4px 10px 8px;font-size:16px;line-height:1.4}
+.cbox.has-notes>.comment[readonly]:placeholder-shown+.cnotes{padding-top:8px}
 .cnote{display:block;white-space:pre-wrap;overflow-wrap:anywhere}
 .cnote b{font-weight:500;color:var(--muted)}
 .admin:not(.locked) .cnote{cursor:pointer;border-radius:4px}
 @media (hover:hover){.admin:not(.locked) .cnote:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (min-width:900px){
   .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
-  .dtable .cnotes{padding:6px 8px 0;font-size:14px}
-  .dtable .cbox.has-notes>.comment{padding-top:0}
+  .dtable .cnotes{padding:0 8px 6px;font-size:14px}
+  .dtable .cbox.has-notes>.comment{padding-bottom:0}
+  .dtable .cbox.has-notes>.comment[readonly]:placeholder-shown+.cnotes{padding-top:6px}
+  .dtable td.c-num .ord-chip.ph{display:inline-flex;visibility:hidden}
 }
 .card-body.anim .cbox.has-notes{animation:rowIn .4s ease-out .261s both}
 .card-body.anim .cbox.has-notes>.comment{animation:none}
@@ -588,6 +591,10 @@ body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5
 .note-tip small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}
 .note-tip i{font-style:normal;opacity:.7}
 /* EXPERIMENT part-notes: end */
+
+/* computer: while the orders table runs on under the footer strip, its visible end is drawn rounded, like the real end of the table */
+.desk-foot{position:fixed;z-index:6;height:13px;box-sizing:border-box;background:var(--card);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;box-shadow:0 0 0 40px var(--bg);clip-path:inset(0 -40px -40px -40px);pointer-events:none}
+.desk-foot[hidden]{display:none}
 </style>
 
 <div id="app"></div>
@@ -1203,7 +1210,7 @@ function renderTable(ids){
     const o=orders[id],tr=document.createElement("tr");
     const td=(cls,...kids)=>{const e=document.createElement("td");if(cls)e.className=cls;e.append(...kids);return e};
     const num=numEl("span",id,o);
-    const ch=ordChip(id,o);
+    const ch=ordChip(id,o,true);
     tr.append(ch?td("c-num",num,ch):td("c-num",num),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
     PARTS.forEach(([k,label])=>tr.append(noteCell(td("c-part c-k-"+k,partCell(id,o,k,label)),id,o,k,label)));
     const f=PARTS.filter(([k])=>o[k]).length;
@@ -1736,8 +1743,13 @@ const ICON_EDIT='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke=
 const isOwnerUI=()=>document.body.classList.contains("admin");
 const hasCrm=o=>!!o&&typeof o.crm==="string"&&CRM_RE.test(o.crm);
 // next to the order number: "add a CRM link" while the order has none; "edit / delete" in service mode
-function ordChip(id,o){
-  if(!isOwnerUI()||!editable())return null;
+function ordChip(id,o,inTable){
+  if(!isOwnerUI())return null;
+  if(!editable()){
+    // table: an invisible stand-in keeps the column as wide as when unlocked, so nothing shifts on the lock
+    if(!inTable)return null;
+    const ph=document.createElement("span");ph.className="ord-chip ph";ph.setAttribute("aria-hidden","true");return ph;
+  }
   const has=hasCrm(o);
   const b=document.createElement("button");b.type="button";b.className="ord-chip "+(has?"edit":"add");
   const t=has?"Изменить или удалить заказ #"+id:"Добавить ссылку на HelloClient для заказа #"+id;
@@ -1902,7 +1914,7 @@ function withNotes(t,id,o){
     line.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
     list.append(line);
   });
-  box.append(list,t);
+  box.append(t,list);
   return box;
 }
 // hover popup (computer)
@@ -1910,10 +1922,7 @@ const tipEl=document.getElementById("noteTip");let tipFor=null;
 function hideTip(){tipFor=null;tipEl.classList.remove("show")}
 function showTip(cell,anchor){
   tipFor=cell;tipEl.replaceChildren();
-  const ch=cell.querySelector(".chosen"),st=ch?(ch.dataset.title||ch.title||""):"";
-  const h=el("small",null,(cell.dataset.noteLabel||"")+(st?" · "+st:""));
-  tipEl.append(h,cell.dataset.note||"");
-  if(canNote()){tipEl.append(document.createElement("br"));tipEl.append(el("i",null,"правый клик — изменить"))}
+  tipEl.append(el("small",null,cell.dataset.noteLabel||""),cell.dataset.note||"");
   tipEl.style.left="0px";tipEl.style.top="0px";tipEl.classList.add("show");
   const r=(anchor||cell).getBoundingClientRect(),w=tipEl.offsetWidth,hh=tipEl.offsetHeight;
   let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(x,innerWidth-w-8));
@@ -1962,6 +1971,26 @@ nDel.addEventListener("click",()=>{if(!nFor)return;const {id,k}=nFor;closeNoteDl
 nDlg.addEventListener("click",e=>{if(e.target===nDlg)closeNoteDlg()});
 nDlg.addEventListener("close",()=>{nFor=null});
 // EXPERIMENT part-notes: end
+// computer: rounded bottom edge for the orders table while it is cut off by the footer strip
+{
+  const foot=document.createElement("div");foot.className="desk-foot";foot.hidden=true;foot.setAttribute("aria-hidden","true");document.body.append(foot);
+  const place=()=>{
+    const v=VIEW.orders,w=document.getElementById("dtableWrap");
+    if(!deskNow()||!w||!w.offsetParent){foot.hidden=true;return}
+    const vr=v.getBoundingClientRect(),wr=w.getBoundingClientRect(),vs=viewsEl.getBoundingClientRect();
+    // only when the orders page is in place (not mid-swipe to Parts) and the table goes on below the strip
+    if(Math.abs(vr.left-vs.left)>1||wr.bottom<=vr.bottom+0.5||wr.top>=vr.bottom-14){foot.hidden=true;return}
+    foot.hidden=false;foot.style.left=wr.left+"px";foot.style.width=wr.width+"px";foot.style.top=(vr.bottom-13)+"px";
+  };
+  let raf=0;const later=()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;place()})};
+  VIEW.orders.addEventListener("scroll",later,{passive:true});
+  viewsEl.addEventListener("scroll",later,{passive:true});
+  window.addEventListener("resize",later);
+  try{new ResizeObserver(later).observe(document.getElementById("dtableWrap"))}catch(_){}
+  try{new MutationObserver(later).observe(document.getElementById("dtbody"),{childList:true})}catch(_){}
+  document.addEventListener("transitionend",later);
+  later();
+}
 setSvc(false,false);
 updateBulkUI();
 // the lock is an owner control: hidden while the page is still finding out who is looking
