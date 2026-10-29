@@ -561,9 +561,13 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .dtable td.c-part.has-note>*{position:relative}
 /* note mark: a six-ray asterisk with rounded ends, drawn like the other line icons */
 :root{--note-star:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M12%203v18M4.2%207.5l15.6%209M4.2%2016.5l15.6-9%22%20stroke%3D%22black%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3C/svg%3E") center/contain no-repeat}
-.dtable td.c-part.has-note>*::after{content:"";position:absolute;top:-5px;right:-8px;width:10px;height:10px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);pointer-events:none}
+.dtable td.c-part.has-note>*::after{content:"";position:absolute;top:-3px;right:-5px;width:5px;height:5px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);pointer-events:none}
 .odlg-field>label .num{font-size:inherit}
-.dtable td.c-part.has-note>.seg::after{visibility:visible;opacity:1;top:50%;right:50%;transform:translate(50%,-50%)}
+/* computer: a set mark (✓ ✗ — ?) with a note gets the asterisk, a part not checked yet gets a dot */
+.dtable td.c-part.has-note>.seg::after{-webkit-mask:none;mask:none;border-radius:50%;visibility:visible;opacity:1;top:50%;right:50%;transform:translate(50%,-50%)}
+/* note on the order itself: asterisk at the number */
+.dtable td.c-num.has-note .num{position:relative}
+.dtable td.c-num.has-note .num::after{content:"";position:absolute;top:0;right:-7px;width:5px;height:5px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);pointer-events:none}
 body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5px;transform:none}
 .admin:not(.locked) .dtable td.c-part{cursor:context-menu}
 .row .label .note-dot{display:inline-block;width:13px;height:13px;margin-left:6px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);vertical-align:middle;position:relative;top:-1px}
@@ -1213,7 +1217,7 @@ function renderTable(ids){
     const td=(cls,...kids)=>{const e=document.createElement("td");if(cls)e.className=cls;e.append(...kids);return e};
     const num=numEl("span",id,o);
     const ch=ordChip(id,o,true);
-    tr.append(ch?td("c-num",num,ch):td("c-num",num),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
+    tr.append(noteCell(ch?td("c-num",num,ch):td("c-num",num),id,o,"order","Заказ"),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
     PARTS.forEach(([k,label])=>tr.append(noteCell(td("c-part c-k-"+k,partCell(id,o,k,label)),id,o,k,label)));
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f===PARTS.length?"":f+"/"+PARTS.length;
@@ -1885,11 +1889,12 @@ document.getElementById("addOrder").addEventListener("click",()=>openOrderDlg(nu
 // it pops up over the mark on hover (computer) and all notes are listed, in part order, at the top of the comment
 const notesOf=o=>{const n=o&&o.notes;return n&&typeof n==="object"?n:{}};
 const noteText=(o,k)=>{const v=notesOf(o)[k];return typeof v==="string"&&v.trim()?v.trim():""};
-const partLabel=k=>{const p=PARTS.find(x=>x[0]===k);return p?p[1]:k};
+const NOTE_KEYS=[["order","Заказ"],...PARTS]; // the order's own note comes first, then the parts in order
+const partLabel=k=>{const p=NOTE_KEYS.find(x=>x[0]===k);return p?p[1]:k};
 const canNote=()=>isOwnerUI()&&editable();
 function noteCell(cell,id,o,k,label){
   const t=noteText(o,k);
-  if(t){cell.classList.add("has-note");cell.dataset.note=t;cell.dataset.noteLabel=label;cell.querySelectorAll("button[title]").forEach(b=>{b.dataset.title=b.title;b.removeAttribute("title")})}
+  if(t){cell.classList.add("has-note");cell.dataset.note=t;cell.dataset.noteLabel=label;cell.querySelectorAll("button.chosen[title]").forEach(b=>{b.dataset.title=b.title;b.removeAttribute("title")})}
   cell.addEventListener("contextmenu",e=>{if(!canNote())return;e.preventDefault();hideTip();openNoteDlg(id,k)});
   return cell;
 }
@@ -1908,7 +1913,7 @@ function noteRow(l,id,o,k,label){
   });
 }
 function withNotes(t,id,o){
-  const lines=PARTS.filter(([k])=>noteText(o,k));
+  const lines=NOTE_KEYS.filter(([k])=>noteText(o,k));
   if(!lines.length)return t;
   const box=el("div","cbox has-notes"),list=el("div","cnotes");
   lines.forEach(([k,label])=>{
