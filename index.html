@@ -898,10 +898,8 @@ const CACHE_KEY="hs09-last-orders";
 function saveLastOrders(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:new Date().toISOString(),orders}))}catch(_){}}
 function loadLastOrders(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");if(c&&c.orders&&typeof c.orders==="object")return c}catch(_){}return null}
 const lastSeen=loadLastOrders();
-const whenStr=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):null};
 if(lastSeen&&Object.keys(lastSeen.orders).length){
   orders=lastSeen.orders;
-  {const w=whenStr(lastSeen.at);if(w)setStatus("Подключаюсь…","данные на "+w)}
   setTimeout(()=>{if(!db)render()},0);
 }
 
@@ -1972,8 +1970,7 @@ showLock(false);
   }}catch(_){}
   if(!db){
     lockBtn.hidden=true;if(lockBtn.parentNode&&lockBtn.parentNode.classList.contains("hapwrap"))lockBtn.parentNode.hidden=true;
-    const when=lastSeen?whenStr(lastSeen.at):null;
-    setStatus("Нет связи — только просмотр",when?"данные на "+when:"");
+    setStatus("Нет связи — только просмотр");
     if(!Object.keys(orders).length)empty.textContent="Данных для просмотра пока нет.";
     render();
     if(OFFLINE){
