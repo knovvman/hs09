@@ -559,12 +559,14 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 
 /* EXPERIMENT part-notes: start (a note per part of each order; shown on hover and gathered into the comment) */
 .dtable td.c-part.has-note>*{position:relative}
-.dtable td.c-part.has-note>*::after{content:"";position:absolute;top:-3px;right:-5px;width:6px;height:6px;border-radius:50%;background:var(--accent);pointer-events:none}
+/* note mark: a six-ray asterisk with rounded ends, drawn like the other line icons */
+:root{--note-star:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M12%203v18M4.2%207.5l15.6%209M4.2%2016.5l15.6-9%22%20stroke%3D%22black%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3C/svg%3E") center/contain no-repeat}
+.dtable td.c-part.has-note>*::after{content:"";position:absolute;top:-5px;right:-8px;width:10px;height:10px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);pointer-events:none}
 .odlg-field>label .num{font-size:inherit}
 .dtable td.c-part.has-note>.seg::after{visibility:visible;opacity:1;top:50%;right:50%;transform:translate(50%,-50%)}
 body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5px;transform:none}
 .admin:not(.locked) .dtable td.c-part{cursor:context-menu}
-.row .label .note-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent);vertical-align:middle;position:relative;top:-1px}
+.row .label .note-dot{display:inline-block;width:13px;height:13px;margin-left:6px;background:var(--accent);-webkit-mask:var(--note-star);mask:var(--note-star);vertical-align:middle;position:relative;top:-1px}
 .admin:not(.locked) .row .label,.row .label.has-note{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .cbox.has-notes{box-sizing:border-box;margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
 .cbox.has-notes>.comment{margin-top:0;border:0;background:transparent;outline:none;min-height:0;padding-bottom:2px}
