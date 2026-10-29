@@ -592,7 +592,7 @@ body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5
 
 <div id="app"></div>
 
-<script type="application/json" id="snapshot">{"orders":{"57418":{"box":"ok","bt":"bad","comment":"Буква Б\nПлатка двигателя нерабочая - видимо она причина исходной неисправности\nПлатка ТЭНа ушла в #60160\nПлатка bluetooth: осторожно! убийца БП - на входе 15v короткое\nБП не выдает 15v","crm":"2d55de17-a411-499e-a7a6-6df63a1951ef","heater":"none","kind":"ours","loc":"mp","motor":"bad","num":57418,"power":"ok","psu":"bad","receipt":"ok"},"59309":{"comment":"Возможно буква Н\nНадо проверить плату двигателя\nВозможно как раз отсюда в конце платка тена уехала на ББ\nБП - мертвец, нет 15v","crm":"c97547c0-f953-4d58-8002-672e659f2c8a","kind":"ours","loc":"mp","motor":"q","num":59309,"power":"ok","psu":"bad","receipt":"ok"},"59818":{"comment":"Буква Г","crm":"019f9edd-efbd-7000-8e98-670fe7c38477","kind":"ours","loc":"mp","num":59818,"receipt":"ok"},"60198":{"bt":"ok","comment":"Платка двигателя: при включении мигает три красных светодиода, фен не запускается вообще\nПлатка ТЭНа ушла в #60333","crm":"019fdba7-bcbb-7000-8a47-19c48dc5c104","heater":"none","kind":"ours","loc":"mp","motor":"bad","num":60198,"power":"ok","psu":"ok","receipt":"ok"},"60696":{"box":"q","bt":"q","crm":"01a024db-96b2-7000-8cd8-092f17d5c90e","heater":"q","kind":"ours","loc":"babushkina","motor":"q","num":60696,"power":"q","psu":"q","receipt":"q"},"61406":{"bt":"ok","comment":"Платка ТЭНа и БП ушли в #60073","crm":"01a08ba7-72bd-726e-9aea-39e6e9328fb5","heater":"none","kind":"ours","loc":"mp","motor":"ok","num":61406,"power":"ok","psu":"none","receipt":"ok"},"61867":{"bt":"ok","comment":"Платка двигателя: при включении мигает три красных светодиода, фен не запускается вообще","crm":"01a0ca2e-03fc-71d8-8034-999d525fbcb0","heater":"bad","kind":"warranty","loc":"mp","motor":"ok","num":61867,"power":"ok","psu":"ok","receipt":"ok"},"62198":{"box":"ok","bt":"ok","comment":"После пересборки заработал\nС помощью него починю гарантию","crm":"01a1023c-aed0-727b-8516-e036c9c55969","heater":"ok","kind":"ours","loc":"mp","motor":"ok","num":62198,"power":"ok","psu":"ok","receipt":"ok"},"62651":{"comment":"Фен с магаза\nПлатка ТЭНа ушла в #61132","crm":"01a143fc-cba6-70e0-9bd5-0e8da0e163cb","kind":"ours","loc":"mp","num":62651}},"at":"2026-10-20T07:43:57.000Z"}</script>
+<script type="application/json" id="snapshot">{"orders":{},"at":null}</script>
 <script id="main">
 const SELF_JS=document.currentScript.textContent;
 const HEAD_HTML="<title>Dyson HS09</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap\">\n";
@@ -892,7 +892,18 @@ function setStatus(t,sub){
   if(sub){const b=document.createElement("span");b.textContent=sub;parts.push(b)}
   statusEl.replaceChildren(...parts);
 }
-if(SNAP&&SNAP.orders&&Object.keys(SNAP.orders).length){orders=JSON.parse(JSON.stringify(SNAP.orders));setTimeout(()=>{if(!db)render()},0)}
+// the last data this device saw is kept in the browser and shown at once on the next start,
+// while the connection to the database is still being set up (it used to show the copy baked into the page)
+const CACHE_KEY="hs09-last-orders";
+function saveLastOrders(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:new Date().toISOString(),orders}))}catch(_){}}
+function loadLastOrders(){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");if(c&&c.orders&&typeof c.orders==="object")return c}catch(_){}return null}
+const lastSeen=loadLastOrders();
+const whenStr=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):null};
+if(lastSeen&&Object.keys(lastSeen.orders).length){
+  orders=lastSeen.orders;
+  {const w=whenStr(lastSeen.at);if(w)setStatus("Подключаюсь…","данные на "+w)}
+  setTimeout(()=>{if(!db)render()},0);
+}
 
 // resizes a comment box to its text; the page's scroll position is kept, because the box is briefly
 // one line tall while it is measured and near the end of the list the browser would scroll the page up
@@ -1961,9 +1972,8 @@ showLock(false);
   }}catch(_){}
   if(!db){
     lockBtn.hidden=true;if(lockBtn.parentNode&&lockBtn.parentNode.classList.contains("hapwrap"))lockBtn.parentNode.hidden=true;
-    const at=SNAP.at?new Date(SNAP.at):null;
-    const when=at&&!isNaN(at)?at.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):null;
-    setStatus("Только просмотр",when?"данные на "+when:"");
+    const when=lastSeen?whenStr(lastSeen.at):null;
+    setStatus("Нет связи — только просмотр",when?"данные на "+when:"");
     if(!Object.keys(orders).length)empty.textContent="Данных для просмотра пока нет.";
     render();
     if(OFFLINE){
@@ -1993,6 +2003,7 @@ showLock(false);
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
     orders=next;render();
+    if(!snap.fromCache||snap.docs.length)saveLastOrders();
     if(!snap.metadata.hasPendingWrites)setStatus(canWrite?"Синхронизировано":"Только просмотр");
   },err=>{setStatus("Связь с хранилищем потеряна, обнови страницу");});
 })();
