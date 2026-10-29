@@ -565,7 +565,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 body.admin:not(.locked) .dtable td.c-part.has-note>.seg::after{top:-3px;right:-5px;transform:none}
 .admin:not(.locked) .dtable td.c-part{cursor:context-menu}
 .row .label .note-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--accent);vertical-align:middle;position:relative;top:-1px}
-.admin:not(.locked) .row .label{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.admin:not(.locked) .row .label,.row .label.has-note{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .cbox.has-notes{box-sizing:border-box;margin-top:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px}
 .cbox.has-notes>.comment{margin-top:0;border:0;background:transparent;outline:none;min-height:0;padding-top:2px}
 .cbox.has-notes:focus-within{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
@@ -1880,8 +1880,18 @@ function noteCell(cell,id,o,k,label){
   return cell;
 }
 function noteRow(l,id,o,k,label){
-  if(noteText(o,k)){const d=el("span","note-dot");d.setAttribute("aria-label","есть заметка");l.append(d)}
-  l.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
+  const t=noteText(o,k),r=l.parentNode;
+  if(t){
+    const d=el("span","note-dot");d.setAttribute("aria-label","есть заметка");l.append(d);
+    l.classList.add("has-note");if(r){r.dataset.note=t;r.dataset.noteLabel=label}
+  }
+  // tap on the part name: owner with the lock open edits the note; everyone else sees it in a bubble
+  l.addEventListener("click",e=>{
+    if(canNote()){e.stopPropagation();hideTip();openNoteDlg(id,k);return}
+    if(!t||!r)return;
+    e.stopPropagation();
+    if(tipFor===r)hideTip();else showTip(r,l);
+  });
 }
 function withNotes(t,id,o){
   const lines=PARTS.filter(([k])=>noteText(o,k));
@@ -1898,23 +1908,26 @@ function withNotes(t,id,o){
 // hover popup (computer)
 const tipEl=document.getElementById("noteTip");let tipFor=null;
 function hideTip(){tipFor=null;tipEl.classList.remove("show")}
-function showTip(cell){
+function showTip(cell,anchor){
   tipFor=cell;tipEl.replaceChildren();
-  const h=el("small",null,(cell.dataset.noteLabel||"")+(cell.querySelector(".chosen")?" · "+(cell.querySelector(".chosen").dataset.title||""):""));
+  const ch=cell.querySelector(".chosen"),st=ch?(ch.dataset.title||ch.title||""):"";
+  const h=el("small",null,(cell.dataset.noteLabel||"")+(st?" · "+st:""));
   tipEl.append(h,cell.dataset.note||"");
   if(canNote()){tipEl.append(document.createElement("br"));tipEl.append(el("i",null,"правый клик — изменить"))}
   tipEl.style.left="0px";tipEl.style.top="0px";tipEl.classList.add("show");
-  const r=cell.getBoundingClientRect(),w=tipEl.offsetWidth,hh=tipEl.offsetHeight;
+  const r=(anchor||cell).getBoundingClientRect(),w=tipEl.offsetWidth,hh=tipEl.offsetHeight;
   let x=r.left+r.width/2-w/2;x=Math.max(8,Math.min(x,innerWidth-w-8));
   let y=r.top-hh-6;if(y<8)y=r.bottom+6;
   tipEl.style.left=x+"px";tipEl.style.top=y+"px";
 }
-document.addEventListener("mouseover",e=>{
+document.addEventListener("pointerover",e=>{
+  if(e.pointerType!=="mouse")return; // a finger tap is handled by the part name (phone)
   const c=e.target.closest&&e.target.closest("td.has-note");
   if(c===tipFor)return;
   if(c)showTip(c);else if(tipFor)hideTip();
 });
 window.addEventListener("scroll",hideTip,true);
+document.addEventListener("click",e=>{if(tipFor&&!tipFor.contains(e.target))hideTip()},true); // a tap anywhere else closes the bubble
 // note editor
 const nDlg=document.getElementById("noteDlg"),nText=document.getElementById("noteText"),nDel=document.getElementById("noteDel");
 let nFor=null;
