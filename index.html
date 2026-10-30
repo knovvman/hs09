@@ -593,7 +593,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .cnote{display:block;width:fit-content;max-width:calc(100% + 12px);box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;padding:1px 6px;margin:2px -6px;border-radius:6px}
 .cnote b{font-weight:500;color:var(--muted)}
 .admin:not(.locked) .cnote{cursor:pointer}
-@media (hover:hover){.cnote:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+@media (hover:hover){.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (min-width:900px){
   .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
