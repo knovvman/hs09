@@ -582,8 +582,11 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .cbox.has-notes:focus-within{outline:none}
   /* a hovered part note in the comment: a soft rounded background fades in under that part's value (the whole cell stays plain) */
   /* a hovered part note makes that part's value stand out: its lines thicken and it grows a little, both easing in and out */
-  .dtable tbody td.c-part>:first-child{-webkit-text-stroke:1.4px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
-  .dtable td.c-part.note-hit>:first-child{-webkit-text-stroke-color:currentColor;transform:scale(1.18)}
+  .dtable tbody td.c-part>:first-child{-webkit-text-stroke:1.8px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
+  .dtable td.c-part.note-hit>:first-child{-webkit-text-stroke-color:currentColor;transform:scale(1.26)}
+  /* the order number reacts the same way to the order's own note */
+  .dtable tbody td.c-num .num{display:inline-block;-webkit-text-stroke:.7px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
+  .dtable td.c-num.note-hit .num{-webkit-text-stroke-color:currentColor;transform:scale(1.1)}
   /* column titles fade their underline in and out instead of jumping */
   .dtable-head th{transition:color .28s ease,box-shadow .28s ease}
   .cnote{transition:background-color .2s ease}
@@ -625,7 +628,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .comment[readonly]{pointer-events:none}
   .cbox.has-notes:has(>.comment[readonly]){outline:none!important}
 }
-@media (hover:hover){.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+@media (hover:hover){.cnote:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (min-width:900px){
   .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
@@ -833,7 +836,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
 {
   const mark=i=>{document.querySelectorAll("#dtHeadClone th.col-on").forEach(e=>e.classList.remove("col-on"));if(i<0)return;const r=document.querySelector("#dtHeadClone tr"),c=r&&r.children[i];if(c)c.classList.add("col-on")};
   const t=document.getElementById("dtable");
-  // the comment column itself is never marked; a part note in the comment marks that part's column and its value in the row (the order's own note marks nothing)
+  // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
   const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit")};
   t.addEventListener("mouseover",e=>{
@@ -841,11 +844,11 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
     if(!td){mark(-1);hit(null);return}
     if(td.classList.contains("c-com")){
       const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
-      const c=n&&tr&&n.dataset.k!=="order"?tr.querySelector("td.c-k-"+n.dataset.k):null;
+      const c=n&&tr?tr.querySelector(n.dataset.k==="order"?"td.c-num":"td.c-k-"+n.dataset.k):null;
       mark(c?c.cellIndex:-1);hit(c,c?n:null);return;
     }
-    const k=td.classList.contains("c-part")&&td.classList.contains("has-note")?[...td.classList].find(x=>x.startsWith("c-k-")):null;
-    const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k.slice(4)+'"]'):null;
+    const k=!td.classList.contains("has-note")?null:td.classList.contains("c-num")?"order":td.classList.contains("c-part")?([...td.classList].find(x=>x.startsWith("c-k-"))||"").slice(4):null;
+    const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k+'"]'):null;
     hit(nt?td:null,nt);mark(td.cellIndex);
   });
   t.addEventListener("mouseleave",()=>{mark(-1);hit(null)});
