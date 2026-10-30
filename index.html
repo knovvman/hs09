@@ -226,7 +226,6 @@ a.num-link:active{color:var(--accent)}
 .import-box{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .import-hint{font-size:13px;color:var(--muted)}
 .import-actions{display:flex;gap:8px;margin-top:8px}
-#grid.all-done .r-receipt,#grid.all-done .r-box{display:none}
 .svc{position:fixed;z-index:20;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;padding:8px 10px;max-width:calc(100vw - 24px);box-sizing:border-box;border:1px dashed var(--purple);border-radius:12px;background:color-mix(in srgb,var(--card) 94%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.22);opacity:0;visibility:hidden;pointer-events:none;transform:translateY(16px) scale(.97);transition:opacity .25s ease,transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s linear .3s}
 .svc.show{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:opacity .25s ease,transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s}
 body.svc-open .wrap{padding-bottom:110px}
@@ -349,7 +348,6 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .comment:not(:focus):placeholder-shown{border-color:transparent}
   .dtable .tprog{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .dtable .tprog.done{color:var(--ok);font-size:16px;font-weight:700}
-  .dtable.all-done .c-prog,.dtable.all-done .c-k-receipt,.dtable.all-done .c-k-box{display:none}
   .dtable.all-done{table-layout:fixed}
   .dtable.all-done td.c-com{width:auto}
   .dtable tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
@@ -895,7 +893,7 @@ document.getElementById("themeBtn").addEventListener("click",()=>{const cur=docu
 let SNAP={orders:{},at:null};
 try{SNAP=JSON.parse(document.getElementById("snapshot").textContent)||SNAP}catch(_){}
 const PARTS=[
-  ["receipt","Квитанция"],["box","Коробка"],["psu","Блок питания"],["heater","Плата ТЭНа"],
+  ["box","Коробка"],["psu","Блок питания"],["heater","Плата ТЭНа"],
   ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]
 ];
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
@@ -1244,7 +1242,7 @@ function updateBulkButtons(ids){
     b.disabled=off;syncHap(b);
   });
 }
-const HEAD2={receipt:["Квитанция"],box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."]};
+const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."]};
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
@@ -1304,7 +1302,7 @@ function renderTable(ids){
     const th1=head.querySelector("th.c-part"),cs=th1&&getComputedStyle(th1);
     if(m&&cs)t1.style.setProperty("--part-w",Math.ceil(m+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight))+"px")}}
   const cnt=ids.filter(id=>!notCounted(orders[id]));
-  const allDone=cnt.length>0&&cnt.every(id=>PARTS.every(([k])=>orders[id][k]));
+  const allDone=false; // columns no longer hide when everything is checked, so the table keeps one layout
   const tbl=document.getElementById("dtable");
   tbl.classList.remove("all-done");
   if(allDone&&tbl.offsetParent){
@@ -1392,7 +1390,6 @@ function render(){
   // the list the browser would scroll the page up in that moment, so the scroll position is put back afterwards
   const vo=document.getElementById("view-orders"),voTop=vo?vo.scrollTop:0;
   grid.replaceChildren(...ids.map(id=>card(id,orders[id])));
-  grid.classList.toggle("all-done",counted.length>0&&counted.every(id=>PARTS.every(([k])=>orders[id][k])));
   renderTable(ids);
   grid.querySelectorAll("textarea.comment").forEach(autosize);
   if(vo&&vo.scrollTop!==voTop)vo.scrollTop=voTop;
