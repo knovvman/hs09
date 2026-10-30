@@ -37,6 +37,7 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (hover:hover){.fold:hover{background:color-mix(in srgb,var(--muted) 8%,transparent)}}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
+@media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
 /* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
 .legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
 .legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn);font-family:var(--font-mono)}
@@ -1087,6 +1088,12 @@ let activeTab="orders";
 const TABS=["orders","stats"];
 const VIEW={orders:document.getElementById("view-orders"),stats:document.getElementById("view-stats")};
 const viewsEl=document.getElementById("views"),tabInd=document.getElementById("tabInd");
+// while the tab screens slide (swipe or tab click) and for a second after they settle, the Orders content ignores the mouse,
+// so hover effects don't fire on the moving table and the slide stays smooth
+{let calmT=0;viewsEl.addEventListener("scroll",()=>{
+  if(!document.body.classList.contains("tab-moving")){document.body.classList.add("tab-moving");const t=document.getElementById("dtable");if(t)t.dispatchEvent(new Event("mouseleave"))}
+  clearTimeout(calmT);calmT=setTimeout(()=>document.body.classList.remove("tab-moving"),1000);
+},{passive:true})}
 function setInd(pos,anim){tabInd.style.transition=anim?"":"none";tabInd.style.transform="translateX(calc("+pos+" * (100% + 4px)))"}
 const tabBtns=[...document.querySelectorAll(".tab")];
 function paintTabs(pos){
