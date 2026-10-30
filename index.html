@@ -566,6 +566,13 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 
 /* EXPERIMENT part-notes: start (a note per part of each order; shown on hover and gathered into the comment) */
 .dtable td.c-part.has-note>*{position:relative}
+@media (min-width:900px){
+  /* desktop: no frame around the comment field when it is clicked */
+  .dtable .comment:focus{outline:none}
+  .dtable .cbox.has-notes:focus-within{outline:none}
+  /* the part (or order number) a hovered note in the comment belongs to */
+  .dtable tbody tr td.note-hit{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+}
 /* note mark: a six-ray asterisk with rounded ends, drawn like the other line icons */
 :root{--note-star:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M12%203v18M4.2%207.5l15.6%209M4.2%2016.5l15.6-9%22%20stroke%3D%22black%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22/%3E%3C/svg%3E") center/contain no-repeat}
 .odlg-field>label .num{font-size:inherit}
@@ -790,8 +797,19 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
 {
   const mark=i=>{document.querySelectorAll("#dtHeadClone th.col-on").forEach(e=>e.classList.remove("col-on"));if(i<0)return;const r=document.querySelector("#dtHeadClone tr"),c=r&&r.children[i];if(c)c.classList.add("col-on")};
   const t=document.getElementById("dtable");
-  t.addEventListener("mouseover",e=>{const td=e.target.closest("td");mark(td?td.cellIndex:-1)});
-  t.addEventListener("mouseleave",()=>mark(-1));
+  // the comment column itself is never marked; a note in the comment marks the column of its part and that part's cell in the row
+  const hit=c=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));if(c)c.classList.add("note-hit")};
+  t.addEventListener("mouseover",e=>{
+    const td=e.target.closest("td");
+    if(!td){mark(-1);hit(null);return}
+    if(td.classList.contains("c-com")){
+      const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
+      const c=n&&tr?tr.querySelector(n.dataset.k==="order"?"td.c-num":"td.c-k-"+n.dataset.k):null;
+      mark(c?c.cellIndex:-1);hit(c);return;
+    }
+    hit(null);mark(td.cellIndex);
+  });
+  t.addEventListener("mouseleave",()=>{mark(-1);hit(null)});
 }
 try{matchMedia("(min-width: 900px)").addEventListener("change",()=>{placeOrdersHead();try{render()}catch(_){}})}catch(_){}
 {let rz=0;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(deskNow()){try{render()}catch(_){}}},120)})}
@@ -1951,7 +1969,7 @@ function withNotes(t,id,o){
   if(!lines.length)return t;
   const box=el("div","cbox has-notes"),list=el("div","cnotes");
   lines.forEach(([k,label])=>{
-    const line=el("span","cnote");const b=el("b",null,label+": ");line.append(b,noteText(o,k));
+    const line=el("span","cnote");line.dataset.k=k;const b=el("b",null,label+": ");line.append(b,noteText(o,k));
     line.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
     list.append(line);
   });
