@@ -844,7 +844,8 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
   const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit")};
-  // leaving a note for the gap before the next one waits a moment, so the column underline glides from note to note instead of blinking off
+  // a note in the comment makes its part's mark (or the number) stand out but does not underline the column title;
+  // leaving a note for the gap before the next one waits a moment, so the mark doesn't blink off between notes
   let gapT=0;const now=(f)=>{clearTimeout(gapT);f()};
   t.addEventListener("mouseover",e=>{
     const td=e.target.closest("td");
@@ -853,7 +854,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
       const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
       const c=n&&tr?tr.querySelector(n.dataset.k==="order"?"td.c-num":"td.c-k-"+n.dataset.k):null;
       if(!c){clearTimeout(gapT);gapT=setTimeout(()=>{mark(-1);hit(null)},140);return}
-      now(()=>{mark(c.cellIndex);hit(c,n)});return;
+      now(()=>{mark(-1);hit(c,n)});return;
     }
     const k=!td.classList.contains("has-note")?null:td.classList.contains("c-num")?"order":td.classList.contains("c-part")?([...td.classList].find(x=>x.startsWith("c-k-"))||"").slice(4):null;
     const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k+'"]'):null;
