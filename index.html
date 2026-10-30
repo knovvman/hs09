@@ -324,7 +324,12 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable :is(th,td).c-loc,.dtable :is(th,td).c-kind{white-space:nowrap}
   .dtable td.c-loc>.seg,.dtable td.c-kind>.seg{display:inline-flex;flex-direction:column;gap:2px}
   .dtable td.c-loc>.seg .loc,.dtable td.c-kind>.seg .kind-pick{min-height:24px;padding-top:0;padding-bottom:0}
-  .dtable:not(.all-done) :is(th,td):is(.c-part,.c-num,.c-loc,.c-kind){width:var(--part-w,auto);min-width:var(--part-w,0);box-sizing:border-box}
+  .dtable:not(.all-done) :is(th,td):is(.c-part,.c-num){width:var(--part-w,auto);min-width:var(--part-w,0);box-sizing:border-box}
+  /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
+  .dtable:not(.all-done) :is(th,td).c-loc{width:60px;min-width:60px;box-sizing:border-box}
+  .dtable:not(.all-done) :is(th,td).c-kind{width:78px;min-width:78px;box-sizing:border-box}
+  /* order numbers centred in their column (for viewers there is nothing else in the cell) */
+  .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
   .dtable:not(.all-done) td.c-com{width:100%}
   .dtable th.c-part>.hl{display:inline-block}
 }
