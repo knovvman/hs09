@@ -571,8 +571,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .comment:focus{outline:none}
   .dtable .cbox.has-notes:focus-within{outline:none}
   /* a hovered part note in the comment: a soft rounded background fades in under that part's value (the whole cell stays plain) */
-  .dtable tbody td.c-part>:first-child{border-radius:8px;transition:background-color .28s ease,box-shadow .28s ease;box-shadow:0 0 0 0 transparent}
-  .dtable td.c-part.note-hit>:first-child{background-color:color-mix(in srgb,var(--accent) 18%,transparent);box-shadow:0 0 0 7px color-mix(in srgb,var(--accent) 18%,transparent)}
+  /* EXPERIMENT note-hit: a hovered part note makes that part's value stand out (no background); compare looks with ?hl=a|b|c|d (remembered in this browser) */
+  .dtable tbody td.c-part>:first-child{transition:filter .28s ease,transform .28s ease,text-shadow .28s ease,-webkit-text-stroke-width .28s ease}
+  :root[data-hl="a"] .dtable td.c-part.note-hit>:first-child{filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 6px color-mix(in srgb,currentColor 60%,transparent))}
+  :root[data-hl="b"] .dtable td.c-part.note-hit>:first-child{-webkit-text-stroke:1.4px currentColor;transform:scale(1.18)}
+  :root[data-hl="c"] .dtable td.c-part.note-hit>:first-child{filter:saturate(1.9) contrast(1.35) brightness(.88);transform:scale(1.12)}
+  :root[data-hl="d"] .dtable td.c-part.note-hit>:first-child{text-shadow:0 0 0 currentColor,1.5px 0 0 color-mix(in srgb,currentColor 45%,transparent),-1.5px 0 0 color-mix(in srgb,currentColor 45%,transparent),0 1.5px 0 color-mix(in srgb,currentColor 45%,transparent),0 -1.5px 0 color-mix(in srgb,currentColor 45%,transparent),1.5px 1.5px 0 color-mix(in srgb,currentColor 45%,transparent),-1.5px -1.5px 0 color-mix(in srgb,currentColor 45%,transparent),1.5px -1.5px 0 color-mix(in srgb,currentColor 45%,transparent),-1.5px 1.5px 0 color-mix(in srgb,currentColor 45%,transparent)}
   /* column titles fade their underline in and out instead of jumping */
   .dtable-head th{transition:color .28s ease,box-shadow .28s ease}
   .cnote{transition:background-color .2s ease}
@@ -797,6 +801,9 @@ function placeAdminBtns(){
 }
 placeAdminBtns();
 try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}catch(_){}
+// EXPERIMENT note-hit: which look makes a hovered note's part value stand out (?hl=a|b|c|d, remembered here)
+{let v="a";try{const q=new URLSearchParams(location.search).get("hl");if(q&&/^[abcd]$/.test(q))localStorage.setItem("note-hl2",q);v=localStorage.getItem("note-hl2")||"a"}catch(_){}
+ document.documentElement.dataset.hl=v}
 // desktop: mark the column title of the cell under the mouse
 {
   const mark=i=>{document.querySelectorAll("#dtHeadClone th.col-on").forEach(e=>e.classList.remove("col-on"));if(i<0)return;const r=document.querySelector("#dtHeadClone tr"),c=r&&r.children[i];if(c)c.classList.add("col-on")};
