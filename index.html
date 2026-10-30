@@ -1375,7 +1375,8 @@ function numEl(tag,id,o){
 let crmWin=null;
 function deskLinks(){try{return matchMedia("(min-width: 900px) and (pointer: fine)").matches}catch(_){return false}}
 try{matchMedia("(min-width: 900px) and (pointer: fine)").addEventListener("change",()=>{try{render()}catch(_){}})}catch(_){}
-function notCounted(o){return !!o&&(o.loc==="babushkina"||(!o.loc&&o.babushkina===true))}
+// an order with "?" on every part is left out of all counts (progress, Parts tab) until at least one part gets another mark
+function notCounted(o){return !!o&&PARTS.every(([k])=>o[k]==="q")}
 function render(){
   const ids=Object.keys(orders).sort((a,b)=>Number(a)-Number(b));
   const counted=ids.filter(id=>!notCounted(orders[id]));
