@@ -1088,11 +1088,11 @@ let activeTab="orders";
 const TABS=["orders","stats"];
 const VIEW={orders:document.getElementById("view-orders"),stats:document.getElementById("view-stats")};
 const viewsEl=document.getElementById("views"),tabInd=document.getElementById("tabInd");
-// while the tab screens slide (swipe or tab click) and for a second after they settle, the Orders content ignores the mouse,
+// while the tab screens slide (swipe or tab click) the Orders content ignores the mouse until they settle,
 // so hover effects don't fire on the moving table and the slide stays smooth
 {let calmT=0;viewsEl.addEventListener("scroll",()=>{
   if(!document.body.classList.contains("tab-moving")){document.body.classList.add("tab-moving");const t=document.getElementById("dtable");if(t)t.dispatchEvent(new Event("mouseleave"))}
-  clearTimeout(calmT);calmT=setTimeout(()=>document.body.classList.remove("tab-moving"),1000);
+  clearTimeout(calmT);calmT=setTimeout(()=>document.body.classList.remove("tab-moving"),120); // no more scroll events for 120 ms = settled
 },{passive:true})}
 function setInd(pos,anim){tabInd.style.transition=anim?"":"none";tabInd.style.transform="translateX(calc("+pos+" * (100% + 4px)))"}
 const tabBtns=[...document.querySelectorAll(".tab")];
