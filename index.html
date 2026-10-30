@@ -321,10 +321,10 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .chosen-kind,.dtable .seg .kind-pick{min-height:28px;padding:2px 4px;font-size:12px;width:66px;min-width:66px}
   .dtable td.c-com{min-width:170px;width:30%;padding-right:12px}
   /* narrow "where"/"type": unchosen buttons stack; part columns share one width (the widest header, set from JS as --part-w); the comment takes the rest */
-  .dtable :is(th,td).c-loc,.dtable :is(th,td).c-kind{width:1%;white-space:nowrap}
+  .dtable :is(th,td).c-loc,.dtable :is(th,td).c-kind{white-space:nowrap}
   .dtable td.c-loc>.seg,.dtable td.c-kind>.seg{display:inline-flex;flex-direction:column;gap:2px}
   .dtable td.c-loc>.seg .loc,.dtable td.c-kind>.seg .kind-pick{min-height:24px;padding-top:0;padding-bottom:0}
-  .dtable:not(.all-done) :is(th,td).c-part{width:var(--part-w,auto);min-width:var(--part-w,0)}
+  .dtable:not(.all-done) :is(th,td):is(.c-part,.c-num,.c-loc,.c-kind){width:var(--part-w,auto);min-width:var(--part-w,0);box-sizing:border-box}
   .dtable:not(.all-done) td.c-com{width:100%}
   .dtable th.c-part>.hl{display:inline-block}
 }
