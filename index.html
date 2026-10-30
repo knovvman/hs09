@@ -599,7 +599,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .cnote{display:block;width:fit-content;max-width:calc(100% + 12px);box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;padding:1px 6px;margin:2px -6px;border-radius:6px}
 .cnote b{font-weight:500;color:var(--muted)}
 .admin:not(.locked) .cnote{cursor:pointer}
-@media (hover:hover){.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+@media (hover:hover){.cnote.lit,.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (min-width:900px){
   .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
@@ -808,16 +808,19 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   const mark=i=>{document.querySelectorAll("#dtHeadClone th.col-on").forEach(e=>e.classList.remove("col-on"));if(i<0)return;const r=document.querySelector("#dtHeadClone tr"),c=r&&r.children[i];if(c)c.classList.add("col-on")};
   const t=document.getElementById("dtable");
   // the comment column itself is never marked; a part note in the comment marks that part's column and its value in the row (the order's own note marks nothing)
-  const hit=c=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));if(c)c.classList.add("note-hit")};
+  // a part's value and its note in the comment light up together, whichever of the two is hovered
+  const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit")};
   t.addEventListener("mouseover",e=>{
     const td=e.target.closest("td");
     if(!td){mark(-1);hit(null);return}
     if(td.classList.contains("c-com")){
       const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
       const c=n&&tr&&n.dataset.k!=="order"?tr.querySelector("td.c-k-"+n.dataset.k):null;
-      mark(c?c.cellIndex:-1);hit(c);return;
+      mark(c?c.cellIndex:-1);hit(c,c?n:null);return;
     }
-    hit(null);mark(td.cellIndex);
+    const k=td.classList.contains("c-part")&&td.classList.contains("has-note")?[...td.classList].find(x=>x.startsWith("c-k-")):null;
+    const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k.slice(4)+'"]'):null;
+    hit(nt?td:null,nt);mark(td.cellIndex);
   });
   t.addEventListener("mouseleave",()=>{mark(-1);hit(null)});
 }
@@ -1999,12 +2002,6 @@ function showTip(cell,anchor){
   let y=r.top-hh-6;if(y<8)y=r.bottom+6;
   tipEl.style.left=x+"px";tipEl.style.top=y+"px";
 }
-document.addEventListener("pointerover",e=>{
-  if(e.pointerType!=="mouse")return; // a finger tap is handled by the part name (phone)
-  const c=e.target.closest&&e.target.closest("td.has-note");
-  if(c===tipFor)return;
-  if(c)showTip(c);else if(tipFor)hideTip();
-});
 window.addEventListener("scroll",hideTip,true);
 document.addEventListener("click",e=>{if(tipFor&&!tipFor.contains(e.target))hideTip()},true); // a tap anywhere else closes the bubble
 // note editor
