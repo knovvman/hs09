@@ -336,7 +336,7 @@ body.svc-open .wrap{padding-bottom:110px}
 @media (min-width:900px) and (max-width:1180px){
   .dtable th{padding-left:3px;padding-right:3px;letter-spacing:0;font-size:10px}
   .dtable td{padding-left:4px;padding-right:4px}
-  .dtable th.c-num,.dtable td.c-num{padding-left:12px;padding-right:6px}
+  .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
   .dtable td.c-com{min-width:110px;padding-right:10px}
   .dtable th.c-com{padding-left:8px}
 }
@@ -518,7 +518,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .ord-chip:active{transform:scale(.88)}
 .ord-chip.edit{display:none;border-style:solid;border-color:color-mix(in srgb,var(--purple) 70%,transparent);color:var(--purple)}
 .svc-open .ord-chip.edit{display:inline-flex}
-.dtable td.c-num .ord-chip{width:24px;height:24px;margin-left:6px;position:relative;top:-2px}
+/* the owner's pencil hangs right after the number and takes no room, so the number stays centred in its column */
+.dtable td.c-num .num-wrap{position:relative;display:inline-block}
+.dtable td.c-num .ord-chip{width:24px;height:24px;position:absolute;left:100%;top:50%;margin:-13px 0 0 4px}
 /* table: every owner row keeps the chip's place (the pencil is only invisible outside service mode), so the numbers stay lined up */
 .dtable td.c-num .ord-chip.edit{display:inline-flex;visibility:hidden}
 .svc-open .dtable td.c-num .ord-chip.edit{visibility:visible}
@@ -619,7 +621,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
   .dtable .cbox.has-notes>.comment{padding-bottom:0}
   .dtable .cbox.has-notes>.comment[readonly]:placeholder-shown+.cnotes{padding-top:6px}
-  .dtable td.c-num .ord-chip.ph{display:inline-flex;visibility:hidden}
+  .dtable td.c-num .ord-chip.ph{display:none}
 }
 .card-body.anim .cbox.has-notes{animation:rowIn .4s ease-out .261s both}
 .card-body.anim .cbox.has-notes>.comment{animation:none}
@@ -1275,7 +1277,8 @@ function renderTable(ids){
     const td=(cls,...kids)=>{const e=document.createElement("td");if(cls)e.className=cls;e.append(...kids);return e};
     const num=numEl("span",id,o);
     const ch=ordChip(id,o,true);
-    tr.append(noteCell(ch?td("c-num",num,ch):td("c-num",num),id,o,"order","Заказ"),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
+    const nw=document.createElement("span");nw.className="num-wrap";nw.append(num);if(ch)nw.append(ch);
+    tr.append(noteCell(td("c-num",nw),id,o,"order","Заказ"),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
     PARTS.forEach(([k,label])=>tr.append(noteCell(td("c-part c-k-"+k,partCell(id,o,k,label)),id,o,k,label)));
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f===PARTS.length?"":f+"/"+PARTS.length;
