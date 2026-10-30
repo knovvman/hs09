@@ -63,7 +63,12 @@ button{font:inherit;cursor:pointer}
 .seg button[aria-pressed="true"].none{background:var(--none-bg);border-color:var(--none);color:var(--fg)}
 .seg button.q{font-weight:700}
 .chosen{border:0;background:none;padding:0 4px;min-width:44px;min-height:36px;font-size:22px;font-weight:700;line-height:1;border-radius:7px;cursor:pointer}
-.chosen.ok{color:var(--ok)}.chosen.bad{color:var(--bad)}.chosen.none{color:var(--none)}.chosen.q{color:var(--warn);font-family:var(--font-mono)}
+.chosen.ok{color:var(--ok)}.chosen.bad{color:var(--bad)}.chosen.none{color:var(--none)}
+/* "нет в наличии": drawn as a short bar with rounded ends (the — glyph has sharp corners) */
+.chosen.none{font-size:0!important}
+.chosen.none::before{content:"";display:inline-block;vertical-align:middle;width:18px;height:3.5px;border-radius:2px;background:currentColor}
+.dtable .chosen.none::before{width:16px;height:3px}
+.dtable td.c-part.note-hit>.chosen.none::before{height:3.8px}.chosen.q{color:var(--warn);font-family:var(--font-mono)}
 .card-head{align-items:center;cursor:pointer;user-select:none;margin-bottom:6px}
 .card.collapsed .card-head{margin-bottom:0}
 .head-left{display:flex;align-items:center;gap:6px;min-width:0}
@@ -347,7 +352,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .comment{margin-top:0;font-size:14px;padding:6px 8px;min-height:32px;background:transparent}
   .dtable .comment:not(:focus):placeholder-shown{border-color:transparent}
   .dtable .tprog{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-  .dtable .tprog.done{color:var(--ok);font-size:16px;font-weight:700}
+  .dtable .tprog.done{color:var(--ok);font-weight:700}
   .dtable.all-done{table-layout:fixed}
   .dtable.all-done td.c-com{width:auto}
   .dtable tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
@@ -585,6 +590,8 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   /* the order number reacts the same way to the order's own note */
   .dtable tbody td.c-num .num{display:inline-block;-webkit-text-stroke:.7px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
   .dtable td.c-num.note-hit .num{-webkit-text-stroke-color:currentColor;transform:scale(1.1)}
+  .dtable tbody td.c-num .num small{-webkit-text-stroke:.7px transparent;transition:-webkit-text-stroke-color .3s ease}
+  .dtable td.c-num.note-hit .num small{-webkit-text-stroke-color:currentColor}
   /* column titles fade their underline in and out instead of jumping */
   .dtable-head th{transition:color .28s ease,box-shadow .28s ease}
   .cnote{transition:background-color .2s ease}
@@ -837,19 +844,23 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
   const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit")};
+  // leaving a note for the gap before the next one waits a moment, so the column underline glides from note to note instead of blinking off
+  let gapT=0;const now=(f)=>{clearTimeout(gapT);f()};
   t.addEventListener("mouseover",e=>{
     const td=e.target.closest("td");
-    if(!td){mark(-1);hit(null);return}
+    if(!td){now(()=>{mark(-1);hit(null)});return}
     if(td.classList.contains("c-com")){
       const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
       const c=n&&tr?tr.querySelector(n.dataset.k==="order"?"td.c-num":"td.c-k-"+n.dataset.k):null;
-      mark(c?c.cellIndex:-1);hit(c,c?n:null);return;
+      if(!c){clearTimeout(gapT);gapT=setTimeout(()=>{mark(-1);hit(null)},140);return}
+      now(()=>{mark(c.cellIndex);hit(c,n)});return;
     }
     const k=!td.classList.contains("has-note")?null:td.classList.contains("c-num")?"order":td.classList.contains("c-part")?([...td.classList].find(x=>x.startsWith("c-k-"))||"").slice(4):null;
     const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k+'"]'):null;
-    hit(nt?td:null,nt);mark(td.cellIndex);
+    // the number itself: only its note lights up, the number stays as it is
+    now(()=>{hit(nt&&k!=="order"?td:null,nt);mark(td.cellIndex)});
   });
-  t.addEventListener("mouseleave",()=>{mark(-1);hit(null)});
+  t.addEventListener("mouseleave",()=>now(()=>{mark(-1);hit(null)}));
 }
 try{matchMedia("(min-width: 900px)").addEventListener("change",()=>{placeOrdersHead();try{render()}catch(_){}})}catch(_){}
 {let rz=0;window.addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(deskNow()){try{render()}catch(_){}}},120)})}
@@ -1292,7 +1303,7 @@ function renderTable(ids){
     tr.append(noteCell(td("c-num",nw),id,o,"order","Заказ"),td("c-loc",locCell(id,o)),td("c-kind",kindCell(id,o)));
     PARTS.forEach(([k,label])=>tr.append(noteCell(td("c-part c-k-"+k,partCell(id,o,k,label)),id,o,k,label)));
     const f=PARTS.filter(([k])=>o[k]).length;
-    const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f===PARTS.length?"":f+"/"+PARTS.length;
+    const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f+"/"+PARTS.length;
     tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
     return tr;
   }));
