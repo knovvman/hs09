@@ -320,6 +320,13 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .loc,.dtable .seg .loc{min-height:28px;min-width:40px;padding:2px 8px;font-size:12px}
   .dtable .chosen-kind,.dtable .seg .kind-pick{min-height:28px;padding:2px 4px;font-size:12px;width:66px;min-width:66px}
   .dtable td.c-com{min-width:170px;width:30%;padding-right:12px}
+  /* narrow "where"/"type": unchosen buttons stack; part columns share one width (the widest header, set from JS as --part-w); the comment takes the rest */
+  .dtable :is(th,td).c-loc,.dtable :is(th,td).c-kind{width:1%;white-space:nowrap}
+  .dtable td.c-loc>.seg,.dtable td.c-kind>.seg{display:inline-flex;flex-direction:column;gap:2px}
+  .dtable td.c-loc>.seg .loc,.dtable td.c-kind>.seg .kind-pick{min-height:24px;padding-top:0;padding-bottom:0}
+  .dtable:not(.all-done) :is(th,td).c-part{width:var(--part-w,auto);min-width:var(--part-w,0)}
+  .dtable:not(.all-done) td.c-com{width:100%}
+  .dtable th.c-part>.hl{display:inline-block}
 }
 @media (min-width:900px) and (max-width:1180px){
   .dtable th{padding-left:3px;padding-right:3px;letter-spacing:0;font-size:10px}
@@ -1202,7 +1209,7 @@ function renderTable(ids){
   const hr=document.createElement("tr");
   const th=(text,cls,title)=>{const e=document.createElement("th");e.textContent=text;if(cls)e.className=cls;if(title)e.title=title;return e};
   hr.append(th("Заказ","c-num"),th("Где","c-loc"),th("Тип","c-kind"));
-  PARTS.forEach(([k,label])=>{const e=th("","c-part c-k-"+k,label);(HEAD2[k]||[label]).forEach((ln,i)=>{if(i)e.append(document.createElement("br"));e.append(ln)});hr.append(e)});
+  PARTS.forEach(([k,label])=>{const e=th("","c-part c-k-"+k,label),w=document.createElement("span");w.className="hl";(HEAD2[k]||[label]).forEach((ln,i)=>{if(i)w.append(document.createElement("br"));w.append(ln)});e.append(w);hr.append(e)});
   hr.append(th("Готово","c-prog"),th("Комментарий","c-com"));
   head.replaceChildren(hr);
   body.replaceChildren(...ids.map(id=>{
@@ -1217,6 +1224,11 @@ function renderTable(ids){
     tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
     return tr;
   }));
+  {// every part column as wide as the widest part header
+   const t1=document.getElementById("dtable");
+   if(t1&&t1.offsetParent){t1.style.removeProperty("--part-w");let m=0;head.querySelectorAll("th.c-part>.hl").forEach(x=>{m=Math.max(m,x.getBoundingClientRect().width)});
+    const th1=head.querySelector("th.c-part"),cs=th1&&getComputedStyle(th1);
+    if(m&&cs)t1.style.setProperty("--part-w",Math.ceil(m+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight))+"px")}}
   const cnt=ids.filter(id=>!notCounted(orders[id]));
   const allDone=cnt.length>0&&cnt.every(id=>PARTS.every(([k])=>orders[id][k]));
   const tbl=document.getElementById("dtable");
