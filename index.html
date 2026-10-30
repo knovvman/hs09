@@ -597,6 +597,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .note-tip.show{opacity:1;transform:none}
 .note-tip small{display:block;font-size:11px;opacity:.7;margin-bottom:2px}
 .note-tip i{font-style:normal;opacity:.7}
+.card-head:has(>.head-left.has-head-note){flex-wrap:nowrap}
+.card-head:has(>.head-left.has-head-note)>.prog{flex-shrink:0}
+.card-head>.head-left.has-head-note{flex:1 1 auto;min-width:0;flex-wrap:nowrap}
+.card-head>.head-left.has-head-note>*{flex-shrink:0}
+.card-head>.head-left.has-head-note>.head-note{flex:1 1 auto;min-width:0}
+.head-note{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;line-height:1.3;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* EXPERIMENT part-notes: end */
 
 /* computer: while the orders table runs on under the footer strip, its visible end is drawn rounded, like the real end of the table */
@@ -1415,6 +1421,7 @@ function card(id,o){
       left.append(seg);
     }
   }
+  headNote(left,id,o); // EXPERIMENT part-notes: order note after the location/type chips
   if(isCol){c.classList.add("collapsed");return c}
   const body=document.createElement("div");body.className="card-body"+(justOpened.has(id)?" anim":"");
   for(const [k,label] of PARTS){
@@ -1453,7 +1460,7 @@ function card(id,o){
       commentTimers[id]=setTimeout(()=>saveComment(id,true),COMMENT_IDLE);
     });
     t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
-    body.append(withNotes(t,id,o));
+    body.append(withNotes(t,id,o,true)); // EXPERIMENT part-notes: the order note is shown in the head on the phone
   }
   {
     // phone: a small arrow at the very end of an open card; the whole strip folds the card
@@ -1921,8 +1928,20 @@ function noteRow(l,id,o,k,label){
     if(tipFor===r)hideTip();else showTip(r,l);
   });
 }
-function withNotes(t,id,o){
-  const lines=NOTE_KEYS.filter(([k])=>noteText(o,k));
+// phone: the order's own note sits in the card head, after the location/type chips, cut with "…" if long
+function headNote(left,id,o){
+  const t=noteText(o,"order");if(!t)return;
+  const s=el("span","head-note",t);s.dataset.note=t;s.dataset.noteLabel="Заказ";
+  left.classList.add("has-head-note");
+  s.addEventListener("click",e=>{
+    e.stopPropagation(); // don't fold/unfold the card
+    if(canNote()){hideTip();openNoteDlg(id,"order");return}
+    if(tipFor===s)hideTip();else showTip(s);
+  });
+  left.append(s);
+}
+function withNotes(t,id,o,noOrder){
+  const lines=NOTE_KEYS.filter(([k])=>noteText(o,k)&&!(noOrder&&k==="order"));
   if(!lines.length)return t;
   const box=el("div","cbox has-notes"),list=el("div","cnotes");
   lines.forEach(([k,label])=>{
