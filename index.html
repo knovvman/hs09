@@ -599,7 +599,21 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .cnote{display:block;width:fit-content;max-width:calc(100% + 12px);box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;padding:1px 6px;margin:2px -6px;border-radius:6px}
 .cnote b{font-weight:500;color:var(--muted)}
 .admin:not(.locked) .cnote{cursor:pointer}
-@media (hover:hover){.cnote.lit,.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+.cnote{transition:background-color .25s ease}
+.cnote.lit{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+@media (max-width:899px){
+  /* phone: a part row lit by its note (or by a tap on it) gets a soft rounded background */
+  #grid .row{position:relative}
+  #grid .row>*{position:relative}
+  #grid .row::before{content:"";position:absolute;inset:2px -8px;border-radius:8px;background:color-mix(in srgb,var(--accent) 12%,transparent);opacity:0;transition:opacity .25s ease;pointer-events:none}
+  #grid .row.lit::before{opacity:1}
+  #grid .row.has-note-row{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  #grid .cnote{-webkit-tap-highlight-color:transparent}
+  /* phone: a comment that can't be edited can't be focused either — no zoom, no caret, no frame */
+  .comment[readonly]{pointer-events:none}
+  .cbox.has-notes:has(>.comment[readonly]){outline:none!important}
+}
+@media (hover:hover){.cnote:not([data-k="order"]):hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (min-width:900px){
   .dtable .cbox.has-notes{margin-top:0;background:transparent;border-color:transparent}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
@@ -1952,16 +1966,27 @@ function noteCell(cell,id,o,k,label){
 function noteRow(l,id,o,k,label){
   const t=noteText(o,k),r=l.parentNode;
   if(t){
-    l.classList.add("has-note");if(r){r.dataset.note=t;r.dataset.noteLabel=label}
+    l.classList.add("has-note");if(r){r.dataset.note=t;r.dataset.noteLabel=label;r.classList.add("has-note-row")}
   }
-  // tap on the part name: owner with the lock open edits the note; everyone else sees it in a bubble
-  l.addEventListener("click",e=>{
-    if(canNote()){e.stopPropagation();hideTip();openNoteDlg(id,k);return}
-    if(!t||!r)return;
-    e.stopPropagation();
-    if(tipFor===r)hideTip();else showTip(r,l);
+  // tap on the part name: owner with the lock open edits the note
+  l.addEventListener("click",e=>{if(canNote()){e.stopPropagation();openNoteDlg(id,k)}});
+  // phone, everyone else: a tap on a part row that has a note lights the row and its note in the comment (tap again or elsewhere to clear)
+  if(t&&r)r.addEventListener("click",e=>{
+    if(canNote()||e.target.closest("button"))return;
+    e.stopPropagation();mobLit(r.closest(".card"),k);
   });
 }
+let mobLitKey=null;
+function mobLit(card,k){
+  const same=mobLitKey&&mobLitKey.card===card&&mobLitKey.k===k;
+  document.querySelectorAll("#grid .row.lit,#grid .cnote.lit").forEach(e=>e.classList.remove("lit"));
+  mobLitKey=null;
+  if(!card||same||!k||k==="order")return;
+  const r=card.querySelector(".row.r-"+k),n=card.querySelector('.cnote[data-k="'+k+'"]');
+  if(r)r.classList.add("lit");if(n)n.classList.add("lit");
+  mobLitKey={card,k};
+}
+document.addEventListener("click",e=>{if(mobLitKey&&!(e.target.closest&&e.target.closest("#grid .row,#grid .cnote")))mobLit(null)},true);
 // phone: the card head shows only a "Бывший <номер>" mention from the order's own note (e.g. "Бывший 5118"), after the location/type chips;
 // any other note text is not shown there (the full note stays in the comment); a tap folds/unfolds the card as anywhere else on the head
 const FORMER_RE=/бывш[а-яё]*\.?\s*(?:заказ[а-яё]*\s*)?(?:№|#)?\s*\d+/iu;
@@ -1984,7 +2009,10 @@ function withNotes(t,id,o){
   const box=el("div","cbox has-notes"),list=el("div","cnotes");
   lines.forEach(([k,label])=>{
     const line=el("span","cnote");line.dataset.k=k;const b=el("b",null,label+": ");line.append(b,noteText(o,k));
-    line.addEventListener("click",e=>{if(!canNote())return;e.stopPropagation();openNoteDlg(id,k)});
+    line.addEventListener("click",e=>{
+      if(canNote()){e.stopPropagation();openNoteDlg(id,k);return}
+      const card=line.closest("#grid .card");if(card&&k!=="order"){e.stopPropagation();mobLit(card,k)} // phone: light the part's row
+    });
     list.append(line);
   });
   box.append(t,list);
