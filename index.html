@@ -763,8 +763,8 @@ const MARKUP=`<div class="wrap">
         <span><i class="dot" style="background:var(--ok)"></i>рабочие</span>
         <span><i class="dot" style="background:var(--bad)"></i>нерабочие</span>
         <span><i class="dot" style="background:var(--none)"></i>нет в наличии</span>
-        <span><i class="dot" style="background:var(--warn)"></i>под вопросом</span>
-        <span id="legUnk"><i class="dot unk"></i>не проверено</span>
+        <span><i class="dot" style="background:var(--warn)"></i>не проверено</span>
+        <span id="legUnk"><i class="dot unk"></i>не отмечено</span>
       </div>
     </section>
   </div>
@@ -916,7 +916,7 @@ const PARTS=[
 ];
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
 const KINDS=[["warranty","Гарантия"],["ours","Наш"]];
-const STATES=[["ok","✓","Работает / есть"],["bad","✗","Не работает"],["none","—","Нет в наличии"],["q","?","Под вопросом"]];
+const STATES=[["ok","✓","Работает"],["bad","✗","Не работает"],["none","—","Нет в наличии"],["q","?","Не проверено"]];
 const grid=document.getElementById("grid"),empty=document.getElementById("empty"),statusEl=document.getElementById("status");
 let db=null,orders={},canWrite=true;
 const queues={};
@@ -1052,7 +1052,7 @@ function renderStats(ids){
       nx.append(el("strong",null,limit.map(c=>c.name+" +1").join(", ")));
       notes.push(nx);
     }
-    if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не проверено плат и БП: "+unkTotal+" — после проверки число может вырасти."))}
+    if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
   hero.replaceChildren(el("div","hero-label","Можно собрать"),num,...notes);
   const partsBox=document.getElementById("statsParts");
@@ -1066,8 +1066,8 @@ function renderStats(ids){
     [["s-ok",c.ok],["s-bad",c.bad],["s-none",c.none],["s-q",c.q],["s-unk",c.unk]].forEach(([cl,v])=>{if(v){const i=el("i",cl);i.style.flex=String(v);bar.append(i)}});
     const sub=el("div","part-sub");
     sub.append(el("span",null,"есть "+(c.ok+c.bad)),el("span",null,"рабочих "+c.ok),el("span",null,"нерабочих "+c.bad),el("span",null,"нет "+c.none));
-    if(c.q)sub.append(el("span",null,"под вопросом "+c.q));
-    if(c.unk&&!allDone)sub.append(el("span",null,"не проверено "+c.unk));
+    if(c.q)sub.append(el("span",null,"не проверено "+c.q));
+    if(c.unk&&!allDone)sub.append(el("span",null,"не отмечено "+c.unk));
     row.append(top,bar,sub);
     return row;
   }));
@@ -1080,7 +1080,7 @@ function renderStats(ids){
     return r;
   });
   const totalNeed=st.reduce((a,c)=>a+Math.max(0,n-c.ok),0);
-  const note=el("div","miss-note",totalNeed?"Всего недостаёт рабочих запчастей: "+totalNeed+" шт."+(allDone?" Нерабочие сюда входят как недостающие.":" Нерабочие и непроверенные сюда входят как недостающие."):"Всех запчастей хватает на все "+n+".");
+  const note=el("div","miss-note",totalNeed?"Всего недостаёт рабочих запчастей: "+totalNeed+" шт."+(allDone?" Нерабочие сюда входят как недостающие.":" Нерабочие, непроверенные и неотмеченные сюда входят как недостающие."):"Всех запчастей хватает на все "+n+".");
   missBox.replaceChildren(...rows,note);
 }
 let activeTab="orders";
