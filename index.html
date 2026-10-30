@@ -836,14 +836,17 @@ const grid=document.getElementById("grid"),empty=document.getElementById("empty"
 let db=null,orders={},canWrite=true;
 const queues={};
 const drafts={},commentTimers={};
-async function saveComment(id){
+// a comment is saved when the field is left, after COMMENT_IDLE ms without typing, or when the tab is hidden/closed — not on every pause between words
+const COMMENT_IDLE=5000;
+async function saveComment(id,quiet){
   if(!(id in drafts)||!db)return;
   const v=drafts[id].slice(0,2000);
+  if(orders[id]&&(orders[id].comment||"")===v){delete drafts[id];return} // nothing changed
   orders[id]={...orders[id],comment:v};
   try{
     await enqueue(id,()=>db.doc("orders/"+id).update({comment:v}));
     if(drafts[id]===v)delete drafts[id];
-    setStatus("Комментарий сохранён");
+    if(!quiet)setStatus("Комментарий сохранён");
   }catch(e){handleErr(e)}
 }
 let locked=false;
@@ -1197,7 +1200,7 @@ function commentBox(id,o,scope){
   t.placeholder="Комментарий";t.setAttribute("aria-label","Комментарий к заказу #"+id);
   t.value=(id in drafts)?drafts[id]:(typeof o.comment==="string"?o.comment:"");
   t.readOnly=!editable();
-  t.addEventListener("input",()=>{drafts[id]=t.value;autosize(t);clearTimeout(commentTimers[id]);commentTimers[id]=setTimeout(()=>saveComment(id),700)});
+  t.addEventListener("input",()=>{drafts[id]=t.value;autosize(t);clearTimeout(commentTimers[id]);commentTimers[id]=setTimeout(()=>saveComment(id,true),COMMENT_IDLE)});
   t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
   return t;
 }
@@ -1447,7 +1450,7 @@ function card(id,o){
       drafts[id]=t.value;
       autosize(t);
       clearTimeout(commentTimers[id]);
-      commentTimers[id]=setTimeout(()=>saveComment(id),700);
+      commentTimers[id]=setTimeout(()=>saveComment(id,true),COMMENT_IDLE);
     });
     t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
     body.append(withNotes(t,id,o));
@@ -1535,7 +1538,8 @@ async function publishSnapshot(){
     if(c!=="conflict")setStatus("Версия для просмотра не обновилась");
   }finally{publishing=false}
 }
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")publishSnapshot()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){flushComments();publishSnapshot()}});
+window.addEventListener("pagehide",()=>{flushComments()});
 
 let markBackup=null;
 function updateBulkUI(){
