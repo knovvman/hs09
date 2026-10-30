@@ -37,6 +37,24 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (hover:hover){.fold:hover{background:color-mix(in srgb,var(--muted) 8%,transparent)}}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
+/* EXPERIMENT note-marks: start (desktop) */
+@media (min-width:900px){
+  .dtable td.c-part.has-note{position:relative}
+  /* a — corner, like a spreadsheet comment */
+  .dtable tr[data-nv="a"] td.c-part.has-note::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent color-mix(in srgb,var(--accent) 75%,transparent) transparent transparent;pointer-events:none}
+  /* b — dotted underline under the mark */
+  .dtable tr[data-nv="b"] td.c-part.has-note>:first-child{background-image:radial-gradient(circle,color-mix(in srgb,var(--accent) 80%,transparent) 1.1px,transparent 1.6px);background-size:5px 4px;background-repeat:repeat-x;background-position:center bottom}
+  /* c — footnote numbers next to the mark and before the note */
+  .dtable tr[data-nv="c"] td.c-part.has-note::after{content:attr(data-fn);position:absolute;top:calc(50% - 15px);left:calc(50% + 10px);font-size:10px;font-weight:700;color:var(--accent);pointer-events:none}
+  .cnote .fn{display:none}
+  .dtable tr[data-nv="c"] .cnote .fn{display:inline;font-size:10px;font-weight:700;color:var(--accent);margin-right:3px;vertical-align:super;line-height:0}
+  /* d — faint ring around the mark */
+  .dtable tr[data-nv="d"] td.c-part.has-note>:first-child{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--accent) 40%,transparent);border-radius:999px}
+  /* e — the mark a little bolder all the time */
+  .dtable tr[data-nv="e"] td.c-part.has-note>:first-child{-webkit-text-stroke-color:color-mix(in srgb,currentColor 45%,transparent)}
+  .dtable tr[data-nv="e"] td.c-part.has-note.note-hit>:first-child{-webkit-text-stroke-color:currentColor}
+}
+/* EXPERIMENT note-marks: end */
 @media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
 /* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
 .legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
@@ -1338,6 +1356,14 @@ function renderTable(ids){
     ths.forEach((t,i)=>{if(!t.classList.contains("c-com")){t.style.boxSizing="border-box";t.style.width=(ws[i]+(t.classList.contains("c-part")?10:0))+"px"}});
   }
   tbl.classList.toggle("all-done",allDone);
+  // EXPERIMENT note-marks: start — five ways to show "this mark has a note", taking turns over the orders that have part notes
+  {let i=0;body.querySelectorAll("tr").forEach(tr=>{
+    const cells=[...tr.querySelectorAll("td.c-part.has-note")];if(!cells.length)return;
+    tr.dataset.nv="abcde"[i++%5];
+    cells.forEach((td,j)=>{td.dataset.fn=j+1;const k=([...td.classList].find(x=>x.startsWith("c-k-"))||"").slice(4);
+      const n=tr.querySelector('.cnote[data-k="'+k+'"]');if(n&&!n.querySelector(".fn")){const f=el("sup","fn",String(j+1));n.prepend(f)}});
+  })}
+  // EXPERIMENT note-marks: end
   syncHeadTable();
   body.querySelectorAll("textarea.comment").forEach(autosize);
 }
