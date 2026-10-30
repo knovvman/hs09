@@ -37,6 +37,10 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (hover:hover){.fold:hover{background:color-mix(in srgb,var(--muted) 8%,transparent)}}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
+/* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
+.legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
+.legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn);font-family:var(--font-mono)}
+.legend .lg.none::before{content:"";width:12px;height:3px;border-radius:2px;background:var(--none)}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 button{font:inherit;cursor:pointer}
@@ -353,6 +357,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .comment:not(:focus):placeholder-shown{border-color:transparent}
   .dtable .tprog{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .dtable .tprog.done{color:var(--ok);font-weight:700}
+  .dtable.prog-off .c-prog{display:none}
   .dtable.all-done{table-layout:fixed}
   .dtable.all-done td.c-com{width:auto}
   .dtable tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
@@ -713,9 +718,10 @@ const MARKUP=`<div class="wrap">
     <div class="import-actions"><button id="importSave" class="btn">Сохранить</button><button id="importCancel" class="btn ghost">Отмена</button></div>
   </div>
   <div class="legend">
-      <span><i class="dot" style="background:var(--ok)"></i>✓ работает / есть</span>
-      <span><i class="dot" style="background:var(--bad)"></i>✗ не работает</span>
-      <span><i class="dot" style="background:var(--none)"></i>— нет в наличии</span>
+      <span><b class="lg ok">✓</b>работает</span>
+      <span><b class="lg bad">✗</b>не работает</span>
+      <span><b class="lg none" aria-label="—"></b>нет в наличии</span>
+      <span><b class="lg q">?</b>не проверено</span>
     </div>
 
   <div class="tools">
@@ -1314,8 +1320,9 @@ function renderTable(ids){
     const th1=head.querySelector("th.c-part"),cs=th1&&getComputedStyle(th1);
     if(m&&cs)t1.style.setProperty("--part-w",Math.ceil(m+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight))+"px")}}
   const cnt=ids.filter(id=>!notCounted(orders[id]));
-  const allDone=false; // columns no longer hide when everything is checked, so the table keeps one layout
+  const allDone=false; // the table keeps one layout when everything is checked; only the Ready column goes (prog-off below)
   const tbl=document.getElementById("dtable");
+  tbl.classList.toggle("prog-off",cnt.length>0&&cnt.every(id=>PARTS.every(([k])=>orders[id][k])));
   tbl.classList.remove("all-done");
   if(allDone&&tbl.offsetParent){
     // keep every column at the width it had before hiding, let the comment absorb the freed space
@@ -1340,6 +1347,7 @@ function syncHeadTable(){
   if(row)[...row.children].forEach((td,i)=>{td.style.boxSizing="border-box";td.style.width=ws[i]+"px"});
   clone.replaceChildren(c);
   ht.classList.toggle("all-done",tbl.classList.contains("all-done"));
+  ht.classList.toggle("prog-off",tbl.classList.contains("prog-off"));
   ht.style.width=tbl.getBoundingClientRect().width+"px";
   if(row)tbl.classList.add("cols-fixed");
   const wrap=document.getElementById("dtableWrap"),hw=document.getElementById("dheadWrap");
