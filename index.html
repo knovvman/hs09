@@ -37,11 +37,14 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (hover:hover){.fold:hover{background:color-mix(in srgb,var(--muted) 8%,transparent)}}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
-/* "Подключаюсь..." — three dots appear one after another, then start over */
-.dots i{font-style:normal;opacity:0;animation:dotIn 1.4s infinite}
-.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
-@keyframes dotIn{0%,15%{opacity:0}30%,75%{opacity:1}90%,100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:1}}
+/* "Подключаюсь" — the classic dots: "." → ".." → "..." → none, and again; they keep their room so the word never shifts */
+.status .dots,.status .dots i{display:inline!important;white-space:nowrap}
+.dots i{font-style:normal;visibility:hidden;animation:dot1 1.6s steps(1,end) infinite}
+.dots i:nth-child(2){animation-name:dot2}.dots i:nth-child(3){animation-name:dot3}
+@keyframes dot1{0%{visibility:hidden}25%,100%{visibility:visible}}
+@keyframes dot2{0%,25%{visibility:hidden}50%,100%{visibility:visible}}
+@keyframes dot3{0%,50%{visibility:hidden}75%,100%{visibility:visible}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;visibility:visible}}
 /* phone: the page keeps one scale — no pinch, double-tap or focus zoom; every text field is at least 16px */
 @media (max-width:899px){html{touch-action:pan-x pan-y}input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:max(16px,1em)!important}}
 @media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
