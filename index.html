@@ -2070,6 +2070,30 @@ function openOrderDlg(id){
 }
 function closeOrderDlg(){resetDel();try{dlg.close()}catch(_){dlg.removeAttribute("open")}dlgId=null}
 let toastT=0;
+// comment fields: own undo/redo history per order (the page redraws on every data update and a redrawn field
+// would lose the browser's own history). Steps are typing bursts separated by a short pause, like in usual editors.
+const TEXT_HIST={};
+function histOf(t){const k=(t.dataset.scope||"c")+":"+t.dataset.id;return TEXT_HIST[k]||(TEXT_HIST[k]={undo:[],redo:[],cur:t.value,t:0})}
+document.addEventListener("focusin",e=>{const t=e.target;if(t&&t.matches&&t.matches("textarea.comment")){const h=histOf(t);if(!h.undo.length&&!h.redo.length)h.cur=t.value}});
+document.addEventListener("input",e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches("textarea.comment")||t.__histApply)return;
+  const h=histOf(t),now=Date.now();
+  if(now-h.t>700||!h.undo.length)h.undo.push(h.cur);
+  if(h.undo.length>200)h.undo.shift();
+  h.cur=t.value;h.redo=[];h.t=now;
+},true);
+document.addEventListener("keydown",e=>{
+  const t=e.target;if(!t||!t.matches||!t.matches("textarea.comment")||t.readOnly)return;
+  if(!(e.ctrlKey||e.metaKey)||e.altKey)return;
+  const k=e.key.toLowerCase(),redo=(k==="z"&&e.shiftKey)||(k==="y"&&!e.shiftKey),undo=k==="z"&&!e.shiftKey;
+  if(!undo&&!redo)return;
+  e.preventDefault();
+  const h=histOf(t),from=undo?h.undo:h.redo,to=undo?h.redo:h.undo;
+  if(!from.length)return;
+  to.push(t.value);const v=from.pop();
+  t.__histApply=true;t.value=v;t.setSelectionRange(v.length,v.length);t.dispatchEvent(new Event("input",{bubbles:true}));t.__histApply=false;
+  h.cur=v;h.t=0;
+});
 // a dialog closes on its dimmed backdrop only when the press also started there — a text selection that begins in a field
 // and ends outside the box is not a "click outside"
 function closeOnBackdrop(d,close){
