@@ -1023,8 +1023,8 @@ function setLocked(v){
   armAutoLock();
 }
 lockBtn.addEventListener("click",()=>setLocked(!locked));
-// the lock closes by itself after 30 s with no clicks, taps or typing; it waits while a dialog is open or a text is being typed
-const AUTO_LOCK_MS=30000;let autoLockT=0;
+// the lock closes by itself after 10 s with no clicks, taps or typing; it waits while a dialog is open or a text is being typed
+const AUTO_LOCK_MS=10000;let autoLockT=0;
 function armAutoLock(){clearTimeout(autoLockT);if(!locked&&document.body.classList.contains("admin"))autoLockT=setTimeout(autoLockNow,AUTO_LOCK_MS)}
 function autoLockNow(){
   if(locked)return;
