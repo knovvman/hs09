@@ -199,6 +199,28 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sb-bar button{font:inherit;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
 /* EXPERIMENT spares: start */
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.spare-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+@media (max-width:899px){.spare-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
+.spare-right .panel-title{min-height:30px;display:flex;align-items:center;margin:0}
+.sg{border-top:1px solid var(--line)}
+.spare-head+#spareList>.sg:first-child{margin-top:6px}
+.sg-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:9px 0;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sg-arrow{width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:rotate(-45deg);transition:transform .25s ease;flex:0 0 auto;margin:0 2px}
+.sg.open .sg-arrow{transform:rotate(45deg)}
+.sg-name{color:var(--fg);flex:1 1 auto}
+.sg-st{display:inline-flex;align-items:baseline;gap:3px;font-size:12px;color:var(--muted)}
+.sg-st .mk{font-weight:700;font-size:13px}.sg-st .mk.ok{color:var(--ok)}.sg-st .mk.bad{color:var(--bad)}.sg-st .mk.q{color:var(--warn);font-family:var(--font-mono)}
+.sg-st .sg-c{margin-right:6px;font-variant-numeric:tabular-nums}
+.sg-n{font-family:var(--font-mono);font-size:16px;color:var(--fg);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+.sg-items{padding:0 0 8px 19px;animation:rowIn .25s ease-out both}
+.sg-items .spare{border-top:0;padding:4px 0}
+.tot-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;font-variant-numeric:tabular-nums}
+.tot-table th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px 10px;white-space:nowrap}
+.tot-table td{text-align:right;padding:8px 0 8px 10px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--font-mono)}
+.tot-table td.tn{text-align:left;padding-left:0;color:var(--fg);font-family:inherit}
+.tot-table td.tx{color:var(--accent)}
+.tot-table td.tt{color:var(--fg);font-weight:700}
+.tot-table td.tok{color:var(--ok);font-weight:700}
 .spare-head .panel-title{margin:0}
 .spare-add.svc-toggle{margin:0;width:30px;height:30px;flex-shrink:0}
 .spare-head{min-height:30px}
@@ -821,8 +843,16 @@ const MARKUP=`<div class="wrap">
     </section>
     <!-- EXPERIMENT spares: start -->
     <section class="panel stats-spare" id="statsSpare" hidden>
-      <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
-      <div id="spareList"></div>
+      <div class="spare-cols">
+        <div class="spare-left">
+          <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+          <div id="spareList"></div>
+        </div>
+        <div class="spare-right">
+          <h2 class="panel-title">Всего на руках</h2>
+          <table class="tot-table" id="spareTotals"></table>
+        </div>
+      </div>
     </section>
     <!-- EXPERIMENT spares: end -->
   </div>
@@ -1116,22 +1146,42 @@ const GEN_WORKING={psu:["рабочего","блока питания"],heater:[
 // Kept in meta/spares as {items:[{id,k,s,note}]}; anyone can read, only the owner can change (firestore.rules: meta/*).
 let spares=[];
 const SPARE_STATES=[["ok","✓","рабочая"],["bad","✗","нерабочая"],["q","?","не проверено"]];
-function renderSpares(){
-  const box=document.getElementById("statsSpare"),list=document.getElementById("spareList"),add=document.getElementById("spareAdd");
+const spareOpen=new Set(); // part kinds whose spares are unfolded in the left list
+function renderSpares(st,n){
+  const box=document.getElementById("statsSpare"),list=document.getElementById("spareList"),add=document.getElementById("spareAdd"),tot=document.getElementById("spareTotals");
   if(!box)return;
   const own=isOwnerUI(),can=own&&editable();
   // the owner always sees the block and its + (faded while locked), so nothing appears or jumps when the lock is toggled
   add.hidden=!own;add.disabled=!can;box.hidden=!spares.length&&!own;
-  const order=k=>STAT_PARTS.findIndex(p=>p[0]===k);
-  const items=[...spares].sort((a,b)=>order(a.k)-order(b.k));
-  if(!items.length){list.replaceChildren(el("div","spare-empty","Пока пусто"));return}
-  list.replaceChildren(...items.map(x=>{
-    const st=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2],p=STAT_PARTS.find(t=>t[0]===x.k);
-    const r=el("div","spare");const mk=el("span","mk "+st[0],st[1]);mk.title=st[2];
-    r.append(mk,el("span","nm",p?p[1]:x.k),el("span","nt",x.note||""));
-    r.addEventListener("click",()=>{if(isOwnerUI()&&editable())openSpareDlg(x)});
-    return r;
+  // left: one line per part kind — name, count, states; a tap unfolds the single spares with their notes
+  const kinds=STAT_PARTS.filter(([k])=>spares.some(x=>x.k===k));
+  if(!kinds.length)list.replaceChildren(el("div","spare-empty","Пока пусто"));
+  else list.replaceChildren(...kinds.map(([k,name])=>{
+    const its=spares.filter(x=>x.k===k),open=spareOpen.has(k);
+    const g=el("div","sg"+(open?" open":""));
+    const row=el("button","sg-row");row.type="button";row.setAttribute("aria-expanded",open?"true":"false");
+    const states=el("span","sg-st");
+    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c){const t=el("span","mk "+v,mk);states.append(t,el("span","sg-c",String(c)))}});
+    row.append(el("span","sg-arrow"),el("span","sg-name",name),states,el("b","sg-n",String(its.length)));
+    row.addEventListener("click",()=>{if(spareOpen.has(k))spareOpen.delete(k);else spareOpen.add(k);renderSpares(st,n)});
+    g.append(row);
+    if(open){const lst=el("div","sg-items");its.forEach(x=>{
+      const s0=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2];
+      const r=el("div","spare");const mk=el("span","mk "+s0[0],s0[1]);mk.title=s0[2];
+      r.append(mk,el("span","nt",x.note||"без заметки"));
+      r.addEventListener("click",()=>{if(isOwnerUI()&&editable())openSpareDlg(x)});
+      lst.append(r)});g.append(lst)}
+    return g;
   }));
+  // right: a plain table of everything on hand — in orders, outside them, total, working
+  if(tot&&st){
+    const hr=document.createElement("tr");["","в заказах","вне","всего","рабочих"].forEach(t=>hr.append(el("th",null,t)));
+    const th=document.createElement("thead");th.append(hr);
+    const tb=document.createElement("tbody");
+    st.forEach(c=>{const tr=document.createElement("tr");const inO=c.inOrders+c.bad;
+      tr.append(el("td","tn",c.name),el("td",null,String(inO)),el("td","tx",c.x?String(c.x):"—"),el("td","tt",String(inO+c.x)),el("td","tok",String(c.ok)));tb.append(tr)});
+    tot.replaceChildren(th,tb);
+  }
 }
 const sDlg=document.getElementById("spareDlg");let sEdit=null,sPick={k:null,s:null};
 function pickers(){
@@ -1164,7 +1214,6 @@ document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)retu
 // EXPERIMENT spares: end
 function renderStats(ids){
   const n=ids.length;
-  try{renderSpares()}catch(_){}
   const st=STAT_PARTS.map(([k,name])=>{
     const c={k,name,ok:0,bad:0,none:0,q:0,unk:0};
     ids.forEach(id=>{const v=orders[id][k];if(v==="ok")c.ok++;else if(v==="bad")c.bad++;else if(v==="none")c.none++;else if(v==="q")c.q++;else c.unk++});
@@ -1172,6 +1221,7 @@ function renderStats(ids){
     return c;
   });
   const can=n?Math.min(n,...st.map(c=>c.ok)):0; // never more dryers than orders
+  try{renderSpares(st,n)}catch(_){}
   const limit=st.filter(c=>c.ok===can);
   const unkTotal=st.reduce((a,c)=>a+c.unk,0);
   const allDone=n>0&&ids.every(id=>PARTS.every(([k])=>orders[id][k]));
