@@ -625,6 +625,13 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   header .acct-btn{margin-left:-16px}
   header .theme{order:4}
 }
+/* computer header: every control is 28px tall, every icon 15px, and they sit 8px apart on one centre line */
+@media (min-width:900px){
+  header>.lock svg,header>.svc-toggle svg,header .acct-btn svg,#addOrderBtn svg,header .theme svg{width:15px!important;height:15px!important}
+  #addOrderBtn{font-size:12px;gap:5px;padding:0 12px 0 9px}
+  header .acct-btn{align-self:center}
+  header>.lock,header>.svc-toggle,#addOrderBtn,header .theme{align-self:center}
+}
 @media (min-width:900px) and (hover:hover){header>.lock:not([aria-pressed="true"]):hover,header>.svc-toggle:not([aria-pressed="true"]):hover{color:var(--fg)}}
 /* adding, editing and deleting orders (owner only) */
 .ord-chip{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex-shrink:0;box-sizing:border-box;padding:0;border-radius:999px;border:1px dashed color-mix(in srgb,var(--accent) 65%,transparent);background:transparent;color:var(--accent);cursor:pointer;-webkit-tap-highlight-color:transparent;vertical-align:middle;transition:transform .15s ease}
