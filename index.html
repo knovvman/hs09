@@ -159,6 +159,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .hero-nums{display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:6px;align-items:baseline}
 .hero-nums>.hero-num{display:contents}
 .hero-nums>.hero-num>b{text-align:right}
+/* "Ограничивает: …" belongs to the first number: on its line, at the right on wide screens, just under the caption on phones */
+.hero-cap{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:16px;row-gap:2px;min-width:0}
+.hero-num .hero-lim{font-size:13px;color:var(--muted)}
+.hero-num .hero-lim strong{color:var(--fg);font-weight:600}
+@media (min-width:900px){.hero-cap{justify-content:space-between}}
+@media (max-width:899px){.hero-lim{flex-basis:100%}}
 .hero-num span{font-size:15px;color:var(--fg)}
 .hero-note{font-size:13px;color:var(--muted)}
 .hero-note strong{color:var(--fg);font-weight:600}
@@ -1076,6 +1082,8 @@ function renderOverall(ids){
 const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]];
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
+// "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
+const GEN_WORKING={psu:"рабочего блока питания",heater:"рабочей платы ТЭНа",motor:"рабочей платы двигателя",bt:"рабочей платы Bluetooth",power:"рабочей платы с кнопками вкл."};
 // EXPERIMENT spares: start — parts that are not in any order (e.g. taken out of one), each with a note on where it came from.
 // Kept in meta/spares as {items:[{id,k,s,note}]}; anyone can read, only the owner can change (firestore.rules: meta/*).
 let spares=[];
@@ -1140,17 +1148,22 @@ function renderStats(ids){
   const allDone=n>0&&ids.every(id=>PARTS.every(([k])=>orders[id][k]));
   const lu=document.getElementById("legUnk");if(lu)lu.hidden=allDone;
   const hero=document.getElementById("statsHero");
-  const num=el("div","hero-num"+(can===0?" zero":""));num.append(el("b",null,String(can)),el("span",null,plural(can,"рабочий фен","рабочих фена","рабочих фенов")+" можно собрать сейчас"));
+  const num=el("div","hero-num"+(can===0?" zero":""));
+  const cap=el("span","hero-cap");cap.append(el("span",null,plural(can,"рабочий фен","рабочих фена","рабочих фенов")+" можно собрать сейчас"));
+  num.append(el("b",null,String(can)),cap);
   const notes=[];let waitNum=null;
   if(n){
-    const lim=el("div","hero-note");
+    // what holds this number back sits on its line, so it reads as part of it
+    const lim=el("span","hero-lim");
     lim.append(can===0?"Не хватает: ":"Ограничивает: ");
     lim.append(el("strong",null,limit.map(c=>c.name).join(", ")));
-    notes.push(lim);
-    // how many more hair dryers wait only for a heater board: the other parts would allow `others`, heater boards allow `h`
-    {const ht=st.find(c=>c.k==="heater"),rest=st.filter(c=>c.k!=="heater");
-     if(ht&&rest.length){const others=Math.min(n,...rest.map(c=>c.ok)),wait=others-ht.ok;
-      if(wait>0){waitNum=el("div","hero-num wait");waitNum.append(el("b",null,"+"+wait),el("span",null,(wait%10===1&&wait%100!==11?"фену":"фенам")+" не хватает только рабочей платы ТЭНа"))}}}
+    cap.append(lim);
+    // how many more dryers lack just one part: for each part, the others would allow `others`, this part allows `ok`;
+    // the part with the biggest gap is shown (with parts pooled across orders, only a single bottleneck part can have a gap)
+    {let best=null;
+     st.forEach(c=>{const rest=st.filter(x=>x!==c);if(!rest.length)return;const others=Math.min(n,...rest.map(x=>x.ok)),wait=others-c.ok;if(wait>0&&(!best||wait>best.wait))best={c,wait}});
+     if(best){const w=best.wait;waitNum=el("div","hero-num wait");
+       waitNum.append(el("b",null,"+"+w),el("span","hero-cap",(w%10===1&&w%100!==11?"фену":"фенам")+" не хватает только "+(GEN_WORKING[best.c.k]||best.c.name)))}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
   const nums=el("div","hero-nums");nums.append(num);if(waitNum)nums.append(waitNum);
