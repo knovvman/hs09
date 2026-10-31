@@ -222,7 +222,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .tot-table td.tt{color:var(--fg);font-weight:700}
 .tot-table td.tok{color:var(--ok);font-weight:700}
 .spare-head .panel-title{margin:0}
-.spare-add.svc-toggle{margin:0;width:30px;height:30px;flex-shrink:0}
+.spare-add.svc-toggle{margin:0;width:auto;height:30px;flex-shrink:0;gap:5px;padding:0 12px 0 9px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
+.spare-add.svc-toggle:disabled{color:var(--muted)}
 .spare-head{min-height:30px}
 .spare{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .spare-head+#spareList>.spare:first-child{margin-top:6px}
@@ -852,7 +853,7 @@ const MARKUP=`<div class="wrap">
     <section class="panel stats-spare" id="statsSpare" hidden>
       <div class="spare-cols">
         <div class="spare-left">
-          <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
+          <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div>
           <div id="spareList"></div>
         </div>
         <div class="spare-right">
