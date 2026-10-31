@@ -1062,8 +1062,7 @@ function renderStats(ids){
     {const ht=st.find(c=>c.k==="heater"),rest=st.filter(c=>c.k!=="heater");
      if(ht&&rest.length){const others=Math.min(...rest.map(c=>c.ok)),wait=others-ht.ok;
       if(wait>0){const nx=el("div","hero-note");
-        nx.append("Ещё ",el("strong",null,wait+" "+plural(wait,"фен","фена","фенов")),plural(wait," ждёт"," ждут"," ждут")+" только плату ТЭНа: нужно ",
-          el("strong",null,wait+" "+plural(wait,"рабочая плата","рабочие платы","рабочих плат")+" ТЭНа"),", и соберётся ",el("strong",null,String(others)),".");
+        nx.append("Ещё ",el("strong",null,wait+" "+(wait%10===1&&wait%100!==11?"фену":"фенам"))," не хватает только рабочей платы ТЭНа.");
         notes.push(nx)}}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
