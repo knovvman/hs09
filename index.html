@@ -779,6 +779,8 @@ const MARKUP=`<div class="wrap">
     <button class="svc-btn svc-add" id="addOrder">+ Добавить заказ</button>
     <button class="svc-btn" id="markAll">Отметить все</button>
     <button class="svc-btn" id="restoreAll">Вернуть как было</button>
+    <button class="svc-btn" id="sbMarkAll" hidden>Отметить все</button>
+    <button class="svc-btn" id="sbClearAll" hidden>Снять все</button>
     <button class="svc-btn" id="sandboxBtn">Проверка</button>
   </div>
   <div class="sb-bar" id="sbBar" hidden><span>Режим проверки — изменения не сохраняются</span><button type="button" id="sbExit">Выйти</button></div>
@@ -1775,6 +1777,9 @@ function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
   const w=!!db&&canWrite;
   ["addOrder","markAll","restoreAll","sandboxBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
+  // in the sandbox the real "mark all / restore" give way to quick local "mark all ✓ / clear all"
+  ["markAll","restoreAll"].forEach(id=>{const b=document.getElementById(id);if(b&&sandbox)b.hidden=true});
+  ["sbMarkAll","sbClearAll"].forEach(id=>{const b=document.getElementById(id);if(b){b.hidden=!w||!sandbox;b.disabled=!editable()}});
   document.getElementById("addOrder").disabled=!editable();
   document.getElementById("markAll").disabled=!!markBackup||!editable()||!!sandbox;
   document.getElementById("restoreAll").disabled=!markBackup||!editable()||!!sandbox;
@@ -1886,6 +1891,13 @@ document.getElementById("offCopy").addEventListener("click",copyForOffline);
 document.getElementById("markAll").addEventListener("click",markAll);
 document.getElementById("sandboxBtn").addEventListener("click",()=>{sandbox?exitSandbox():enterSandbox()});
 document.getElementById("sbExit").addEventListener("click",exitSandbox);
+function sbSetAllParts(val){
+  if(!sandbox||!editable())return;
+  Object.keys(orders).forEach(id=>{const o={...orders[id]};PARTS.forEach(([k])=>{if(val)o[k]=val;else delete o[k]});orders[id]=o});
+  render();setStatus(val?"Всё отмечено — проверка":"Всё снято — проверка");
+}
+document.getElementById("sbMarkAll").addEventListener("click",()=>sbSetAllParts("ok"));
+document.getElementById("sbClearAll").addEventListener("click",()=>sbSetAllParts(null));
 document.getElementById("restoreAll").addEventListener("click",restoreAll);
 // service panel show/hide (remembered per viewer)
 function setSvc(open,save){
