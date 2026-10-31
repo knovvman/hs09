@@ -326,7 +326,9 @@ body.svc-open .wrap{padding-bottom:110px}
   /* phone: "+ Добавить заказ" sits in the "Развернуть / Свернуть" row */
   /* phone: "+ Добавить заказ" is an oval on the right of the expand/collapse row (those get short labels for room) */
   .tools>#addOrderBtn{flex:0 0 auto;width:auto;height:38px;min-height:38px;border-radius:999px;gap:5px;padding:0 11px 0 8px;font:inherit;font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap}
-  .tools:has(>#addOrderBtn:not([hidden])){gap:6px}
+  /* when the row is too narrow for all three, the oval drops to its own line, kept on the right */
+  .tools:has(>#addOrderBtn:not([hidden])){gap:6px;flex-wrap:wrap}
+  .tools>#addOrderBtn{margin-left:auto}
   .tools:has(>#addOrderBtn:not([hidden])) .btn{flex-shrink:0;padding-left:9px;padding-right:9px}
   .tools:has(>#addOrderBtn:not([hidden]))>.hapwrap{flex-shrink:0}
   .tools>#addOrderBtn svg{width:15px;height:15px}
@@ -869,8 +871,8 @@ const MARKUP=`<div class="wrap">
     </div>
 
   <div class="tools">
-    <button class="btn ghost" id="expandAll">Развернуть</button>
-    <button class="btn ghost" id="collapseAll">Свернуть</button>
+    <button class="btn ghost" id="expandAll">Развернуть все</button>
+    <button class="btn ghost" id="collapseAll">Свернуть все</button>
   </div>
 
   <section class="overall" id="overall" aria-label="Общий прогресс">
