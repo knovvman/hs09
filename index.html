@@ -1065,12 +1065,13 @@ function renderStats(ids){
     lim.append(can===0?"Не хватает: ":"Ограничивает: ");
     lim.append(el("strong",null,limit.map(c=>c.name).join(", ")));
     notes.push(lim);
-    if(can<n){
-      const nx=el("div","hero-note");
-      nx.append("Для ещё одного фена нужно: ");
-      nx.append(el("strong",null,limit.map(c=>c.name+" +1").join(", ")));
-      notes.push(nx);
-    }
+    // how many more hair dryers wait only for a heater board: the other parts would allow `others`, heater boards allow `h`
+    {const ht=st.find(c=>c.k==="heater"),rest=st.filter(c=>c.k!=="heater");
+     if(ht&&rest.length){const others=Math.min(...rest.map(c=>c.ok)),wait=others-ht.ok;
+      if(wait>0){const nx=el("div","hero-note");
+        nx.append("Ещё ",el("strong",null,wait+" "+plural(wait,"фен","фена","фенов")),plural(wait," ждёт"," ждут"," ждут")+" только плату ТЭНа: нужно ",
+          el("strong",null,wait+" "+plural(wait,"рабочая плата","рабочие платы","рабочих плат")+" ТЭНа"),", и соберётся ",el("strong",null,String(others)),".");
+        notes.push(nx)}}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
   hero.replaceChildren(el("div","hero-label","Можно собрать"),num,...notes);
