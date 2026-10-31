@@ -184,6 +184,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .miss b{font-family:var(--font-mono);font-size:16px;color:var(--bad);font-variant-numeric:tabular-nums;white-space:nowrap}
 .miss.okk b{color:var(--ok)}
 .miss-note{font-size:12px;color:var(--muted);margin-top:8px}
+/* sandbox bar: a calm strip at the top while test mode is on */
+.sb-bar{position:fixed;z-index:35;top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:7px 8px 7px 14px;border-radius:999px;background:var(--fg);color:var(--bg);font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.sb-bar[hidden]{display:none}
+.sb-bar button{font:inherit;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
 /* EXPERIMENT spares: start */
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .spare-head .panel-title{margin:0}
@@ -769,7 +773,9 @@ const MARKUP=`<div class="wrap">
     <button class="svc-btn svc-add" id="addOrder">+ Добавить заказ</button>
     <button class="svc-btn" id="markAll">Отметить все</button>
     <button class="svc-btn" id="restoreAll">Вернуть как было</button>
+    <button class="svc-btn" id="sandboxBtn">Проверка</button>
   </div>
+  <div class="sb-bar" id="sbBar" hidden><span>Режим проверки — изменения не сохраняются</span><button type="button" id="sbExit">Выйти</button></div>
   <div class="dtable-wrap" id="dtableWrap"><table class="dtable" id="dtable"><thead id="dthead"></thead><tbody id="dtbody"></tbody></table></div>
   <div id="empty" class="empty">Заказы загружаются…</div>
   </div>
@@ -1032,6 +1038,7 @@ document.getElementById("collapseAll").addEventListener("click",()=>{
 });
 
 function setStatus(t,sub){
+  if(typeof sandbox!=="undefined"&&sandbox&&/^(Сохранено|Комментарий сохранён)$/.test(t))t="Не сохранено — проверка";
   const a=document.createElement("span");a.textContent=t;
   const parts=[a];
   if(sub){const b=document.createElement("span");b.textContent=sub;parts.push(b)}
@@ -1710,7 +1717,7 @@ async function flushComments(){
   for(const id of ids){clearTimeout(commentTimers[id]);await saveComment(id)}
 }
 async function publishSnapshot(){
-  if(!artifactNS||!db||publishing)return;
+  if(!artifactNS||!db||publishing||sandbox)return;
   await flushComments();
   const data=canon(orders);
   const j=JSON.stringify(data);
@@ -1731,13 +1738,34 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 window.addEventListener("pagehide",()=>{flushComments()});
 
 let markBackup=null;
+// sandbox ("Проверка"): the owner can change any marks, spares, comments and orders to see how the stats react;
+// nothing reaches the database — writes go to a stand-in, live updates are held back — and leaving restores exactly what was there
+// (plus anything that changed in the database meanwhile)
+let sandbox=null;
+const FAKE_DB={doc:()=>({update:async()=>{},set:async()=>{},delete:async()=>{},get:async()=>({exists:false,data:()=>({})})}),collection:()=>({onSnapshot:()=>()=>{}})};
+function enterSandbox(){
+  if(sandbox||!db)return;
+  sandbox={realDb:db,orders:JSON.parse(JSON.stringify(orders)),spares:JSON.parse(JSON.stringify(spares)),liveOrders:null,liveSpares:null};
+  db=FAKE_DB;document.body.classList.add("sandbox");document.getElementById("sbBar").hidden=false;
+  updateBulkUI();render();toast("Режим проверки: меняй что угодно, при выходе всё вернётся");
+}
+async function exitSandbox(){
+  if(!sandbox)return;
+  try{await flushComments()}catch(_){}
+  const sb=sandbox;sandbox=null;db=sb.realDb;
+  orders=sb.liveOrders||sb.orders;spares=sb.liveSpares||sb.spares;
+  Object.keys(drafts).forEach(k=>delete drafts[k]);
+  document.body.classList.remove("sandbox");document.getElementById("sbBar").hidden=true;
+  updateBulkUI();render();toast("Вернул всё как было");
+}
 function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
   const w=!!db&&canWrite;
-  ["addOrder","markAll","restoreAll"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
+  ["addOrder","markAll","restoreAll","sandboxBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
   document.getElementById("addOrder").disabled=!editable();
-  document.getElementById("markAll").disabled=!!markBackup||!editable();
-  document.getElementById("restoreAll").disabled=!markBackup||!editable();
+  document.getElementById("markAll").disabled=!!markBackup||!editable()||!!sandbox;
+  document.getElementById("restoreAll").disabled=!markBackup||!editable()||!!sandbox;
+  const sb=document.getElementById("sandboxBtn");sb.textContent=sandbox?"Выйти из проверки":"Проверка";sb.disabled=!sandbox&&!editable();
 }
 async function markAll(){
   if(!db||markBackup||!editable())return;
@@ -1843,6 +1871,8 @@ async function importForOffline(text){
 }
 document.getElementById("offCopy").addEventListener("click",copyForOffline);
 document.getElementById("markAll").addEventListener("click",markAll);
+document.getElementById("sandboxBtn").addEventListener("click",()=>{sandbox?exitSandbox():enterSandbox()});
+document.getElementById("sbExit").addEventListener("click",exitSandbox);
 document.getElementById("restoreAll").addEventListener("click",restoreAll);
 // service panel show/hide (remembered per viewer)
 function setSvc(open,save){
@@ -2268,9 +2298,10 @@ showLock(false);
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
-  db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;spares=Array.isArray(v)?v.filter(x=>x&&x.k):[];render()},()=>{}); // EXPERIMENT spares
+  db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{}); // EXPERIMENT spares
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
+    if(sandbox){sandbox.liveOrders=next;return} // held back until the sandbox is left
     orders=next;render();
     if(!snap.fromCache||snap.docs.length)saveLastOrders();
     if(!snap.metadata.hasPendingWrites)setStatus(canWrite?"Синхронизировано":"Только просмотр");
