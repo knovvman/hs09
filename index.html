@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset=utf8><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png?v=3"><link rel="apple-touch-icon" href="icon-180.png?v=3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="HS09"><meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12171b" media="(prefers-color-scheme: dark)"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="ru"><head><meta charset=utf8><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png?v=3"><link rel="apple-touch-icon" href="icon-180.png?v=3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="HS09"><meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12171b" media="(prefers-color-scheme: dark)"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Dyson HS09</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,6 +37,8 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (hover:hover){.fold:hover{background:color-mix(in srgb,var(--muted) 8%,transparent)}}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
 .legend span{display:inline-flex;align-items:center;gap:5px}
+/* phone: the page keeps one scale — no pinch, double-tap or focus zoom; every text field is at least 16px */
+@media (max-width:899px){html{touch-action:pan-x pan-y}input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:max(16px,1em)!important}}
 @media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
 /* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
 .legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
@@ -98,6 +100,7 @@ button{font:inherit;cursor:pointer}
 .chosen-kind.warranty{background:var(--purple-bg);border-color:var(--purple);color:var(--purple)}
 .chosen-kind,.seg .kind-pick{box-sizing:border-box;width:58px;min-width:58px;padding-left:2px;padding-right:2px;text-align:center;white-space:nowrap}
 .chosen-kind.warranty,.seg .kind-pick.warranty{font-size:11px;letter-spacing:-.02em}
+@media (max-width:899px){#grid .chosen-kind.warranty,#grid .seg .kind-pick.warranty{font-size:13px;letter-spacing:0;width:auto;min-width:58px;padding-left:10px;padding-right:10px}}
 .loc.on.babushkina{border-color:var(--bad);background:var(--bad-bg);color:var(--bad)}
 .locked .chosen-kind{cursor:default}
 .comment{box-sizing:border-box;width:100%;margin-top:8px;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:none;overflow:hidden;min-height:44px;line-height:1.4}
@@ -201,9 +204,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .stats-note-text{min-height:96px;margin-top:6px;resize:none}
 .stats-note-text[readonly]{border-color:transparent;background:transparent;padding-left:0}
-.spare-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
-@media (max-width:899px){.spare-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
-.spare-right .panel-title{min-height:30px;display:flex;align-items:center;margin:0}
+.stats-total .panel-title{min-height:30px;display:flex;align-items:center;margin:0}
 .sg{border-top:1px solid var(--line)}
 .spare-head+#spareList>.sg:first-child{margin-top:6px}
 .sg-row{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:9px 0;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -216,6 +217,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sg-n{font-family:var(--font-mono);font-size:16px;color:var(--fg);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
 .sg-items{padding:0 0 8px 19px;animation:rowIn .25s ease-out both}
 .sg-items .spare{border-top:0;padding:4px 0}
+.stats-total{background:color-mix(in srgb,var(--accent) 5%,var(--card));border-color:color-mix(in srgb,var(--accent) 22%,var(--line))}
+.stats-total .panel-title{color:var(--accent)}
 .tot-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;font-variant-numeric:tabular-nums}
 .tot-table th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px 10px;white-space:nowrap}
 .tot-table td{text-align:right;padding:8px 0 8px 10px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--font-mono)}
@@ -223,6 +226,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .tot-table td.tx{color:var(--accent)}
 .tot-table td.tt{color:var(--fg);font-weight:700}
 .tot-table td.tok{color:var(--ok);font-weight:700}
+.tot-table td.tbad{color:var(--bad);font-weight:700}
+.tot-table tr>*:first-child{width:99%}
+.tot-table tr>*{white-space:nowrap}
 .spare-head .panel-title{margin:0}
 .spare-add.svc-toggle{margin:0;width:auto;height:30px;flex-shrink:0;gap:5px;padding:0 12px 0 9px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
 .spare-add.svc-toggle:disabled{color:var(--muted)}
@@ -313,6 +319,8 @@ body.svc-open .wrap{padding-bottom:110px}
   #addOrderBtn{width:auto;gap:6px;padding:0 14px 0 11px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
   #addOrderBtn .add-txt{display:inline}
   #addOrderBtn:disabled{color:var(--muted)}
+  #addOrderBtn{transition:opacity .25s ease}
+  body[data-tab]:not([data-tab="orders"]) #addOrderBtn{opacity:0;pointer-events:none}
 }
 @media (max-width:899px){body.admin .tools .w-all{display:none}} /* phone, owner: short labels make room for the + / lock / service icons */
 .svc-toggle.add-ico:disabled{opacity:.4;cursor:default}
@@ -486,7 +494,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (max-width:899px){
   #view-stats{display:flex;flex-direction:column}
   .stats-left{display:contents}
-  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-note{order:5}
+  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-total{order:5}#view-stats .stats-note{order:6}
   #view-stats>*,.stats-left>*{flex-shrink:0}
   .stats-left>.hero{margin-top:10px}
 }
@@ -495,7 +503,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .stats-left{grid-column:1;display:flex;flex-direction:column;gap:16px;min-width:0}
   .stats-left>section,#view-stats>.stats-parts{margin-top:0}
   #view-stats>.stats-parts{grid-column:2;grid-row:1;display:flex;flex-direction:column}
-  #view-stats>section.stats-spare{grid-column:1 / -1;grid-row:2;margin-top:0}
+  #view-stats>section.stats-spare{grid-column:1;grid-row:2;margin-top:0}
+  #view-stats>section.stats-total{grid-column:2;grid-row:2;margin-top:0}
+  #view-stats>section.stats-spare[hidden]+section.stats-total{grid-column:1 / -1}
   #view-stats>section.stats-note{grid-column:1 / -1;grid-row:3;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
   .stats-miss{flex:1 0 auto;display:flex;flex-direction:column}
@@ -560,7 +570,15 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .acct-btn.in{color:var(--accent);border-color:var(--accent)}
 .acct-btn.ask{color:var(--bad);border-color:var(--bad)}
 .acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
-@media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}}
+@media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}
+  header:has(>#lockBtn:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto}
+  /* the lock in the phone header: a round icon, the same size as the theme button */
+  header>.lock{width:40px;height:40px;min-height:40px;padding:0;border-radius:999px;justify-content:center;flex-shrink:0}
+  header>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  header>.lock svg{width:20px;height:20px}
+  header>.lock[hidden]{display:none}
+  header .status{justify-self:stretch;align-items:stretch;min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box;margin-right:0!important;padding-right:4px}
+  header .status span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}}
 @media (min-width:900px){header .acct-btn{order:5;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
   header .acct-btn.in{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   header .acct-btn.ask{background:var(--bad-bg)}}
@@ -642,6 +660,10 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .odlg-btn{font:inherit;font-size:15px;font-weight:500;border-radius:10px;padding:9px 16px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
 .odlg-btn.ghost{background:transparent;color:var(--accent)}
 .odlg-btn:disabled{opacity:.5;cursor:default}
+/* "Закрыть заказ": a calm accent button above the red delete */
+.odlg-close{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:transparent;color:var(--accent);cursor:pointer}
+.odlg-close.ask{background:var(--accent);color:var(--card);border-color:var(--accent)}
+.odlg-close+.odlg-del{margin-top:8px}
 .odlg-del{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);background:transparent;color:var(--bad);cursor:pointer;transition:background-color .2s ease,color .2s ease}
 .odlg-del.ask{background:var(--bad);color:var(--card);border-color:var(--bad)}
 .odlg-del[hidden]{display:none}
@@ -739,6 +761,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .card-head>.head-left.has-head-note{flex:1 1 auto;min-width:0;flex-wrap:nowrap}
 .card-head>.head-left.has-head-note>*{flex-shrink:0}
 .card-head>.head-left.has-head-note>.head-note{flex:1 1 auto;min-width:0;text-align:right;padding-right:6px}
+/* a finished order has no "N из 6": its empty slot and gap go away, so "Бывший …" gets the room */
+.card-head>.prog:empty{display:none}
+.card-head:has(>.prog:empty) .head-note{padding-right:0}
 .head-note{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;line-height:1.3;color:var(--muted)}
 .card-head.note-full:has(>.head-left.has-head-note){flex-wrap:wrap}
 .card-head.note-full>.head-note{flex:0 0 100%;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;margin:-2px 0 4px;animation:rowIn .3s ease-out both}
@@ -854,16 +879,12 @@ const MARKUP=`<div class="wrap">
     </section>
     <!-- EXPERIMENT spares: start -->
     <section class="panel stats-spare" id="statsSpare" hidden>
-      <div class="spare-cols">
-        <div class="spare-left">
-          <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div>
-          <div id="spareList"></div>
-        </div>
-        <div class="spare-right">
-          <h2 class="panel-title">Всего на руках</h2>
-          <table class="tot-table" id="spareTotals"></table>
-        </div>
-      </div>
+      <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Добавить</span></button></div>
+      <div id="spareList"></div>
+    </section>
+    <section class="panel stats-total" id="statsTotal">
+      <h2 class="panel-title">Всего</h2>
+      <table class="tot-table" id="spareTotals"></table>
     </section>
     <!-- EXPERIMENT spares: end -->
     <section class="panel stats-note" id="statsNoteBox" hidden>
@@ -886,6 +907,7 @@ const MARKUP=`<div class="wrap">
       </div>
       <div class="odlg-msg" id="ordMsg" role="alert"></div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="ordCancel">Отмена</button><button type="submit" class="odlg-btn" id="ordSave">Добавить</button></div>
+      <button type="button" class="odlg-close" id="ordClose" hidden>Закрыть заказ</button>
       <button type="button" class="odlg-del" id="ordDel" hidden>Удалить заказ</button>
     </form>
   </dialog>
@@ -947,7 +969,10 @@ function placeAdminBtns(){
   let gap=tools.querySelector(".tools-gap");
   if(!deskNow()){
     if(!gap){gap=document.createElement("span");gap.className="tools-gap"}
-    const add=document.getElementById("addOrderBtn");if(add)tools.append(gap,add,lb,svc);else tools.append(gap,lb,svc);
+    // phone: + and the service key stay in the tools row; the lock goes to the header, just before the theme button
+    const add=document.getElementById("addOrderBtn");if(add)tools.append(gap,add,svc);else tools.append(gap,svc);
+    const hdr=document.querySelector("header"),tb=document.getElementById("themeBtn");
+    if(hdr&&tb)hdr.insertBefore(lb,tb);
   }else{
     // computer: the same two round icons sit in the header, just before the theme switch
     if(gap)gap.remove();
@@ -1069,18 +1094,20 @@ function setLocked(v){
   armAutoLock();
 }
 lockBtn.addEventListener("click",()=>setLocked(!locked));
+// iOS still pinch-zooms despite user-scalable=no; block its gesture events too (phone only)
+["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>{if(!deskNow())e.preventDefault()},{passive:false}));
 // the lock closes by itself after 10 s with no clicks, taps or typing; it waits while a dialog is open or a text is being typed
 const AUTO_LOCK_MS=10000;let autoLockT=0;
 function armAutoLock(){clearTimeout(autoLockT);if(!locked&&document.body.classList.contains("admin"))autoLockT=setTimeout(autoLockNow,AUTO_LOCK_MS)}
 function autoLockNow(){
   if(locked)return;
   const ae=document.activeElement,typing=ae&&(ae.tagName==="TEXTAREA"||ae.tagName==="INPUT")&&!ae.readOnly;
-  if(document.querySelector("dialog[open]")||typing){armAutoLock();return}
+  if(document.querySelector("dialog[open]")||typing||document.body.classList.contains("sandbox")){armAutoLock();return}
   setLocked(true);toast("Замок закрылся сам");
 }
 ["pointerdown","keydown","input"].forEach(ev=>document.addEventListener(ev,()=>{if(!locked)armAutoLock()},{capture:true,passive:true}));
 applyLock();
-const editable=()=>canWrite&&!locked&&!!db;
+const editable=()=>canWrite&&!!db&&(!locked||document.body.classList.contains("sandbox")); // in the sandbox the lock does not matter
 let collapsed=new Set();
 const seenIds=new Set();
 function animRows(b,total,each,reverse,to){
@@ -1210,11 +1237,11 @@ function renderSpares(st,n){
   }));
   // right: a plain table of everything on hand — in orders, outside them, total, working
   if(tot&&st){
-    const hr=document.createElement("tr");["","в заказах","вне","всего","рабочих"].forEach(t=>hr.append(el("th",null,t)));
+    const hr=document.createElement("tr");["","в заказах","вне","всего","рабочих","нерабочих"].forEach(t=>hr.append(el("th",null,t)));
     const th=document.createElement("thead");th.append(hr);
     const tb=document.createElement("tbody");
     st.forEach(c=>{const tr=document.createElement("tr");const inO=c.inOrders+c.bad;
-      tr.append(el("td","tn",c.name),el("td",null,String(inO)),el("td","tx",c.x?String(c.x):"—"),el("td","tt",String(inO+c.x)),el("td","tok",String(c.ok)));tb.append(tr)});
+      tr.append(el("td","tn",c.name),el("td",null,String(inO)),el("td","tx",c.x?String(c.x):"—"),el("td","tt",String(inO+c.x)),el("td","tok",String(c.ok)),el("td",(c.bad+c.xbad)?"tbad":null,String(c.bad+c.xbad)));tb.append(tr)});
     tot.replaceChildren(th,tb);
   }
 }
@@ -1252,7 +1279,7 @@ function renderStats(ids){
   const st=STAT_PARTS.map(([k,name])=>{
     const c={k,name,ok:0,bad:0,none:0,q:0,unk:0};
     ids.forEach(id=>{const v=orders[id][k];if(v==="ok")c.ok++;else if(v==="bad")c.bad++;else if(v==="none")c.none++;else if(v==="q")c.q++;else c.unk++});
-    c.inOrders=c.ok;c.x=spares.filter(x=>x.k===k).length;c.xok=spares.filter(x=>x.k===k&&x.s==="ok").length;c.ok+=c.xok; // EXPERIMENT spares: working spares count as working
+    c.inOrders=c.ok;c.x=spares.filter(x=>x.k===k).length;c.xok=spares.filter(x=>x.k===k&&x.s==="ok").length;c.xbad=spares.filter(x=>x.k===k&&x.s==="bad").length;c.ok+=c.xok; // EXPERIMENT spares: working spares count as working
     return c;
   });
   const can=n?Math.min(n,...st.map(c=>c.ok)):0; // never more dryers than orders
@@ -1290,15 +1317,14 @@ function renderStats(ids){
     const row=el("div","part");
     const top=el("div","part-top");
     const nm=el("div","part-name"+(n&&c.ok===can?" limit":""),c.name);
-    const ok=el("div","part-ok");ok.append(String(c.ok)+" ",el("small",null,c.xok?"рабочих":"рабочих из "+n));
+    const ok=el("div","part-ok");ok.append(String(c.inOrders)+" ",el("small",null,"рабочих из "+n));
     top.append(nm,ok);
     const bar=el("div","seg-bar");
-    [["s-ok",c.ok],["s-bad",c.bad],["s-none",c.none],["s-q",c.q],["s-unk",c.unk]].forEach(([cl,v])=>{if(v){const i=el("i",cl);i.style.flex=String(v);bar.append(i)}});
+    [["s-ok",c.inOrders],["s-bad",c.bad],["s-none",c.none],["s-q",c.q],["s-unk",c.unk]].forEach(([cl,v])=>{if(v){const i=el("i",cl);i.style.flex=String(v);bar.append(i)}});
     const sub=el("div","part-sub");
     sub.append(el("span",null,"есть "+(c.inOrders+c.bad)),el("span",null,"рабочих "+c.inOrders),el("span",null,"нерабочих "+c.bad),el("span",null,"нет "+c.none));
     if(c.q)sub.append(el("span",null,"не проверено "+c.q));
     if(c.unk&&!allDone)sub.append(el("span",null,"не отмечено "+c.unk));
-    if(c.x)sub.append(el("span","spare-n","вне заказов "+c.x),el("span","spare-n","всего "+(c.inOrders+c.bad+c.x))); // EXPERIMENT spares
     row.append(top,bar,sub);
     return row;
   }));
@@ -1333,7 +1359,7 @@ function paintTabs(pos){
     b.style.color="color-mix(in srgb, var(--fg) "+Math.round(w*100)+"%, var(--muted))";
   });
 }
-function markTabs(t){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t?"true":"false"));}
+function markTabs(t){document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t?"true":"false"));document.body.dataset.tab=t}
 function pageW(){const st=getComputedStyle(viewsEl);return viewsEl.clientWidth-(parseFloat(st.paddingLeft)||0)-(parseFloat(st.paddingRight)||0)+(parseFloat(st.columnGap)||0)}
 let settleT=0;
 viewsEl.addEventListener("scroll",()=>{
@@ -1902,7 +1928,7 @@ function updateBulkUI(){
   {const a=document.getElementById("addOrderBtn");if(a)a.disabled=!editable();}
   document.getElementById("markAll").disabled=!!markBackup||!editable()||!!sandbox;
   document.getElementById("restoreAll").disabled=!markBackup||!editable()||!!sandbox;
-  const sb=document.getElementById("sandboxBtn");sb.textContent=sandbox?"Выйти из проверки":"Проверка";sb.disabled=!sandbox&&!editable();
+  const sb=document.getElementById("sandboxBtn");sb.textContent=sandbox?"Выйти из проверки":"Проверка";sb.disabled=!db||!canWrite;
 }
 async function markAll(){
   if(!db||markBackup||!editable())return;
@@ -2160,7 +2186,7 @@ function dlgShowCheck(){
   dlgCheck.textContent=r.bad?r.bad:r.id?"✓ Ссылка подходит":(dlgId&&hasCrm(orders[dlgId])?"Поле пустое — ссылка будет удалена":"");
   return r;
 }
-function resetDel(){clearTimeout(delAskT);dlgDel.classList.remove("ask");dlgDel.textContent="Удалить заказ"}
+function resetDel(){clearTimeout(delAskT);dlgDel.classList.remove("ask");dlgDel.textContent="Удалить заказ";const c=document.getElementById("ordClose");if(c){c.classList.remove("ask");c.textContent="Закрыть заказ"}}
 function openOrderDlg(id){
   if(!db||!editable()){setStatus("Изменения закрыты замком");return}
   dlgId=id||null;
@@ -2173,7 +2199,7 @@ function openOrderDlg(id){
   dlgNum.value="";dlgNum.classList.remove("bad");
   dlgLink.value=hasCrm(o)?"https://app.helloclient.by/order/"+o.crm:"";
   dlgSave.textContent=id?"Сохранить":"Добавить";dlgSave.disabled=false;
-  dlgDel.hidden=!id;resetDel();
+  dlgDel.hidden=!id;document.getElementById("ordClose").hidden=!id;resetDel();
   dlgMsg.textContent="";dlgShowCheck();
   try{dlg.showModal()}catch(_){dlg.setAttribute("open","")}
   // a new order starts with the number; an existing one with the link (unless it already has one)
@@ -2280,6 +2306,33 @@ function deleteOrder(){
 document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||!editable()){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderLink();else addOrder()});
 document.getElementById("ordCancel").addEventListener("click",closeOrderDlg);
 dlgDel.addEventListener("click",()=>{if(db&&editable())deleteOrder()});
+// closing a finished order: it leaves the list and every count; its working parts are gone with it,
+// its non-working (and unchecked) boards and power supply move to "Вне заказов" with a note where they came from
+function closeOrder(){
+  const id=dlgId,o=orders[id],btn=document.getElementById("ordClose");if(!o){closeOrderDlg();return}
+  const moved=STAT_PARTS.filter(([k])=>o[k]==="bad"||o[k]==="q").map(([k])=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k,s:o[k],note:"из заказа #"+id,from:id}));
+  if(!btn.classList.contains("ask")){
+    btn.classList.add("ask");
+    btn.textContent=moved.length?"Ещё раз — и "+moved.length+" "+plural(moved.length,"запчасть уйдёт","запчасти уйдут","запчастей уйдут")+" во «Вне заказов»":"Нажми ещё раз, чтобы закрыть #"+id;
+    clearTimeout(delAskT);delAskT=setTimeout(resetDel,4000);return;
+  }
+  if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}
+  closeOrderDlg();
+  const copy=JSON.parse(JSON.stringify(o)),at=new Date().toISOString();
+  delete orders[id];collapsed.delete(id);
+  const before=spares;
+  if(moved.length)saveSpares([...spares,...moved]);else render();
+  enqueue(id,()=>db.doc("orders/"+id).update({closed:true,closedAt:at})).then(()=>setStatus("Сохранено"),e=>{orders[id]=copy;render();writeErr("Не удалось закрыть заказ #"+id)(e)});
+  toast("Заказ #"+id+" закрыт","Вернуть",()=>{
+    if(orders[id]){toast("Заказ #"+id+" уже есть");return}
+    seenIds.add(id);orders[id]=copy;
+    const ids=new Set(moved.map(x=>x.id));
+    if(moved.length)saveSpares(spares.filter(x=>!ids.has(x.id)));else render();
+    enqueue(id,()=>db.doc("orders/"+id).update({closed:false,closedAt:null})).then(()=>setStatus("Сохранено"),writeErr("Не удалось вернуть заказ #"+id));
+    toast("Заказ #"+id+" возвращён");
+  });
+}
+document.getElementById("ordClose").addEventListener("click",()=>{if(db&&editable())closeOrder()});
 closeOnBackdrop(dlg,closeOrderDlg); // tap outside the box closes it
 dlg.addEventListener("close",()=>{resetDel();dlgId=null});
 dlgNum.addEventListener("input",()=>{const v=dlgNum.value.replace(/\D/g,"");if(v!==dlgNum.value)dlgNum.value=v;dlgNum.classList.remove("bad");dlgMsg.textContent=""});
@@ -2482,7 +2535,7 @@ showLock(false);
   try{db.doc("meta/statsNote").onSnapshot(d=>{const v=d.exists?String((d.data()||{}).text||""):"";if(sandbox){sandbox.liveNote=v;return}statsNote=v;renderStatsNote()},()=>{})}catch(_){}
   try{db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{})}catch(_){} // EXPERIMENT spares: never let this block the orders below
   db.collection("orders").onSnapshot(snap=>{
-    const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
+    const next={};snap.docs.forEach(d=>{if(d.exists){const v=d.data();if(!v||!v.closed)next[d.id]=v}}); // closed orders are not shown or counted
     if(sandbox){sandbox.liveOrders=next;return} // held back until the sandbox is left
     orders=next;render();
     if(!snap.fromCache||snap.docs.length)saveLastOrders();
