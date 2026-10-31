@@ -601,7 +601,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   /* the lock in the phone header: a round icon, the same size as the theme button */
   /* the lock floats in the bottom-right corner, above the page */
   /* a proper floating button: bottom-right corner, frosted when open, accent when locked; a layered shadow lifts it off the list in both themes */
-  body>.lock{position:fixed;z-index:21;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:54px;height:54px;min-height:54px;padding:0;border-radius:999px;justify-content:center;
+  body>.lock{position:fixed;z-index:21;right:max(30px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:54px;height:54px;min-height:54px;padding:0;border-radius:999px;justify-content:center;
     border:1px solid color-mix(in srgb,var(--fg) 14%,transparent);background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);color:var(--fg);
     box-shadow:0 1px 2px rgba(0,0,0,.12),0 6px 16px rgba(0,0,0,.16),0 14px 34px rgba(0,0,0,.18);transition:transform .15s ease,background-color .25s ease,color .25s ease,box-shadow .25s ease}
   body>.lock[aria-pressed="true"]{background:var(--accent);border-color:transparent;color:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.14),0 6px 16px color-mix(in srgb,var(--accent) 35%,transparent),0 14px 34px rgba(0,0,0,.2)}
