@@ -60,6 +60,7 @@ button{font:inherit;cursor:pointer}
 .btn:disabled{border-color:var(--line);color:var(--muted);opacity:.55;cursor:default}
 .btn{transition:color .25s ease,border-color .25s ease,background-color .25s ease,opacity .25s ease}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
+.status{transition:opacity .25s ease}.status.st-out{opacity:0}
 .status{font-size:11px;line-height:1.25;color:var(--muted);margin-left:auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap;flex-shrink:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
@@ -1227,12 +1228,28 @@ document.getElementById("collapseAll").addEventListener("click",()=>{
   setTimeout(fin,(1200+bodies.length*40)*SLOW);
 });
 
-function setStatus(t,sub){
-  if(typeof sandbox!=="undefined"&&sandbox&&/^(Сохранено|Комментарий сохранён)$/.test(t))t="Не сохранено — проверка";
+// status line: "Сохранено"-type notes fade in, stay STATUS_HOLD ms, then fade back to the usual status;
+// a usual status that arrives meanwhile waits for the note to finish
+var STATUS_HOLD=2000,STATUS_FADE=250;
+var statusHoldUntil=0,statusPending=null,statusPendT=0,statusFadeT=0;
+function paintStatus(t,sub){
   const a=document.createElement("span");a.textContent=t;
   const parts=[a];
   if(sub){const b=document.createElement("span");b.textContent=sub;parts.push(b)}
-  statusEl.replaceChildren(...parts);
+  const same=statusEl.textContent===t+(sub||"");
+  clearTimeout(statusFadeT);
+  if(same||!statusEl.childNodes.length||reduceMotionT()){statusEl.classList.remove("st-out");statusEl.replaceChildren(...parts);return}
+  statusEl.classList.add("st-out");
+  statusFadeT=setTimeout(()=>{statusEl.replaceChildren(...parts);statusEl.classList.remove("st-out")},STATUS_FADE);
+}
+function setStatus(t,sub){
+  if(typeof sandbox!=="undefined"&&sandbox&&/^(Сохранено|Комментарий сохранён)$/.test(t))t="Не сохранено — проверка";
+  const note=/^(Сохранено|Комментарий сохранён|Не сохранено — проверка)$/.test(t);
+  const now=Date.now();
+  if(note){statusHoldUntil=now+STATUS_HOLD;clearTimeout(statusPendT);paintStatus(t,sub);
+    statusPendT=setTimeout(()=>{if(statusPending){const p=statusPending;statusPending=null;paintStatus(p[0],p[1])}},STATUS_HOLD);return}
+  if(now<statusHoldUntil){statusPending=[t,sub];return}
+  statusPending=null;paintStatus(t,sub);
 }
 // the last data this device saw is kept in the browser and shown at once on the next start,
 // while the connection to the database is still being set up (it used to show the copy baked into the page)
