@@ -600,13 +600,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   header>.svc-toggle svg{width:20px;height:20px}
   /* the lock in the phone header: a round icon, the same size as the theme button */
   /* the lock floats in the bottom-right corner, above the page */
-  body>.lock{position:fixed;z-index:21;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:52px;height:52px;min-height:52px;padding:0;border-radius:999px;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+  body>.lock{position:fixed;z-index:21;right:calc(20vw - 26px);bottom:calc(20vh - 26px + env(safe-area-inset-bottom,0px));width:52px;height:52px;min-height:52px;padding:0;border-radius:999px;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.22)}
   body>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   body>.lock svg{width:22px;height:22px}
   body>.lock[hidden]{display:none}
   body>.lock:active{transform:scale(.92)}
-  /* the service panel opens above the floating lock */
-  body:has(>.lock:not([hidden])) .svc{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+
   header .status{justify-self:stretch;align-items:stretch;min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box;margin-right:0!important;padding-right:4px}
   header .status span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}}
 @media (min-width:900px){header .acct-btn{order:5;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
