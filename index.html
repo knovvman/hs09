@@ -322,6 +322,13 @@ body.svc-open .wrap{padding-bottom:110px}
 .svc-toggle:active{transform:scale(.9)}
 .svc-toggle.add-ico{margin-left:0}
 .add-ico .add-txt{display:none}
+@media (max-width:899px){
+  /* phone: "+ Добавить заказ" gets a full-width row of its own under "Развернуть все / Свернуть все" */
+  .tools:has(>#addOrderBtn:not([hidden])){flex-wrap:wrap}
+  .tools>#addOrderBtn{order:9;flex:1 1 100%;width:auto;height:auto;min-height:40px;border-radius:8px;gap:6px;padding:0 12px;font:inherit;font-weight:500;color:var(--fg);white-space:nowrap}
+  .tools>#addOrderBtn .add-txt{display:inline}
+  .tools>#addOrderBtn:disabled{color:var(--muted)}
+}
 /* computer: the header button carries its words — "+ Добавить заказ" */
 @media (min-width:900px){
   #addOrderBtn{width:auto;gap:6px;padding:0 14px 0 11px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
@@ -330,7 +337,6 @@ body.svc-open .wrap{padding-bottom:110px}
   #addOrderBtn{transition:opacity .25s ease}
   body[data-tab]:not([data-tab="orders"]) #addOrderBtn{opacity:0;pointer-events:none}
 }
-@media (max-width:899px){body.admin .tools .w-all{display:none}} /* phone, owner: short labels make room for the + / lock / service icons */
 .svc-toggle.add-ico:disabled{opacity:.4;cursor:default}
 .svc-toggle.add-ico:disabled:active{transform:none}
 .card-head button:disabled{pointer-events:none} /* a chip that can't be changed lets the tap through to the card head */
@@ -579,7 +585,15 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .acct-btn.ask{color:var(--bad);border-color:var(--bad)}
 .acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
 @media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}
-  header:has(>#lockBtn:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto}
+  /* owner: lock, key, theme and sign-in fill the right side, so the status line moves under the title */
+  header:has(>#lockBtn:not([hidden])){grid-template-columns:minmax(0,1fr) auto auto auto auto;column-gap:8px}
+  header:has(>#lockBtn:not([hidden]))>.title-row{grid-column:1;grid-row:1;align-self:end}
+  header:has(>#lockBtn:not([hidden]))>.status{grid-column:1;grid-row:2;justify-self:start;margin:-9px 0 0!important;padding-right:0}
+  header:has(>#lockBtn:not([hidden]))>.status span{text-align:left}
+  header:has(>#lockBtn:not([hidden]))>:is(.lock,.svc-toggle,.theme-btn,.acct-btn){grid-row:1 / 3;align-self:center}
+  header:has(>#lockBtn:not([hidden]))>.tabs,header:has(>#lockBtn:not([hidden]))>.lock-row,header:has(>#lockBtn:not([hidden]))>.hdr-mob{grid-row:auto}
+  header>.svc-toggle{width:40px;height:40px;flex-shrink:0}
+  header>.svc-toggle svg{width:20px;height:20px}
   /* the lock in the phone header: a round icon, the same size as the theme button */
   header>.lock{width:40px;height:40px;min-height:40px;padding:0;border-radius:999px;justify-content:center;flex-shrink:0}
   header>.lock #lockText{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -985,9 +999,10 @@ function placeAdminBtns(){
   if(!deskNow()){
     if(!gap){gap=document.createElement("span");gap.className="tools-gap"}
     // phone: + and the service key stay in the tools row; the lock goes to the header, just before the theme button
-    const add=document.getElementById("addOrderBtn");if(add)tools.append(gap,add,svc);else tools.append(gap,svc);
+    // phone: the lock and the service key live in the header before the theme button; "+ Добавить заказ" takes their old place
+    const add=document.getElementById("addOrderBtn");if(add)tools.append(gap,add);else tools.append(gap);
     const hdr=document.querySelector("header"),tb=document.getElementById("themeBtn");
-    if(hdr&&tb)hdr.insertBefore(lb,tb);
+    if(hdr&&tb){hdr.insertBefore(lb,tb);hdr.insertBefore(svc,tb)}
   }else{
     // computer: the same two round icons sit in the header, just before the theme switch
     if(gap)gap.remove();
