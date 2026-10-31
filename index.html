@@ -199,6 +199,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sb-bar button{font:inherit;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
 /* EXPERIMENT spares: start */
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stats-note-text{min-height:96px;margin-top:6px;resize:none}
+.stats-note-text[readonly]{border-color:transparent;background:transparent;padding-left:0}
 .spare-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
 @media (max-width:899px){.spare-cols{grid-template-columns:minmax(0,1fr);gap:18px}}
 .spare-right .panel-title{min-height:30px;display:flex;align-items:center;margin:0}
@@ -484,7 +486,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (max-width:899px){
   #view-stats{display:flex;flex-direction:column}
   .stats-left{display:contents}
-  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}
+  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-note{order:5}
   #view-stats>*,.stats-left>*{flex-shrink:0}
   .stats-left>.hero{margin-top:10px}
 }
@@ -494,6 +496,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .stats-left>section,#view-stats>.stats-parts{margin-top:0}
   #view-stats>.stats-parts{grid-column:2;grid-row:1;display:flex;flex-direction:column}
   #view-stats>section.stats-spare{grid-column:1 / -1;grid-row:2;margin-top:0}
+  #view-stats>section.stats-note{grid-column:1 / -1;grid-row:3;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
   .stats-miss{flex:1 0 auto;display:flex;flex-direction:column}
   #statsMissing{flex:1 0 auto;display:flex;flex-direction:column}
@@ -863,6 +866,10 @@ const MARKUP=`<div class="wrap">
       </div>
     </section>
     <!-- EXPERIMENT spares: end -->
+    <section class="panel stats-note" id="statsNoteBox" hidden>
+      <h2 class="panel-title">Комментарий</h2>
+      <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="4" placeholder="Комментарий ко всей вкладке" aria-label="Комментарий ко всей вкладке «Запчасти»"></textarea>
+    </section>
   </div>
   </div>
   <dialog id="ordDlg" class="odlg" aria-labelledby="ordTitle">
@@ -1150,6 +1157,26 @@ function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
 // "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
 const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы с кнопками вкл."]};
+// the Parts tab's own comment, kept in meta/statsNote as {text}; saved on leaving the field, after COMMENT_IDLE without typing, or when the tab is hidden
+let statsNote="",statsNoteDraft=null,statsNoteT=0;
+function renderStatsNote(){
+  const box=document.getElementById("statsNoteBox"),t=document.getElementById("statsNote");if(!box||!t)return;
+  const own=isOwnerUI();
+  box.hidden=!own&&!statsNote.trim(); // guests see it only when there is text; the owner always, so nothing jumps on the lock
+  t.readOnly=!editable();
+  if(document.activeElement!==t&&statsNoteDraft===null&&t.value!==statsNote){t.value=statsNote;autosize(t)}
+}
+async function saveStatsNote(){
+  if(statsNoteDraft===null||!db)return;
+  const v=statsNoteDraft.slice(0,5000);
+  if(v===statsNote){statsNoteDraft=null;return}
+  statsNote=v;
+  try{await db.doc("meta/statsNote").set({text:v});if(statsNoteDraft===v)statsNoteDraft=null;setStatus("Комментарий сохранён")}catch(e){handleErr(e)}
+}
+{const t=document.getElementById("statsNote");
+ t.addEventListener("input",()=>{statsNoteDraft=t.value;autosize(t);clearTimeout(statsNoteT);statsNoteT=setTimeout(saveStatsNote,COMMENT_IDLE)});
+ t.addEventListener("blur",()=>{clearTimeout(statsNoteT);saveStatsNote()});
+ document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){clearTimeout(statsNoteT);saveStatsNote()}});}
 // EXPERIMENT spares: start — parts that are not in any order (e.g. taken out of one), each with a note on where it came from.
 // Kept in meta/spares as {items:[{id,k,s,note}]}; anyone can read, only the owner can change (firestore.rules: meta/*).
 let spares=[];
@@ -1230,6 +1257,7 @@ function renderStats(ids){
   });
   const can=n?Math.min(n,...st.map(c=>c.ok)):0; // never more dryers than orders
   try{renderSpares(st,n)}catch(_){}
+  try{renderStatsNote()}catch(_){}
   const limit=st.filter(c=>c.ok===can);
   const unkTotal=st.reduce((a,c)=>a+c.unk,0);
   const allDone=n>0&&ids.every(id=>PARTS.every(([k])=>orders[id][k]));
@@ -1849,7 +1877,7 @@ let sandbox=null;
 const FAKE_DB={doc:()=>({update:async()=>{},set:async()=>{},delete:async()=>{},get:async()=>({exists:false,data:()=>({})})}),collection:()=>({onSnapshot:()=>()=>{}})};
 function enterSandbox(){
   if(sandbox||!db)return;
-  sandbox={realDb:db,orders:JSON.parse(JSON.stringify(orders)),spares:JSON.parse(JSON.stringify(spares)),liveOrders:null,liveSpares:null};
+  sandbox={realDb:db,orders:JSON.parse(JSON.stringify(orders)),spares:JSON.parse(JSON.stringify(spares)),note:statsNote,liveOrders:null,liveSpares:null,liveNote:null};
   db=FAKE_DB;document.body.classList.add("sandbox");document.getElementById("sbBar").hidden=false;
   updateBulkUI();render();toast("Режим проверки: меняй что угодно, при выходе всё вернётся");
 }
@@ -1857,10 +1885,10 @@ async function exitSandbox(){
   if(!sandbox)return;
   try{await flushComments()}catch(_){}
   const sb=sandbox;sandbox=null;db=sb.realDb;
-  orders=sb.liveOrders||sb.orders;spares=sb.liveSpares||sb.spares;
+  orders=sb.liveOrders||sb.orders;spares=sb.liveSpares||sb.spares;statsNote=sb.liveNote!=null?sb.liveNote:sb.note;statsNoteDraft=null;{const t=document.getElementById("statsNote");if(t){t.value=statsNote;autosize(t)}}
   Object.keys(drafts).forEach(k=>delete drafts[k]);
   document.body.classList.remove("sandbox");document.getElementById("sbBar").hidden=true;
-  updateBulkUI();render();toast("Вернул всё как было");
+  updateBulkUI();render();toast("Вернул всё как было");setStatus(canWrite?"Синхронизировано":"Только просмотр");
 }
 function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
@@ -2451,6 +2479,7 @@ showLock(false);
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
+  try{db.doc("meta/statsNote").onSnapshot(d=>{const v=d.exists?String((d.data()||{}).text||""):"";if(sandbox){sandbox.liveNote=v;return}statsNote=v;renderStatsNote()},()=>{})}catch(_){}
   try{db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{})}catch(_){} // EXPERIMENT spares: never let this block the orders below
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
