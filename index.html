@@ -1969,7 +1969,8 @@ async function fbInit(){
     get:()=>F.getDoc(r).then(wrap,tr),
     set:b=>F.setDoc(r,b).catch(tr),
     update:b=>F.updateDoc(r,b).catch(tr),
-    delete:()=>F.deleteDoc(r).catch(tr)}};
+    delete:()=>F.deleteDoc(r).catch(tr),
+    onSnapshot:(cb,eb)=>F.onSnapshot(r,d=>cb(wrap(d)),eb)}};
   const collection=n=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.collection(fs,n),{includeMetadataChanges:true},
     q=>cb({docs:q.docs.map(wrap),empty:q.empty,fromCache:q.metadata.fromCache,metadata:{hasPendingWrites:q.metadata.hasPendingWrites}}),eb)});
   return{db:{doc,collection},user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
@@ -2325,7 +2326,7 @@ showLock(false);
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
-  db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{}); // EXPERIMENT spares
+  try{db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{})}catch(_){} // EXPERIMENT spares: never let this block the orders below
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
     if(sandbox){sandbox.liveOrders=next;return} // held back until the sandbox is left
