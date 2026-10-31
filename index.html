@@ -1777,8 +1777,10 @@ function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
   const w=!!db&&canWrite;
   ["addOrder","markAll","restoreAll","sandboxBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
-  // in the sandbox the real "mark all / restore" give way to quick local "mark all ✓ / clear all"
-  ["markAll","restoreAll"].forEach(id=>{const b=document.getElementById(id);if(b&&sandbox)b.hidden=true});
+  // the real "mark all" is retired: marking everything is done in the sandbox ("Отметить все / Снять все" there, nothing saved);
+  // "restore" stays only while an old real mark-all is still waiting to be undone
+  document.getElementById("markAll").hidden=true;
+  document.getElementById("restoreAll").hidden=!w||!markBackup||!!sandbox;
   ["sbMarkAll","sbClearAll"].forEach(id=>{const b=document.getElementById(id);if(b){b.hidden=!w||!sandbox;b.disabled=!editable()}});
   document.getElementById("addOrder").disabled=!editable();
   document.getElementById("markAll").disabled=!!markBackup||!editable()||!!sandbox;
