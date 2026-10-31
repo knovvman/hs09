@@ -286,6 +286,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 #view-stats .miss b{color:var(--bad)}
 #view-stats .miss.okk b{color:var(--ok)}
 #view-stats .sg-n{color:var(--fg)}
+#view-stats .sg-n small{font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--muted)}
 #view-stats .sg-st{font-size:12px}
 #view-stats .spare-head+#spareList>.sg:first-child{margin-top:0}
 #view-stats .tot-table{margin-top:0;font-size:14px}
@@ -1150,7 +1151,7 @@ let SNAP={orders:{},at:null};
 try{SNAP=JSON.parse(document.getElementById("snapshot").textContent)||SNAP}catch(_){}
 const PARTS=[
   ["box","Коробка"],["psu","Блок питания"],["heater","Плата ТЭНа"],
-  ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]
+  ["engine","Двигатель"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]
 ];
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
 const KINDS=[["warranty","Гарантия"],["ours","Наш"]];
@@ -1292,11 +1293,11 @@ function renderOverall(ids){
   document.getElementById("overall").classList.toggle("complete",total>0&&filled===total);
   document.getElementById("overall").hidden=!ids.length||filled===total;
 }
-const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]];
+const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["engine","Двигатель"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]];
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
 // "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
-const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы с кнопками вкл."]};
+const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],engine:["рабочего","двигателя"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы с кнопками вкл."]};
 // the Parts tab's own comment, kept in meta/statsNote as {text}; saved on leaving the field, after COMMENT_IDLE without typing, or when the tab is hidden
 let statsNote="",statsNoteDraft=null,statsNoteT=0;
 function renderStatsNote(){
@@ -1339,7 +1340,7 @@ function renderSpares(st,n){
     const head=el("div","sgp-head");
     const states=el("span","sg-st");
     SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c&&its.length>1){states.append(el("span","mk "+v,mk),el("span","sg-c",String(c)))}});
-    head.append(el("span","sg-name",name),states,el("b","sg-n",String(its.length)));
+    const nb=el("b","sg-n",String(its.length));nb.append(el("small",null," шт."));head.append(el("span","sg-name",name),states,nb);
     const lst=el("div","sgp-items");
     (open||its.length<=SPARE_SHOW+1?its:its.slice(0,SPARE_SHOW)).forEach(x=>{
       const s0=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2];
@@ -1425,7 +1426,7 @@ function renderStats(ids){
        const g=GEN_WORKING[best.c.k]||["рабочей",best.c.name],cp=el("span","hero-cap flow");
        cp.append(el("span",null,(w%10===1&&w%100!==11?"фену":"фенам")+" не хватает только "+g[0]+" "),el("span","part-pill",g[1]));
        waitNum.append(el("b",null,String(w)),cp)}}
-    if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
+    if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено запчастей: "+unkTotal+" — после отметки число может вырасти."))}
   }
   const nums=el("div","hero-nums");nums.append(num);if(waitNum)nums.append(waitNum);
   hero.replaceChildren(el("div","hero-label","Можно собрать"),nums,...notes);
@@ -1640,7 +1641,7 @@ function updateBulkButtons(ids){
     b.disabled=off;syncHap(b);
   });
 }
-const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."]};
+const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."]};
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
@@ -1776,7 +1777,7 @@ let crmWin=null;
 function deskLinks(){try{return matchMedia("(min-width: 900px) and (pointer: fine)").matches}catch(_){return false}}
 try{matchMedia("(min-width: 900px) and (pointer: fine)").addEventListener("change",()=>{try{render()}catch(_){}})}catch(_){}
 // an order with "?" on every part is left out of all counts (progress, Parts tab) until at least one part gets another mark
-function notCounted(o){return !!o&&PARTS.every(([k])=>o[k]==="q")}
+function notCounted(o){return !!o&&PARTS.some(([k])=>o[k]==="q")&&PARTS.every(([k])=>!o[k]||o[k]==="q")}
 function render(){
   const ids=Object.keys(orders).sort((a,b)=>Number(a)-Number(b));
   const counted=ids.filter(id=>!notCounted(orders[id]));
