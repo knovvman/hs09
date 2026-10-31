@@ -266,7 +266,19 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 #view-stats .spare-head .panel-title{margin:0}
 #view-stats .spare-add.svc-toggle{height:28px;margin:-6px 0}
 #view-stats :is(.miss,.sg-row,.part){font-size:14px}
-#view-stats :is(.miss,.sg){border-top:1px solid var(--line)}
+#view-stats .miss{border-top:1px solid var(--line)}
+/* spares: part groups side by side, each with its count and every spare's note */
+#spareList{columns:3 210px;column-gap:24px}
+#view-stats .sgp{break-inside:avoid;-webkit-column-break-inside:avoid}
+#view-stats .sgp{border-top:1px solid var(--line);padding:9px 0 10px;min-width:0}
+#view-stats .sgp-head{display:flex;align-items:baseline;gap:10px;font-size:14px}
+#view-stats .sgp-head .sg-name{flex:1 1 auto;color:var(--fg)}
+#view-stats .sgp-items{margin-top:5px}
+#view-stats .sgp-items .spare{display:flex;align-items:baseline;gap:8px;border-top:0;padding:3px 0;font-size:13px}
+#view-stats .sgp-items .spare .mk{flex:0 0 14px;font-size:13px}
+#view-stats .sgp-items .spare .nt.none{opacity:.55;font-style:italic}
+.sgp-more{all:unset;cursor:pointer;font-size:12px;color:var(--accent);padding:3px 0 0 22px}
+@media (hover:hover){.sgp-more:hover{text-decoration:underline}}
 #view-stats .miss{padding:9px 0}
 #view-stats .sg-row{padding:9px 0}
 #view-stats .part{padding:11px 0}
@@ -286,7 +298,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 #view-stats .tot-table td.tbad{color:var(--bad)}
 #view-stats .tot-table .h-short{display:none}
 #view-stats .tot-table th.h-ok{color:var(--ok)}#view-stats .tot-table th.h-bad{color:var(--bad)}
-@media (max-width:899px){
+@media (max-width:1279px){
   #view-stats .tot-table .h-full{display:none}
   #view-stats .tot-table .h-short{display:inline}
   #view-stats .tot-table th.h-ok,#view-stats .tot-table th.h-bad{font-size:14px}
@@ -435,7 +447,7 @@ body.svc-open .wrap{padding-bottom:110px}
   #view-orders>.overall,#view-orders>.grid,#view-orders>.empty{flex:0 0 100%;margin-top:0;box-sizing:border-box;min-width:0}
   .grid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;align-items:start}
   .card{padding:14px 16px}
-  #view-stats{display:grid;grid-template-columns:minmax(0,.68fr) minmax(0,.32fr) minmax(0,1.35fr);gap:16px;align-items:start;padding-top:16px}
+  #view-stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.35fr) minmax(0,1fr);gap:16px;align-items:start;padding-top:16px}
   #view-stats>.hero{grid-column:1;grid-row:1;margin-top:0}
   #view-stats>section:nth-of-type(2){grid-column:2;grid-row:1 / span 2;margin-top:0}
   #view-stats>section:nth-of-type(3){grid-column:1;grid-row:2;margin-top:0}
@@ -556,11 +568,11 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 }
 @media (min-width:900px){
   #view-stats{align-items:stretch}
-  .stats-left{grid-column:1 / 3;display:flex;flex-direction:column;gap:16px;min-width:0}
+  .stats-left{grid-column:1;display:flex;flex-direction:column;gap:16px;min-width:0}
   .stats-left>section,#view-stats>.stats-parts{margin-top:0}
-  #view-stats>.stats-parts{grid-column:3;grid-row:1;display:flex;flex-direction:column}
-  #view-stats>section.stats-spare{grid-column:1;grid-row:2;margin-top:0}
-  #view-stats>section.stats-total{grid-column:2 / 4;grid-row:2;margin-top:0}
+  #view-stats>.stats-parts{grid-column:2 / 4;grid-row:1;display:flex;flex-direction:column}
+  #view-stats>section.stats-spare{grid-column:1 / 3;grid-row:2;margin-top:0}
+  #view-stats>section.stats-total{grid-column:3;grid-row:2;margin-top:0}
   #view-stats>section.stats-spare[hidden]+section.stats-total{grid-column:1 / -1}
   #view-stats>section.stats-note{grid-column:1 / -1;grid-row:3;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
@@ -971,8 +983,8 @@ const MARKUP=`<div class="wrap">
     </section>
     <!-- EXPERIMENT spares: end -->
     <section class="panel stats-note" id="statsNoteBox" hidden>
-      <h2 class="panel-title">Комментарий</h2>
-      <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="4" placeholder="Комментарий ко всей вкладке" aria-label="Комментарий ко всей вкладке «Запчасти»"></textarea>
+      <h2 class="panel-title">P.&nbsp;S.</h2>
+      <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="4" placeholder="Приписка ко всей вкладке" aria-label="P. S. — приписка ко всей вкладке «Запчасти»"></textarea>
     </section>
   </div>
   </div>
@@ -1316,24 +1328,28 @@ function renderSpares(st,n){
   const own=isOwnerUI(),can=own&&editable();
   // the owner always sees the block and its + (faded while locked), so nothing appears or jumps when the lock is toggled
   add.hidden=!own;add.disabled=!can;box.hidden=!spares.length&&!own;
-  // left: one line per part kind — name, count, states; a tap unfolds the single spares with their notes
+  // one group per part kind: name and count on top, then every spare with its state and where it came from;
+  // a long group shows SPARE_SHOW of them and folds the rest behind "ещё N"
+  const SPARE_SHOW=4;
   const kinds=STAT_PARTS.filter(([k])=>spares.some(x=>x.k===k));
   if(!kinds.length)list.replaceChildren(el("div","spare-empty","Пока пусто"));
   else list.replaceChildren(...kinds.map(([k,name])=>{
     const its=spares.filter(x=>x.k===k),open=spareOpen.has(k);
-    const g=el("div","sg"+(open?" open":""));
-    const row=el("button","sg-row");row.type="button";row.setAttribute("aria-expanded",open?"true":"false");
+    const g=el("div","sgp");
+    const head=el("div","sgp-head");
     const states=el("span","sg-st");
-    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c){const t=el("span","mk "+v,mk);states.append(t,el("span","sg-c",String(c)))}});
-    row.append(el("span","sg-arrow"),el("span","sg-name",name),states,el("b","sg-n",String(its.length)));
-    row.addEventListener("click",()=>{if(spareOpen.has(k))spareOpen.delete(k);else spareOpen.add(k);renderSpares(st,n)});
-    g.append(row);
-    if(open){const lst=el("div","sg-items");its.forEach(x=>{
+    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c&&its.length>1){states.append(el("span","mk "+v,mk),el("span","sg-c",String(c)))}});
+    head.append(el("span","sg-name",name),states,el("b","sg-n",String(its.length)));
+    const lst=el("div","sgp-items");
+    (open||its.length<=SPARE_SHOW+1?its:its.slice(0,SPARE_SHOW)).forEach(x=>{
       const s0=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2];
       const r=el("div","spare");const mk=el("span","mk "+s0[0],s0[1]);mk.title=s0[2];
-      r.append(mk,el("span","nt",x.note||"без заметки"));
+      r.append(mk,el("span","nt"+(x.note?"":" none"),x.note||"без заметки"));
       r.addEventListener("click",()=>{if(isOwnerUI()&&editable())openSpareDlg(x)});
-      lst.append(r)});g.append(lst)}
+      lst.append(r)});
+    if(its.length>SPARE_SHOW+1){const more=el("button","sgp-more",open?"свернуть":"ещё "+(its.length-SPARE_SHOW));more.type="button";
+      more.addEventListener("click",()=>{if(spareOpen.has(k))spareOpen.delete(k);else spareOpen.add(k);renderSpares(st,n)});lst.append(more)}
+    g.append(head,lst);
     return g;
   }));
   // right: a plain table of everything on hand — in orders, outside them, total, working
