@@ -200,7 +200,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 /* EXPERIMENT spares: start */
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .spare-head .panel-title{margin:0}
-.spare-add{margin:0}
+.spare-add.svc-toggle{margin:0;width:30px;height:30px;flex-shrink:0}
+.spare-head{min-height:30px}
 .spare{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
 .spare-head+#spareList>.spare:first-child{margin-top:6px}
 .spare .mk{flex:0 0 18px;text-align:center;font-weight:700;font-size:16px;line-height:1}
@@ -820,7 +821,7 @@ const MARKUP=`<div class="wrap">
     </section>
     <!-- EXPERIMENT spares: start -->
     <section class="panel stats-spare" id="statsSpare" hidden>
-      <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-btn spare-add" id="spareAdd" hidden>+ Добавить</button></div>
+      <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-toggle add-ico spare-add" id="spareAdd" hidden aria-label="Добавить запчасть вне заказов" title="Добавить"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button></div>
       <div id="spareList"></div>
     </section>
     <!-- EXPERIMENT spares: end -->
@@ -1118,8 +1119,9 @@ const SPARE_STATES=[["ok","✓","рабочая"],["bad","✗","нерабоча
 function renderSpares(){
   const box=document.getElementById("statsSpare"),list=document.getElementById("spareList"),add=document.getElementById("spareAdd");
   if(!box)return;
-  const can=isOwnerUI()&&editable();
-  add.hidden=!can;box.hidden=!spares.length&&!can;
+  const own=isOwnerUI(),can=own&&editable();
+  // the owner always sees the block and its + (faded while locked), so nothing appears or jumps when the lock is toggled
+  add.hidden=!own;add.disabled=!can;box.hidden=!spares.length&&!own;
   const order=k=>STAT_PARTS.findIndex(p=>p[0]===k);
   const items=[...spares].sort((a,b)=>order(a.k)-order(b.k));
   if(!items.length){list.replaceChildren(el("div","spare-empty","Пока пусто"));return}
