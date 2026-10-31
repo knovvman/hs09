@@ -225,8 +225,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sg-n{font-family:var(--font-mono);font-size:16px;color:var(--fg);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
 .sg-items{padding:0 0 8px 19px;animation:rowIn .25s ease-out both}
 .sg-items .spare{border-top:0;padding:4px 0}
-.stats-total{background:color-mix(in srgb,var(--accent) 5%,var(--card));border-color:color-mix(in srgb,var(--accent) 22%,var(--line))}
-.stats-total .panel-title{color:var(--accent)}
 .tot-table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px;font-variant-numeric:tabular-nums}
 .tot-table th{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px 10px;white-space:nowrap}
 .tot-table td{text-align:right;padding:8px 0 8px 10px;border-top:1px solid var(--line);color:var(--muted);font-family:var(--font-mono)}
@@ -255,6 +253,45 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .spare-pick button{font:inherit;font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
 .spare-pick button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:600}
 /* EXPERIMENT spares: end */
+/* ===== Parts tab: one visual system for every block =====
+   card: same background, border, radius and 16/18px padding; title: 12px uppercase muted, 12px below it the first divider;
+   rows: 14px names, 9px vertical padding, the same hairline; numbers: monospace 15px semibold — green working, red non-working,
+   accent outside orders, plain text for totals, muted for neutral counts */
+#view-stats :is(.panel,.hero){padding:16px 18px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+#view-stats :is(.panel-title,.hero-label){font-size:12px;line-height:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;min-height:0;display:block}
+#view-stats .hero{gap:0}
+#view-stats .hero-nums{margin-bottom:2px}
+#view-stats .spare-head{min-height:16px;margin:0 0 12px}
+#view-stats .spare-head .panel-title{margin:0}
+#view-stats .spare-add.svc-toggle{height:28px;margin:-6px 0}
+#view-stats :is(.miss,.sg-row,.part){font-size:14px}
+#view-stats :is(.miss,.sg){border-top:1px solid var(--line)}
+#view-stats .miss{padding:9px 0}
+#view-stats .sg-row{padding:9px 0}
+#view-stats .part{padding:11px 0}
+#view-stats :is(.miss b,.sg-n,.part-ok){font-family:var(--font-mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+#view-stats .miss b{color:var(--bad)}
+#view-stats .miss.okk b{color:var(--ok)}
+#view-stats .sg-n{color:var(--fg)}
+#view-stats .sg-st{font-size:12px}
+#view-stats .spare-head+#spareList>.sg:first-child{margin-top:0}
+#view-stats .tot-table{margin-top:0;font-size:14px}
+#view-stats .tot-table th{font-size:11px;letter-spacing:.04em;font-weight:600;color:var(--muted);padding:0 0 8px 12px}
+#view-stats .tot-table td{padding:9px 0 9px 12px;font-family:var(--font-mono);font-size:15px;font-weight:600;color:var(--muted)}
+#view-stats .tot-table td.tn{font-family:inherit;font-size:14px;font-weight:400;color:var(--fg);padding-left:0}
+#view-stats .tot-table td.tx{color:var(--accent)}
+#view-stats .tot-table td.tt{color:var(--fg)}
+#view-stats .tot-table td.tok{color:var(--ok)}
+#view-stats .tot-table td.tbad{color:var(--bad)}
+#view-stats .tot-table .h-short{display:none}
+#view-stats .tot-table th.h-ok{color:var(--ok)}#view-stats .tot-table th.h-bad{color:var(--bad)}
+@media (max-width:899px){
+  #view-stats .tot-table .h-full{display:none}
+  #view-stats .tot-table .h-short{display:inline}
+  #view-stats .tot-table th.h-ok,#view-stats .tot-table th.h-bad{font-size:14px}
+  #view-stats .tot-table :is(th,td){padding-left:8px}
+  #view-stats .tot-table td.tn{white-space:normal;padding-left:0}
+}
 .lock-row{margin-top:10px}
 .lock{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:6px 12px 6px 9px;font-size:13px;font-weight:500;min-height:38px}
 .lock[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card)}
@@ -1284,7 +1321,7 @@ function renderSpares(st,n){
   }));
   // right: a plain table of everything on hand — in orders, outside them, total, working
   if(tot&&st){
-    const hr=document.createElement("tr");["","в заказах","вне","всего","рабочих","нерабочих"].forEach(t=>hr.append(el("th",null,t)));
+    const hr=document.createElement("tr");[["",""],["в заказах","заказ"],["вне","вне"],["всего","всего"],["рабочих","✓"],["нерабочих","✗"]].forEach(([full,sh],i)=>{const h=el("th",i===4?"h-ok":i===5?"h-bad":null);h.append(el("span","h-full",full),el("span","h-short",sh));hr.append(h)});
     const th=document.createElement("thead");th.append(hr);
     const tb=document.createElement("tbody");
     st.forEach(c=>{const tr=document.createElement("tr");const inO=c.inOrders+c.bad;
