@@ -184,6 +184,24 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .miss b{font-family:var(--font-mono);font-size:16px;color:var(--bad);font-variant-numeric:tabular-nums;white-space:nowrap}
 .miss.okk b{color:var(--ok)}
 .miss-note{font-size:12px;color:var(--muted);margin-top:8px}
+/* EXPERIMENT spares: start */
+.spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.spare-head .panel-title{margin:0}
+.spare-add{margin:0}
+.spare{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.spare-head+#spareList>.spare:first-child{margin-top:6px}
+.spare .mk{flex:0 0 18px;text-align:center;font-weight:700;font-size:16px;line-height:1}
+.spare .mk.ok{color:var(--ok)}.spare .mk.bad{color:var(--bad)}.spare .mk.q{color:var(--warn);font-family:var(--font-mono)}
+.spare .nm{flex:0 0 auto;color:var(--fg)}
+.spare .nt{flex:1 1 auto;min-width:0;color:var(--muted);overflow-wrap:anywhere}
+.admin:not(.locked) .spare{cursor:pointer}
+@media (hover:hover){.admin:not(.locked) .spare:hover .nm{color:var(--accent)}}
+.spare-empty{font-size:13px;color:var(--muted);padding-top:6px}
+.part-sub .spare-n{color:var(--accent)}
+.spare-pick{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+.spare-pick button{font:inherit;font-size:13px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--fg);cursor:pointer}
+.spare-pick button[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:600}
+/* EXPERIMENT spares: end */
 .lock-row{margin-top:10px}
 .lock{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:6px 12px 6px 9px;font-size:13px;font-weight:500;min-height:38px}
 .lock[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card)}
@@ -417,7 +435,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (max-width:899px){
   #view-stats{display:flex;flex-direction:column}
   .stats-left{display:contents}
-  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}
+  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}
   #view-stats>*,.stats-left>*{flex-shrink:0}
   .stats-left>.hero{margin-top:10px}
 }
@@ -426,6 +444,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .stats-left{grid-column:1;display:flex;flex-direction:column;gap:16px;min-width:0}
   .stats-left>section,#view-stats>.stats-parts{margin-top:0}
   #view-stats>.stats-parts{grid-column:2;grid-row:1;display:flex;flex-direction:column}
+  #view-stats>section.stats-spare{grid-column:1 / -1;grid-row:2;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
   .stats-miss{flex:1 0 auto;display:flex;flex-direction:column}
   #statsMissing{flex:1 0 auto;display:flex;flex-direction:column}
@@ -773,6 +792,12 @@ const MARKUP=`<div class="wrap">
         <span id="legUnk"><i class="dot unk"></i>не отмечено</span>
       </div>
     </section>
+    <!-- EXPERIMENT spares: start -->
+    <section class="panel stats-spare" id="statsSpare" hidden>
+      <div class="spare-head"><h2 class="panel-title">Вне заказов</h2><button type="button" class="svc-btn spare-add" id="spareAdd" hidden>+ Добавить</button></div>
+      <div id="spareList"></div>
+    </section>
+    <!-- EXPERIMENT spares: end -->
   </div>
   </div>
   <dialog id="ordDlg" class="odlg" aria-labelledby="ordTitle">
@@ -805,6 +830,18 @@ const MARKUP=`<div class="wrap">
     </form>
   </dialog>
   <div class="note-tip" id="noteTip" role="tooltip"></div>
+  <!-- EXPERIMENT spares: start -->
+  <dialog id="spareDlg" class="odlg" aria-labelledby="spareTitle">
+    <form id="spareForm" class="odlg-box" novalidate>
+      <h2 id="spareTitle" class="odlg-title">Запчасть вне заказов</h2>
+      <div class="spare-pick" id="sparePart" role="group" aria-label="Запчасть"></div>
+      <div class="spare-pick" id="spareState" role="group" aria-label="Состояние"></div>
+      <div class="odlg-field"><label for="spareNote">Откуда</label><input id="spareNote" autocomplete="off" maxlength="200"></div>
+      <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="spareCancel">Отмена</button><button type="submit" class="odlg-btn" id="spareSave">Сохранить</button></div>
+      <button type="button" class="odlg-del" id="spareDel" hidden>Удалить</button>
+    </form>
+  </dialog>
+  <!-- EXPERIMENT spares: end -->
   <!-- EXPERIMENT part-notes: end -->
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button type="button" id="toastBtn" hidden></button></div>
 </div>`;
@@ -1032,14 +1069,65 @@ function renderOverall(ids){
 const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."]];
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
+// EXPERIMENT spares: start — parts that are not in any order (e.g. taken out of one), each with a note on where it came from.
+// Kept in meta/spares as {items:[{id,k,s,note}]}; anyone can read, only the owner can change (firestore.rules: meta/*).
+let spares=[];
+const SPARE_STATES=[["ok","✓","рабочая"],["bad","✗","нерабочая"],["q","?","не проверено"]];
+function renderSpares(){
+  const box=document.getElementById("statsSpare"),list=document.getElementById("spareList"),add=document.getElementById("spareAdd");
+  if(!box)return;
+  const can=isOwnerUI()&&editable();
+  add.hidden=!can;box.hidden=!spares.length&&!can;
+  const order=k=>STAT_PARTS.findIndex(p=>p[0]===k);
+  const items=[...spares].sort((a,b)=>order(a.k)-order(b.k));
+  if(!items.length){list.replaceChildren(el("div","spare-empty","Пока пусто"));return}
+  list.replaceChildren(...items.map(x=>{
+    const st=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2],p=STAT_PARTS.find(t=>t[0]===x.k);
+    const r=el("div","spare");const mk=el("span","mk "+st[0],st[1]);mk.title=st[2];
+    r.append(mk,el("span","nm",p?p[1]:x.k),el("span","nt",x.note||""));
+    r.addEventListener("click",()=>{if(isOwnerUI()&&editable())openSpareDlg(x)});
+    return r;
+  }));
+}
+const sDlg=document.getElementById("spareDlg");let sEdit=null,sPick={k:null,s:null};
+function pickers(){
+  const mk=(boxId,list,key,label)=>{const b=document.getElementById(boxId);b.replaceChildren(...list.map(([v,a,c])=>{const t=document.createElement("button");t.type="button";t.textContent=label(a,c);t.setAttribute("aria-pressed",sPick[key]===v?"true":"false");t.addEventListener("click",()=>{sPick[key]=v;pickers()});return t}))};
+  mk("sparePart",STAT_PARTS.map(([k,n])=>[k,n]),"k",a=>a);
+  mk("spareState",SPARE_STATES,"s",(a,c)=>a+" "+c);
+}
+function openSpareDlg(x){
+  sEdit=x||null;sPick={k:x?x.k:null,s:x?x.s:"bad"};pickers();
+  document.getElementById("spareNote").value=x?x.note||"":"";
+  document.getElementById("spareDel").hidden=!x;
+  try{sDlg.showModal()}catch(_){sDlg.setAttribute("open","")}
+}
+function closeSpareDlg(){try{sDlg.close()}catch(_){sDlg.removeAttribute("open")}sEdit=null}
+async function saveSpares(next){
+  const before=spares;spares=next;render();
+  try{await db.doc("meta/spares").set({items:next});setStatus("Сохранено")}catch(e){spares=before;render();handleErr(e)}
+}
+document.getElementById("spareAdd").addEventListener("click",()=>openSpareDlg(null));
+document.getElementById("spareCancel").addEventListener("click",closeSpareDlg);
+sDlg.addEventListener("click",e=>{if(e.target===sDlg)closeSpareDlg()});
+document.getElementById("spareForm").addEventListener("submit",e=>{
+  e.preventDefault();if(!db||!sPick.k){toast("Выбери запчасть");return}
+  const note=document.getElementById("spareNote").value.replace(/\s+/g," ").trim().slice(0,200);
+  const item={id:sEdit?sEdit.id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:sPick.k,s:sPick.s||"bad",note};
+  const next=sEdit?spares.map(x=>x.id===item.id?item:x):[...spares,item];
+  closeSpareDlg();saveSpares(next);
+});
+document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)return;const id=sEdit.id;closeSpareDlg();saveSpares(spares.filter(x=>x.id!==id))});
+// EXPERIMENT spares: end
 function renderStats(ids){
   const n=ids.length;
+  try{renderSpares()}catch(_){}
   const st=STAT_PARTS.map(([k,name])=>{
     const c={k,name,ok:0,bad:0,none:0,q:0,unk:0};
     ids.forEach(id=>{const v=orders[id][k];if(v==="ok")c.ok++;else if(v==="bad")c.bad++;else if(v==="none")c.none++;else if(v==="q")c.q++;else c.unk++});
+    c.inOrders=c.ok;c.x=spares.filter(x=>x.k===k).length;c.xok=spares.filter(x=>x.k===k&&x.s==="ok").length;c.ok+=c.xok; // EXPERIMENT spares: working spares count as working
     return c;
   });
-  const can=n?Math.min(...st.map(c=>c.ok)):0;
+  const can=n?Math.min(n,...st.map(c=>c.ok)):0; // never more dryers than orders
   const limit=st.filter(c=>c.ok===can);
   const unkTotal=st.reduce((a,c)=>a+c.unk,0);
   const allDone=n>0&&ids.every(id=>PARTS.every(([k])=>orders[id][k]));
@@ -1054,7 +1142,7 @@ function renderStats(ids){
     notes.push(lim);
     // how many more hair dryers wait only for a heater board: the other parts would allow `others`, heater boards allow `h`
     {const ht=st.find(c=>c.k==="heater"),rest=st.filter(c=>c.k!=="heater");
-     if(ht&&rest.length){const others=Math.min(...rest.map(c=>c.ok)),wait=others-ht.ok;
+     if(ht&&rest.length){const others=Math.min(n,...rest.map(c=>c.ok)),wait=others-ht.ok;
       if(wait>0){waitNum=el("div","hero-num wait");waitNum.append(el("b",null,"+"+wait),el("span",null,(wait%10===1&&wait%100!==11?"фену":"фенам")+" не хватает только рабочей платы ТЭНа"))}}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
@@ -1065,14 +1153,15 @@ function renderStats(ids){
     const row=el("div","part");
     const top=el("div","part-top");
     const nm=el("div","part-name"+(n&&c.ok===can?" limit":""),c.name);
-    const ok=el("div","part-ok");ok.append(String(c.ok)+" ",el("small",null,"рабочих из "+n));
+    const ok=el("div","part-ok");ok.append(String(c.ok)+" ",el("small",null,c.xok?"рабочих":"рабочих из "+n));
     top.append(nm,ok);
     const bar=el("div","seg-bar");
     [["s-ok",c.ok],["s-bad",c.bad],["s-none",c.none],["s-q",c.q],["s-unk",c.unk]].forEach(([cl,v])=>{if(v){const i=el("i",cl);i.style.flex=String(v);bar.append(i)}});
     const sub=el("div","part-sub");
-    sub.append(el("span",null,"есть "+(c.ok+c.bad)),el("span",null,"рабочих "+c.ok),el("span",null,"нерабочих "+c.bad),el("span",null,"нет "+c.none));
+    sub.append(el("span",null,"есть "+(c.inOrders+c.bad)),el("span",null,"рабочих "+c.inOrders),el("span",null,"нерабочих "+c.bad),el("span",null,"нет "+c.none));
     if(c.q)sub.append(el("span",null,"не проверено "+c.q));
     if(c.unk&&!allDone)sub.append(el("span",null,"не отмечено "+c.unk));
+    if(c.x)sub.append(el("span","spare-n","вне заказов "+c.x),el("span","spare-n","всего "+(c.inOrders+c.bad+c.x))); // EXPERIMENT spares
     row.append(top,bar,sub);
     return row;
   }));
@@ -2179,6 +2268,7 @@ showLock(false);
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
+  db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;spares=Array.isArray(v)?v.filter(x=>x&&x.k):[];render()},()=>{}); // EXPERIMENT spares
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists)next[d.id]=d.data()});
     orders=next;render();
