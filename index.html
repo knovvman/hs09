@@ -304,6 +304,13 @@ body.svc-open .wrap{padding-bottom:110px}
 .svc-toggle[aria-pressed="true"] svg{transform:rotate(-45deg)}
 .svc-toggle:active{transform:scale(.9)}
 .svc-toggle.add-ico{margin-left:0}
+.add-ico .add-txt{display:none}
+/* computer: the header button carries its words — "+ Добавить заказ" */
+@media (min-width:900px){
+  #addOrderBtn{width:auto;gap:6px;padding:0 14px 0 11px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
+  #addOrderBtn .add-txt{display:inline}
+  #addOrderBtn:disabled{color:var(--muted)}
+}
 @media (max-width:899px){body.admin .tools .w-all{display:none}} /* phone, owner: short labels make room for the + / lock / service icons */
 .svc-toggle.add-ico:disabled{opacity:.4;cursor:default}
 .svc-toggle.add-ico:disabled:active{transform:none}
@@ -780,7 +787,7 @@ const MARKUP=`<div class="wrap">
     <button id="offCopy" class="icon-btn" hidden title="Скопировать для офлайн" aria-label="Скопировать данные для офлайн-страницы"><svg class="ic-copy" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><svg class="ic-ok" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
     <button id="offImport" class="sync-btn" hidden title="Вставить данные, скопированные на основной странице">Обновить данные</button>
     <span id="syncMsg" class="sync-msg" role="status"></span>
-    <button id="addOrderBtn" class="svc-toggle add-ico" type="button" hidden aria-label="Добавить заказ" title="Добавить заказ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="addOrderBtn" class="svc-toggle add-ico" type="button" hidden aria-label="Добавить заказ" title="Добавить заказ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Добавить заказ</span></button>
     <button id="svcToggle" class="svc-toggle" hidden aria-pressed="false" aria-label="Сервисные кнопки" title="Сервисные кнопки"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.5-.5-.5-2.5z"/></svg></button>
   </div>
   <div id="importBox" class="import-box" hidden>
