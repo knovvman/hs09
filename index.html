@@ -154,6 +154,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .hero-num{display:flex;align-items:baseline;gap:10px}
 .hero-num b{font-family:var(--font-mono);font-size:48px;line-height:1;color:var(--ok);font-variant-numeric:tabular-nums}
 .hero-num.zero b{color:var(--bad)}
+.hero-num.wait b{color:var(--accent)}
+/* the big numbers share one right-aligned column, so their captions start on the same line */
+.hero-nums{display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:6px;align-items:baseline}
+.hero-nums>.hero-num{display:contents}
+.hero-nums>.hero-num>b{text-align:right}
 .hero-num span{font-size:15px;color:var(--fg)}
 .hero-note{font-size:13px;color:var(--muted)}
 .hero-note strong{color:var(--fg);font-weight:600}
@@ -1041,7 +1046,7 @@ function renderStats(ids){
   const lu=document.getElementById("legUnk");if(lu)lu.hidden=allDone;
   const hero=document.getElementById("statsHero");
   const num=el("div","hero-num"+(can===0?" zero":""));num.append(el("b",null,String(can)),el("span",null,plural(can,"рабочий фен","рабочих фена","рабочих фенов")+" можно собрать сейчас"));
-  const notes=[];
+  const notes=[];let waitNum=null;
   if(n){
     const lim=el("div","hero-note");
     lim.append(can===0?"Не хватает: ":"Ограничивает: ");
@@ -1050,12 +1055,11 @@ function renderStats(ids){
     // how many more hair dryers wait only for a heater board: the other parts would allow `others`, heater boards allow `h`
     {const ht=st.find(c=>c.k==="heater"),rest=st.filter(c=>c.k!=="heater");
      if(ht&&rest.length){const others=Math.min(...rest.map(c=>c.ok)),wait=others-ht.ok;
-      if(wait>0){const nx=el("div","hero-note");
-        nx.append("Ещё ",el("strong",null,wait+" "+(wait%10===1&&wait%100!==11?"фену":"фенам"))," не хватает только рабочей платы ТЭНа.");
-        notes.push(nx)}}}
+      if(wait>0){waitNum=el("div","hero-num wait");waitNum.append(el("b",null,"+"+wait),el("span",null,(wait%10===1&&wait%100!==11?"фену":"фенам")+" не хватает только рабочей платы ТЭНа"))}}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
-  hero.replaceChildren(el("div","hero-label","Можно собрать"),num,...notes);
+  const nums=el("div","hero-nums");nums.append(num);if(waitNum)nums.append(waitNum);
+  hero.replaceChildren(el("div","hero-label","Можно собрать"),nums,...notes);
   const partsBox=document.getElementById("statsParts");
   partsBox.replaceChildren(...st.map(c=>{
     const row=el("div","part");
