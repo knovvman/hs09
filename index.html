@@ -1014,13 +1014,25 @@ function applyLock(){
   document.getElementById("shackle").setAttribute("d",locked?"M8 11V7a4 4 0 0 1 8 0v4":"M8 11V7a4 4 0 0 1 7.5-2");
   document.body.classList.toggle("locked",locked);
 }
-lockBtn.addEventListener("click",()=>{
-  locked=!locked;
+function setLocked(v){
+  locked=v;
   try{localStorage.setItem("orders-locked",locked?"1":"0")}catch(_){}
   savePrefs();
   applyLock();render();updateBulkUI();
   if(locked)publishSnapshot();
-});
+  armAutoLock();
+}
+lockBtn.addEventListener("click",()=>setLocked(!locked));
+// the lock closes by itself after 30 s with no clicks, taps or typing; it waits while a dialog is open or a text is being typed
+const AUTO_LOCK_MS=30000;let autoLockT=0;
+function armAutoLock(){clearTimeout(autoLockT);if(!locked&&document.body.classList.contains("admin"))autoLockT=setTimeout(autoLockNow,AUTO_LOCK_MS)}
+function autoLockNow(){
+  if(locked)return;
+  const ae=document.activeElement,typing=ae&&(ae.tagName==="TEXTAREA"||ae.tagName==="INPUT")&&!ae.readOnly;
+  if(document.querySelector("dialog[open]")||typing){armAutoLock();return}
+  setLocked(true);toast("Замок закрылся сам");
+}
+["pointerdown","keydown","input"].forEach(ev=>document.addEventListener(ev,()=>{if(!locked)armAutoLock()},{capture:true,passive:true}));
 applyLock();
 const editable=()=>canWrite&&!locked&&!!db;
 let collapsed=new Set();
@@ -1419,8 +1431,8 @@ function partCell(id,o,k,label){
 function commentBox(id,o,scope){
   const t=document.createElement("textarea");
   t.className="comment";t.dataset.id=id;t.dataset.scope=scope;t.rows=1;t.id="comment-"+scope+"-"+id;
-  // desktop table: no "Комментарий" hint; an empty field is marked with .is-empty instead
-  if(scope!=="t")t.placeholder="Комментарий";t.setAttribute("aria-label","Комментарий к заказу #"+id);
+  // an empty field shows the "Комментарий" hint (above notes an empty field stays hidden, so it never shows there); .is-empty marks it
+  t.placeholder="Комментарий";t.setAttribute("aria-label","Комментарий к заказу #"+id);
   t.value=(id in drafts)?drafts[id]:(typeof o.comment==="string"?o.comment:"");
   t.classList.toggle("is-empty",!t.value);
   t.readOnly=!editable();
@@ -2346,6 +2358,7 @@ showLock(false);
     document.body.classList.add("admin");
     document.getElementById("svcToggle").hidden=false;
     document.getElementById("addOrderBtn").hidden=false;
+    armAutoLock();
     let o=false;try{o=localStorage.getItem("hs09-svc")==="1"}catch(_){}
     setSvc(o,false);
   }}catch(_){}
@@ -2370,7 +2383,7 @@ showLock(false);
       if(s.exists){
         const p=s.data()||{};
         if(typeof p.locked==="boolean")locked=p.locked;
-        applyLock();render();
+        applyLock();render();armAutoLock();
       }
     }
   }catch(_){}
