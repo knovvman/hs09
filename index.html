@@ -1128,7 +1128,7 @@ async function saveSpares(next){
 }
 document.getElementById("spareAdd").addEventListener("click",()=>openSpareDlg(null));
 document.getElementById("spareCancel").addEventListener("click",closeSpareDlg);
-sDlg.addEventListener("click",e=>{if(e.target===sDlg)closeSpareDlg()});
+closeOnBackdrop(sDlg,closeSpareDlg);
 document.getElementById("spareForm").addEventListener("submit",e=>{
   e.preventDefault();if(!db||!sPick.k){toast("Выбери запчасть");return}
   const note=document.getElementById("spareNote").value.replace(/\s+/g," ").trim().slice(0,200);
@@ -2070,6 +2070,13 @@ function openOrderDlg(id){
 }
 function closeOrderDlg(){resetDel();try{dlg.close()}catch(_){dlg.removeAttribute("open")}dlgId=null}
 let toastT=0;
+// a dialog closes on its dimmed backdrop only when the press also started there — a text selection that begins in a field
+// and ends outside the box is not a "click outside"
+function closeOnBackdrop(d,close){
+  let downOnBackdrop=false;
+  d.addEventListener("pointerdown",e=>{downOnBackdrop=e.target===d});
+  d.addEventListener("click",e=>{if(e.target===d&&downOnBackdrop)close();downOnBackdrop=false});
+}
 function toast(text,action,fn){
   const t=document.getElementById("toast"),b=document.getElementById("toastBtn");
   document.getElementById("toastText").textContent=text;
@@ -2137,7 +2144,7 @@ function deleteOrder(){
 document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||!editable()){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderLink();else addOrder()});
 document.getElementById("ordCancel").addEventListener("click",closeOrderDlg);
 dlgDel.addEventListener("click",()=>{if(db&&editable())deleteOrder()});
-dlg.addEventListener("click",e=>{if(e.target===dlg)closeOrderDlg()}); // tap outside the box closes it
+closeOnBackdrop(dlg,closeOrderDlg); // tap outside the box closes it
 dlg.addEventListener("close",()=>{resetDel();dlgId=null});
 dlgNum.addEventListener("input",()=>{const v=dlgNum.value.replace(/\D/g,"");if(v!==dlgNum.value)dlgNum.value=v;dlgNum.classList.remove("bad");dlgMsg.textContent=""});
 dlgLink.addEventListener("input",()=>{dlgMsg.textContent="";dlgShowCheck()});
@@ -2260,7 +2267,7 @@ document.getElementById("noteForm").addEventListener("submit",e=>{
 });
 document.getElementById("noteCancel").addEventListener("click",closeNoteDlg);
 nDel.addEventListener("click",()=>{if(!nFor)return;const {id,k}=nFor;closeNoteDlg();setNote(id,k,null)});
-nDlg.addEventListener("click",e=>{if(e.target===nDlg)closeNoteDlg()});
+closeOnBackdrop(nDlg,closeNoteDlg);
 nDlg.addEventListener("close",()=>{nFor=null});
 // EXPERIMENT part-notes: end
 // computer: rounded bottom edge for the orders table while it is cut off by the footer strip
