@@ -334,8 +334,6 @@ body.svc-open .wrap{padding-bottom:110px}
   #addOrderBtn{width:auto;gap:6px;padding:0 14px 0 11px;font:inherit;font-size:13px;font-weight:500;color:var(--fg)}
   #addOrderBtn .add-txt{display:inline}
   #addOrderBtn:disabled{color:var(--muted)}
-  #addOrderBtn{transition:opacity .25s ease}
-  body[data-tab]:not([data-tab="orders"]) #addOrderBtn{opacity:0;pointer-events:none}
 }
 .svc-toggle.add-ico:disabled{opacity:.4;cursor:default}
 .svc-toggle.add-ico:disabled:active{transform:none}
@@ -642,7 +640,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 /* computer header: every control is 28px tall, every icon 15px, and they sit 8px apart on one centre line */
 @media (min-width:900px){
   header>.lock svg,header>.svc-toggle svg,header .acct-btn svg,#addOrderBtn svg,header .theme svg{width:15px!important;height:15px!important}
-  #addOrderBtn{font-size:12px;gap:5px;padding:0 12px 0 9px}
+  /* a wide pill reads smaller than the round icons at the same height: 2px taller, and the lowercase label lifted half a pixel to its optical centre */
+  #addOrderBtn{font-size:12px;gap:5px;padding:0 12px 0 9px;height:30px;min-height:30px}
+  #addOrderBtn .add-txt{position:relative;top:-.5px}
   header .acct-btn{align-self:center}
   header>.lock,header>.svc-toggle,#addOrderBtn,header .theme{align-self:center}
 }
@@ -846,7 +846,7 @@ const MARKUP=`<div class="wrap">
     <button id="offImport" class="sync-btn" hidden title="Вставить данные, скопированные на основной странице">Обновить данные</button>
     <span id="syncMsg" class="sync-msg" role="status"></span>
     <button id="addOrderBtn" class="svc-toggle add-ico" type="button" hidden aria-label="Добавить заказ" title="Добавить заказ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Добавить заказ</span></button>
-    <button id="svcToggle" class="svc-toggle" hidden aria-pressed="false" aria-label="Сервисные кнопки" title="Сервисные кнопки"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.5-.5-.5-2.5z"/></svg></button>
+    <button id="svcToggle" class="svc-toggle" hidden aria-pressed="false" aria-label="Сервисные кнопки" title="Сервисные кнопки"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path transform="translate(1.58 -1.08)" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.5-.5-.5-2.5z"/></svg></button>
   </div>
   <div id="importBox" class="import-box" hidden>
     <div class="import-hint">Вставь сюда скопированное на основной странице: на iPhone — нажми на поле и «Вставить», на Mac — ⌘V. Страница обновится сама.</div>
