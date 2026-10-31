@@ -161,8 +161,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .hero-nums>.hero-num>b{text-align:right}
 /* "Ограничивает: …" belongs to the first number: on its line, at the right on wide screens, just under the caption on phones */
 .hero-cap{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:16px;row-gap:2px;min-width:0}
-.hero-num .hero-lim{font-size:13px;color:var(--muted)}
-.hero-num .hero-lim strong{color:var(--fg);font-weight:600}
+.hero-num .hero-lim{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:4px;font-size:12px;color:var(--muted)}
+/* a part name as a soft pill: shows that any part can stand in this place */
+.hero-num .part-pill{display:inline-block;padding:1px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--accent);font-weight:600;white-space:nowrap}
+.hero-num .part-pill.sm{padding:0 7px;font-size:12px}
+.hero-num .hero-cap.flow{display:block} /* plain text flow: the pill follows its word and wraps with it */
 @media (min-width:900px){.hero-cap{justify-content:space-between}}
 @media (max-width:899px){.hero-lim{flex-basis:100%}}
 .hero-num span{font-size:15px;color:var(--fg)}
@@ -1085,7 +1088,7 @@ const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭН
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
 // "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
-const GEN_WORKING={psu:"рабочего блока питания",heater:"рабочей платы ТЭНа",motor:"рабочей платы двигателя",bt:"рабочей платы Bluetooth",power:"рабочей платы с кнопками вкл."};
+const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы с кнопками вкл."]};
 // EXPERIMENT spares: start — parts that are not in any order (e.g. taken out of one), each with a note on where it came from.
 // Kept in meta/spares as {items:[{id,k,s,note}]}; anyone can read, only the owner can change (firestore.rules: meta/*).
 let spares=[];
@@ -1158,14 +1161,16 @@ function renderStats(ids){
     // what holds this number back sits on its line, so it reads as part of it
     const lim=el("span","hero-lim");
     lim.append(can===0?"Не хватает: ":"Ограничивает: ");
-    lim.append(el("strong",null,limit.map(c=>c.name).join(", ")));
+    limit.forEach(c=>lim.append(el("span","part-pill sm",c.name)));
     cap.append(lim);
     // how many more dryers lack just one part: for each part, the others would allow `others`, this part allows `ok`;
     // the part with the biggest gap is shown (with parts pooled across orders, only a single bottleneck part can have a gap)
     {let best=null;
      st.forEach(c=>{const rest=st.filter(x=>x!==c);if(!rest.length)return;const others=Math.min(n,...rest.map(x=>x.ok)),wait=others-c.ok;if(wait>0&&(!best||wait>best.wait))best={c,wait}});
      if(best){const w=best.wait;waitNum=el("div","hero-num wait");
-       waitNum.append(el("b",null,"+"+w),el("span","hero-cap",(w%10===1&&w%100!==11?"фену":"фенам")+" не хватает только "+(GEN_WORKING[best.c.k]||best.c.name)))}}
+       const g=GEN_WORKING[best.c.k]||["рабочей",best.c.name],cp=el("span","hero-cap flow");
+       cp.append(el("span",null,(w%10===1&&w%100!==11?"фену":"фенам")+" не хватает только "+g[0]+" "),el("span","part-pill",g[1]));
+       waitNum.append(el("b",null,String(w)),cp)}}
     if(unkTotal&&!allDone){notes.push(el("div","hero-note","Не отмечено плат и БП: "+unkTotal+" — после отметки число может вырасти."))}
   }
   const nums=el("div","hero-nums");nums.append(num);if(waitNum)nums.append(waitNum);
