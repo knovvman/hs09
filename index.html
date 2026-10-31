@@ -396,7 +396,7 @@ body.svc-open .wrap{padding-bottom:110px}
 /* table details for every desktop width (were stuck inside the 900–1180 block by mistake) */
 @media (min-width:900px){
   .dtable .comment{margin-top:0;font-size:14px;padding:6px 8px;min-height:32px;background:transparent}
-  .dtable .comment:not(:focus):placeholder-shown{border-color:transparent}
+  .dtable .comment:not(:focus):is(:placeholder-shown,.is-empty){border-color:transparent}
   .dtable .tprog{font-family:var(--font-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
   .dtable .tprog.done{color:var(--ok);font-weight:700}
   .dtable.prog-off .c-prog{display:none}
@@ -687,6 +687,10 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .cnotes{padding:0 8px 6px;font-size:14px}
   .dtable .cbox.has-notes>.comment{padding-bottom:0}
   .dtable .cbox.has-notes>.comment[readonly]:placeholder-shown+.cnotes{padding-top:6px}
+  /* an empty comment above notes stays hidden whether the lock is open or closed, so nothing jumps;
+     the owner clicks the free space of the cell to type one */
+  .dtable .cbox.has-notes:not(.typing)>.comment.is-empty{display:none}
+  .dtable .cbox.has-notes:not(.typing)>.comment.is-empty+.cnotes{padding-top:6px}
   .dtable td.c-num .ord-chip.ph{display:none}
 }
 .card-body.anim .cbox.has-notes{animation:rowIn .4s ease-out .261s both}
@@ -1415,10 +1419,12 @@ function partCell(id,o,k,label){
 function commentBox(id,o,scope){
   const t=document.createElement("textarea");
   t.className="comment";t.dataset.id=id;t.dataset.scope=scope;t.rows=1;t.id="comment-"+scope+"-"+id;
-  t.placeholder="Комментарий";t.setAttribute("aria-label","Комментарий к заказу #"+id);
+  // desktop table: no "Комментарий" hint; an empty field is marked with .is-empty instead
+  if(scope!=="t")t.placeholder="Комментарий";t.setAttribute("aria-label","Комментарий к заказу #"+id);
   t.value=(id in drafts)?drafts[id]:(typeof o.comment==="string"?o.comment:"");
+  t.classList.toggle("is-empty",!t.value);
   t.readOnly=!editable();
-  t.addEventListener("input",()=>{drafts[id]=t.value;autosize(t);clearTimeout(commentTimers[id]);commentTimers[id]=setTimeout(()=>saveComment(id,true),COMMENT_IDLE)});
+  t.addEventListener("input",()=>{t.classList.toggle("is-empty",!t.value);drafts[id]=t.value;autosize(t);clearTimeout(commentTimers[id]);commentTimers[id]=setTimeout(()=>saveComment(id,true),COMMENT_IDLE)});
   t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
   return t;
 }
@@ -1551,7 +1557,7 @@ function render(){
   justOpened.clear();
   if(keep){
     const t=document.querySelector((keep.scope==="t"?"#dtable":"#grid")+' textarea.comment[data-id="'+keep.id+'"]');
-    if(t){t.focus();try{t.setSelectionRange(keep.a,keep.b)}catch(_){}}
+    if(t){const cb=t.closest(".cbox");if(cb)cb.classList.add("typing");t.focus();try{t.setSelectionRange(keep.a,keep.b)}catch(_){}}
   }
 }
 
@@ -2250,6 +2256,9 @@ function withNotes(t,id,o){
     list.append(line);
   });
   box.append(t,list);
+  // desktop: the empty comment above notes is hidden; the owner clicks the free space of the cell to type
+  box.addEventListener("click",e=>{if(e.target.closest(".cnote")||!editable()||t.dataset.scope!=="t")return;box.classList.add("typing");t.focus()});
+  t.addEventListener("blur",()=>{if(!t.value)box.classList.remove("typing")});
   return box;
 }
 // hover popup (computer)
