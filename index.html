@@ -323,11 +323,13 @@ body.svc-open .wrap{padding-bottom:110px}
 .svc-toggle.add-ico{margin-left:0}
 .add-ico .add-txt{display:none}
 @media (max-width:899px){
-  /* phone: "+ Добавить заказ" gets a full-width row of its own under "Развернуть все / Свернуть все" */
+  /* phone: "+ Добавить заказ" sits in the "Развернуть / Свернуть" row */
   /* phone: "+ Добавить заказ" is an oval on the right of the expand/collapse row (those get short labels for room) */
-  .tools>#addOrderBtn{flex:0 0 auto;width:auto;height:38px;min-height:38px;border-radius:999px;gap:5px;padding:0 13px 0 10px;font:inherit;font-size:14px;font-weight:500;color:var(--fg);white-space:nowrap}
+  .tools>#addOrderBtn{flex:0 0 auto;width:auto;height:38px;min-height:38px;border-radius:999px;gap:5px;padding:0 11px 0 8px;font:inherit;font-size:13px;font-weight:500;color:var(--fg);white-space:nowrap}
+  .tools:has(>#addOrderBtn:not([hidden])){gap:6px}
+  .tools:has(>#addOrderBtn:not([hidden])) .btn{flex-shrink:0;padding-left:9px;padding-right:9px}
+  .tools:has(>#addOrderBtn:not([hidden]))>.hapwrap{flex-shrink:0}
   .tools>#addOrderBtn svg{width:15px;height:15px}
-  body.admin .tools .w-all{display:none}
   .tools>#addOrderBtn .add-txt{display:inline}
   .tools>#addOrderBtn:disabled{color:var(--muted)}
 }
@@ -586,8 +588,13 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
 @media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}
   /* owner: the key sits before the theme button; the status keeps its place on the title line */
-  header:has(>#svcToggle:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto;column-gap:8px}
+  header:has(>#svcToggle:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto;column-gap:6px}
+  header:has(>#svcToggle:not([hidden]))>:is(.svc-toggle,.theme-btn,.acct-btn){width:36px!important;height:36px!important}
   header>.svc-toggle{width:40px;height:40px;flex-shrink:0}
+}
+/* very narrow phones: "+ Добавить" without the second word */
+@media (max-width:380px){.tools>#addOrderBtn .w-zak{display:none}}
+@media (max-width:899px){
   header>.svc-toggle svg{width:20px;height:20px}
   /* the lock in the phone header: a round icon, the same size as the theme button */
   /* the lock floats in the bottom-right corner, above the page */
@@ -846,7 +853,7 @@ const MARKUP=`<div class="wrap">
     <button id="offCopy" class="icon-btn" hidden title="Скопировать для офлайн" aria-label="Скопировать данные для офлайн-страницы"><svg class="ic-copy" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><svg class="ic-ok" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
     <button id="offImport" class="sync-btn" hidden title="Вставить данные, скопированные на основной странице">Обновить данные</button>
     <span id="syncMsg" class="sync-msg" role="status"></span>
-    <button id="addOrderBtn" class="svc-toggle add-ico" type="button" hidden aria-label="Добавить заказ" title="Добавить заказ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Добавить заказ</span></button>
+    <button id="addOrderBtn" class="svc-toggle add-ico" type="button" hidden aria-label="Добавить заказ" title="Добавить заказ"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Добавить<span class="w-zak"> заказ</span></span></button>
     <button id="svcToggle" class="svc-toggle" hidden aria-pressed="false" aria-label="Сервисные кнопки" title="Сервисные кнопки"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path transform="translate(1.58 -1.08)" d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.5-.5-.5-2.5z"/></svg></button>
   </div>
   <div id="importBox" class="import-box" hidden>
@@ -862,8 +869,8 @@ const MARKUP=`<div class="wrap">
     </div>
 
   <div class="tools">
-    <button class="btn ghost" id="expandAll">Развернуть<span class="w-all"> все</span></button>
-    <button class="btn ghost" id="collapseAll">Свернуть<span class="w-all"> все</span></button>
+    <button class="btn ghost" id="expandAll">Развернуть</button>
+    <button class="btn ghost" id="collapseAll">Свернуть</button>
   </div>
 
   <section class="overall" id="overall" aria-label="Общий прогресс">
