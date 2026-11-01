@@ -551,6 +551,29 @@ body.svc-open .wrap{padding-bottom:110px}
 }
 @media (prefers-reduced-motion:reduce){.dtable td.c-com.clamp>.cclip{transition:none!important}}
 /* EXPERIMENT cloud: end */
+/* "install the app": a small card at the bottom for visitors in a browser — a real install button where the browser offers one
+   (Chrome, Edge), short steps elsewhere (iPhone/iPad, Safari on Mac, Android); hidden in the installed app and for 30 days after closing */
+.inst{position:fixed;z-index:29;left:max(20px,env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 40px));box-sizing:border-box;
+  display:grid;grid-template-columns:40px minmax(0,1fr) auto;column-gap:12px;row-gap:10px;align-items:start;padding:14px 12px 14px 14px;border-radius:16px;
+  background:var(--card);color:var(--fg);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 30px rgba(0,0,0,.18);font-family:var(--font-body);
+  opacity:0;transform:translateY(16px);transition:opacity .3s ease,transform .35s cubic-bezier(.2,.8,.2,1)}
+.inst.show{opacity:1;transform:none}
+.inst[hidden]{display:none}
+.inst-ic{width:40px;height:40px;border-radius:10px;display:block}
+.inst-title{font-size:15px;font-weight:600;line-height:20px}
+.inst-text{margin-top:2px;font-size:13px;line-height:1.5;color:var(--muted)}
+.inst-text b{font-weight:600;color:var(--fg)}
+.inst-text .mk-w{display:inline-flex;vertical-align:-3px;font-size:16px;color:var(--accent);margin:0 1px;--sw:2}
+.inst-x{width:28px;height:28px;margin:-4px -2px 0 0;border:0;border-radius:999px;background:none;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+@media (hover:hover){.inst-x:hover{color:var(--fg);background:var(--none-bg)}}
+.inst-go{grid-column:2 / -1;justify-self:start;font:inherit;font-size:14px;font-weight:500;padding:7px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
+.inst-go:active{transform:scale(.97)}
+@media (max-width:899px){
+  .inst{left:12px;right:12px;width:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+  /* the owner's floating lock and key sit in the corner: the card goes above them */
+  body.admin .inst{bottom:calc(18px + 54px + 12px + 54px + 14px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){.inst{transition:none}}
 /* history: a short feed on the Parts tab and the whole feed in a panel that slides in from the right */
 .hist-btn{display:none}
 @media (max-width:899px){
@@ -1159,6 +1182,12 @@ const MARKUP=`<div class="wrap">
   </dialog>
   <!-- EXPERIMENT spares: end -->
   <!-- EXPERIMENT part-notes: end -->
+  <div class="inst" id="inst" role="dialog" aria-labelledby="instTitle" hidden>
+    <img class="inst-ic" src="icon-192.png?v=3" alt="" width="40" height="40">
+    <div class="inst-body"><div class="inst-title" id="instTitle">Установить HS09</div><div class="inst-text" id="instText"></div></div>
+    <button type="button" class="inst-x" id="instX" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button type="button" class="inst-go" id="instGo">Установить</button>
+  </div>
   <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastText"></span><button type="button" id="toastBtn" hidden></button></div>
 </div>`;
 document.getElementById("app").innerHTML=MARKUP;
@@ -1212,7 +1241,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   const t=document.getElementById("dtable");
   // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
-  const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit");clipShow(n||null)};
+  const hit=(c,n,still)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit");if(!still)clipShow(n||null)};
   // a note in the comment makes its part's mark (or the number) stand out but does not underline the column title;
   // leaving a note for the gap before the next one waits a moment, so the mark doesn't blink off between notes
   let gapT=0;const now=(f)=>{clearTimeout(gapT);f()};
@@ -1223,7 +1252,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
       const n=e.target.closest(".cnote[data-k]"),tr=td.parentNode;
       const c=n&&tr?tr.querySelector(n.dataset.k==="order"?"td.c-num":"td.c-k-"+n.dataset.k):null;
       if(!c){clearTimeout(gapT);gapT=setTimeout(()=>{mark(-1);hit(null)},140);return}
-      now(()=>{mark(-1);hit(c,n)});return;
+      now(()=>{mark(-1);hit(c,n,true)});return; // the comment under the pointer stays put
     }
     const k=!td.classList.contains("has-note")?null:td.classList.contains("c-num")?"order":td.classList.contains("c-part")?([...td.classList].find(x=>x.startsWith("c-k-"))||"").slice(4):null;
     const nt=k&&td.parentNode?td.parentNode.querySelector('.cnote[data-k="'+k+'"]'):null;
@@ -1283,7 +1312,9 @@ const STATES=[["ok","✓","Работает"],["bad","✗","Не работае�
 // every mark and small symbol is drawn (SVG, 1em square, current colour), never a font glyph: glyphs sit differently
 // in different fonts and systems (a "+" on iPhone sat low). New symbols go here too.
 const ICON_PATHS={ok:"M4.5 12.5l5 5L19.5 7",bad:"M6.5 6.5l11 11M17.5 6.5l-11 11",none:"M3.5 12h17",
-  q:"M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1",arr:"M4.5 12h14M13.5 7l5 5-5 5"};
+  q:"M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1",arr:"M4.5 12h14M13.5 7l5 5-5 5",
+  share:"M12 3.5v11M8 7.5l4-4 4 4M7.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1",
+  dots:"M12 5.5v.1M12 12v.1M12 18.5v.1",plusbox:"M12 8.5v7M8.5 12h7M6.5 4.5h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z"};
 function iconSVG(k){return '<svg class="mk-ic ic-'+k+'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="'+(ICON_PATHS[k]||"")+'"/></svg>'}
 function icon(k,cls){const e=document.createElement("span");e.className=(cls?cls+" ":"")+"mk-w";e.innerHTML=iconSVG(k);return e}
 const grid=document.getElementById("grid"),empty=document.getElementById("empty"),statusEl=document.getElementById("status");
@@ -1989,11 +2020,6 @@ function clampRows(body){
     c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
     w.style.top=Math.round((c.clientHeight-Math.min(w.scrollHeight,CLIP_H))/2)+"px"; // centred in the row
     if(!c.dataset.cl){c.dataset.cl=1;w.addEventListener("scroll",()=>clipFade(w),{passive:true});
-      // the wheel / trackpad scrolls a closed cut comment under the pointer; at its ends the page scrolls as usual
-      w.addEventListener("wheel",e=>{if(!c.classList.contains("clamp")||w.classList.contains("open")||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
-        const max=w.scrollHeight-w.clientHeight,d=e.deltaMode===1?e.deltaY*20:e.deltaY;
-        if((d<0&&w.scrollTop<=0)||(d>0&&w.scrollTop>=max-1))return;
-        e.preventDefault();cancelAnimationFrame(w._sa||0);clearTimeout(clipT);w.scrollTop=Math.max(0,Math.min(max,w.scrollTop+d))},{passive:false});
       w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px"})}
   });
   // the page redraws on every data update: an open comment comes back open, without animating again
@@ -2661,6 +2687,32 @@ function closeOnBackdrop(d,close){
   d.addEventListener("pointerdown",e=>{downOnBackdrop=e.target===d});
   d.addEventListener("click",e=>{if(e.target===d&&downOnBackdrop)close();downOnBackdrop=false});
 }
+// "install the app" card
+{const card=document.getElementById("inst"),text=document.getElementById("instText"),go=document.getElementById("instGo"),KEY="hs09-install-off";
+ const installed=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(_){return false}};
+ const off=()=>{try{const t=+localStorage.getItem(KEY)||0;return Date.now()-t<30*864e5}catch(_){return false}};
+ const ua=navigator.userAgent||"",touchMac=/Macintosh/.test(ua)&&navigator.maxTouchPoints>1;
+ const ios=/iPhone|iPad|iPod/.test(ua)||touchMac,android=/Android/.test(ua);
+ const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari\//.test(ua)&&!/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
+ let native=null,shown=false;
+ const I=k=>{const e=icon(k);return e};
+ const show=(how)=>{
+   if(shown||installed()||off())return;shown=true;
+   text.replaceChildren();go.hidden=how!=="native";
+   if(how==="native")text.append("Откроется отдельным окном, без вкладок браузера.");
+   else if(how==="ios")text.append("Нажми ",I("share")," ",Object.assign(el("b",null,"«Поделиться»")),", затем ",el("b",null,"«На экран „Домой“»"),".");
+   else if(how==="mac")text.append("В меню ",el("b",null,"«Файл»")," выбери ",el("b",null,"«Добавить в Dock»"),".");
+   else if(how==="android")text.append("Нажми ",I("dots")," в углу браузера, затем ",el("b",null,"«Добавить на главный экран»"),".");
+   card.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
+ };
+ const hide=(remember)=>{if(remember)try{localStorage.setItem(KEY,String(Date.now()))}catch(_){}
+   card.classList.remove("show");setTimeout(()=>{card.hidden=true},350)};
+ window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();native=e;if(!shown)setTimeout(()=>show("native"),1500)});
+ window.addEventListener("appinstalled",()=>hide(true));
+ go.addEventListener("click",async()=>{if(!native)return;go.disabled=true;try{native.prompt();const r=await native.userChoice;hide(r&&r.outcome==="accepted"||true)}catch(_){hide(false)}native=null;go.disabled=false});
+ document.getElementById("instX").addEventListener("click",()=>hide(true));
+ // browsers without an install button of their own: short steps, a moment after the page opens
+ setTimeout(()=>{if(native||shown)return;if(ios)show("ios");else if(macSafari)show("mac");else if(android)show("android")},3000);}
 function toast(text,action,fn){
   const t=document.getElementById("toast"),b=document.getElementById("toastBtn");
   document.getElementById("toastText").textContent=text;
