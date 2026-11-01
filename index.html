@@ -495,6 +495,11 @@ body.svc-open .wrap{padding-bottom:110px}
   /* a little room between the card's left edge and the Order column (about what the comment keeps on the right) */
   .dtable :is(th,td).c-num{padding-left:18px!important;padding-right:6px!important}
   .dtable:not(.all-done) :is(th,td).c-num{width:calc(var(--part-w,90px) + 12px);min-width:calc(var(--part-w,90px) + 12px)}
+  /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
+  .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
+  .dtable-wrap{overflow-x:clip} /* an opened comment may hang below the table */
+  .dtable th.c-part{letter-spacing:.025em;padding-left:5px;padding-right:5px}
+  /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
   .dtable:not(.all-done) :is(th,td).c-loc{width:60px;min-width:60px;box-sizing:border-box}
   .dtable:not(.all-done) :is(th,td).c-kind{width:78px;min-width:78px;box-sizing:border-box}
@@ -505,11 +510,20 @@ body.svc-open .wrap{padding-bottom:110px}
 }
 @media (min-width:900px) and (max-width:1180px){
   .dtable th{padding-left:3px;padding-right:3px;letter-spacing:0;font-size:10px}
+  .dtable th.c-part{letter-spacing:0;padding-left:4px;padding-right:4px} /* EXPERIMENT narrow-cols */
+  .dtable:not(.all-done) :is(th,td).c-num{width:90px;min-width:90px} /* EXPERIMENT narrow-cols */
   .dtable td{padding-left:4px;padding-right:4px}
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
   .dtable td.c-com{min-width:110px;padding-right:10px}
   .dtable th.c-com{padding-left:8px}
 }
+/* EXPERIMENT even-rows: start — every second order: the comment never makes the row taller; longer text fades out and opens over the rows below on hover/focus */
+@media (min-width:900px){
+  .dtable td.c-com.clamp{position:relative}
+  .dtable td.c-com.clamp>.cclip{max-height:52px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 calc(100% - 16px),transparent);mask-image:linear-gradient(#000 calc(100% - 16px),transparent);border-radius:10px}
+  .dtable td.c-com.clamp>.cclip.open{position:absolute;z-index:6;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .25s ease}
+}
+/* EXPERIMENT even-rows: end */
 /* table details for every desktop width (were stuck inside the 900–1180 block by mistake) */
 @media (min-width:900px){
   .dtable .comment{margin-top:0;font-size:14px;padding:6px 8px;min-height:32px;background:transparent}
@@ -1652,6 +1666,7 @@ function updateBulkButtons(ids){
   });
 }
 const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."],ten:["ТЭН"]};
+/* EXPERIMENT narrow-cols: start */ HEAD2.power=["Плата","кнопок"]; /* EXPERIMENT narrow-cols: end */
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
@@ -1705,6 +1720,7 @@ function renderTable(ids){
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f+"/"+PARTS.length;
     tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
+    /* EXPERIMENT even-rows: start */ if(ids.indexOf(id)%2===1){const c=tr.lastChild,w=document.createElement("div");w.className="cclip";w.append(...c.childNodes);c.append(w);c.classList.add("clamp-v")} /* EXPERIMENT even-rows: end */
     return tr;
   }));
   {// every part column as wide as the widest part header
@@ -1726,7 +1742,29 @@ function renderTable(ids){
   tbl.classList.toggle("all-done",allDone);
   syncHeadTable();
   body.querySelectorAll("textarea.comment").forEach(autosize);
+  clampRows(body); // EXPERIMENT even-rows
 }
+/* EXPERIMENT even-rows: start */
+function clampRows(body){
+  body.querySelectorAll("td.clamp-v").forEach(c=>{
+    const w=c.querySelector(".cclip");if(!w||w.classList.contains("open"))return;
+    c.classList.remove("clamp");c.classList.toggle("clamp",w.scrollHeight>52+1);
+    if(c.dataset.cl)return;c.dataset.cl=1;
+    let hov=false,tmo=0;
+    const open=()=>{if(!c.classList.contains("clamp")||w.classList.contains("open"))return;clearTimeout(tmo);
+      const top=w.offsetTop,left=w.offsetLeft,wd=w.offsetWidth;w.classList.add("open");w.style.top=top+"px";w.style.left=left+"px";w.style.width=wd+"px";w.style.maxHeight="52px";
+      requestAnimationFrame(()=>{w.style.maxHeight=w.scrollHeight+"px"})};
+    const close=()=>{if(!w.classList.contains("open")||hov||c.contains(document.activeElement))return;
+      w.style.maxHeight="52px";clearTimeout(tmo);tmo=setTimeout(()=>{w.classList.remove("open");w.style.top=w.style.left=w.style.width=w.style.maxHeight="";clampRows(body)},260)};
+    c.addEventListener("mouseenter",()=>{hov=true;open()});
+    c.addEventListener("mouseleave",()=>{hov=false;close()});
+    c.addEventListener("focusin",open);
+    c.addEventListener("focusout",()=>setTimeout(close,0));
+    w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px"});
+  });
+}
+window.addEventListener("resize",()=>{const b=document.getElementById("dtbody");if(b)clampRows(b)});
+/* EXPERIMENT even-rows: end */
 function syncHeadTable(){
   const tbl=document.getElementById("dtable"),head=document.getElementById("dthead"),clone=document.getElementById("dtHeadClone"),ht=document.getElementById("dtHeadTable");
   if(!tbl||!head||!clone||!ht)return;
