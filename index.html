@@ -49,8 +49,9 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (max-width:899px){html{touch-action:pan-x pan-y}input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:max(16px,1em)!important}}
 @media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
 /* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
-.legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:14px;line-height:1;--sw:3}
-.legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn)}.legend .lg.none{color:var(--none)}
+.legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
+.legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn);font-family:var(--font-mono)}
+.legend .lg.none::before{content:"";width:12px;height:3px;border-radius:2px;background:var(--none)}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 button{font:inherit;cursor:pointer}
@@ -87,7 +88,12 @@ button{font:inherit;cursor:pointer}
 .ic-none path{stroke-width:calc(var(--sw,2.6) + .7px)}
 .ic-q path{stroke-width:calc(var(--sw,2.6) + .3px)}
 .mk-w{display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle}
-.chosen,.seg button{display:inline-flex;align-items:center;justify-content:center}
+#grid .chosen,#grid .seg button{display:inline-flex;align-items:center;justify-content:center}
+/* the desktop table keeps its font glyphs (owner's choice); "нет в наличии" there is a short rounded bar */
+.dtable .chosen.none{font-size:0!important}
+.dtable .chosen.none::before{content:"";display:inline-block;vertical-align:middle;width:16px;height:3px;border-radius:2px;background:currentColor}
+.dtable td.c-part.note-hit>.chosen.none::before{height:3.8px}
+.dtable .chosen.q{font-family:var(--font-mono)}
 .seg button .mk-ic{--sw:2.4}
 .mk-w.ok{color:var(--ok)}.mk-w.bad{color:var(--bad)}.mk-w.q{color:var(--warn)}.mk-w.none{color:var(--none)}
 .spare-pick button{display:inline-flex;align-items:center;gap:5px}
@@ -889,8 +895,8 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .cbox.has-notes:focus-within{outline:none}
   /* a hovered part note in the comment: a soft rounded background fades in under that part's value (the whole cell stays plain) */
   /* a hovered part note makes that part's value stand out: its lines thicken and it grows a little, both easing in and out */
-  .dtable tbody td.c-part>:first-child{transition:transform .3s ease}
-  .dtable td.c-part.note-hit>:first-child{transform:scale(1.26);--sw:3.4}
+  .dtable tbody td.c-part>:first-child{-webkit-text-stroke:1.8px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
+  .dtable td.c-part.note-hit>:first-child{-webkit-text-stroke-color:currentColor;transform:scale(1.26)}
   /* the order number reacts the same way to the order's own note */
   .dtable tbody td.c-num .num{display:inline-block;-webkit-text-stroke:.7px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
   .dtable td.c-num.note-hit .num{-webkit-text-stroke-color:currentColor;transform:scale(1.1)}
@@ -1026,10 +1032,10 @@ const MARKUP=`<div class="wrap">
     <div class="import-actions"><button id="importSave" class="btn">Сохранить</button><button id="importCancel" class="btn ghost">Отмена</button></div>
   </div>
   <div class="legend">
-      <span><b class="lg ok mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg></b>работает</span>
-      <span><b class="lg bad mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></b>не работает</span>
-      <span><b class="lg none mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12h17"/></svg></b>нет в наличии</span>
-      <span><b class="lg q mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1"/></svg></b>не проверено</span>
+      <span><b class="lg ok">✓</b>работает</span>
+      <span><b class="lg bad">✗</b>не работает</span>
+      <span><b class="lg none" aria-label="—"></b>нет в наличии</span>
+      <span><b class="lg q">?</b>не проверено</span>
     </div>
 
   <div class="tools">
@@ -1853,9 +1859,10 @@ function kindCell(id,o){
   KINDS.forEach(([v,text])=>seg.append(mkBtn("kind-pick "+v,text,null,()=>setPart(id,"kind",v))));return seg;
 }
 function partCell(id,o,k,label){
-  if(o[k]){const st=STATES.find(x=>x[0]===o[k]);const b=mkBtn("chosen "+o[k],"",(st?st[2]:""),()=>setPart(id,k,null));b.innerHTML=iconSVG(st?o[k]:"q");b.setAttribute("aria-label",label+": "+(st?st[2]:""));return b}
+  if(o[k]){const st=STATES.find(x=>x[0]===o[k]);const b=mkBtn("chosen "+o[k],st?st[1]:"?",(st?st[2]:""),()=>setPart(id,k,null)); // the table keeps font glyphs (owner's choice)
+b.setAttribute("aria-label",label+": "+(st?st[2]:""));return b}
   const seg=document.createElement("div");seg.className="seg";
-  STATES.forEach(([v,sym,title])=>{const b=mkBtn(v,"",title,()=>setPart(id,k,v));b.innerHTML=iconSVG(v);b.setAttribute("aria-label",label+": "+title);seg.append(b)});
+  STATES.forEach(([v,sym,title])=>{const b=mkBtn(v,sym,title,()=>setPart(id,k,v));b.setAttribute("aria-label",label+": "+title);seg.append(b)});
   return seg;
 }
 function commentBox(id,o,scope){
