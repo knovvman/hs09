@@ -1935,10 +1935,18 @@ function clipScroll(w,to){
   const T=Math.min(700,320+Math.abs(d)*2),t0=performance.now(),ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
   const step=now=>{const k=Math.min(1,(now-t0)/T);w.scrollTop=from+d*ease(k);if(k<1)w._sa=requestAnimationFrame(step)};w._sa=requestAnimationFrame(step);
 }
-// a part's note: the closed comment scrolls so the note sits in its middle (the row keeps its height); null scrolls the others back
+// a part's note: the closed comment scrolls so the note sits in its middle (the row keeps its height).
+// Calm on purpose: it only moves after the pointer rests on a mark for a moment (sweeping across marks does nothing),
+// it stays where it is while the pointer is still in that row, and drifts back to the top a little after leaving the row
+let clipT=0,clipBackT=0;
 function clipShow(n){
-  document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||(n&&w.contains(n)))return;if(w.scrollTop)clipScroll(w,0)});
-  const w=n&&n.closest(".cclip");if(!w||w.classList.contains("open")||!w.closest("td.clamp"))return;
+  clearTimeout(clipT);clearTimeout(clipBackT);
+  if(n){clipT=setTimeout(()=>clipGo(n),170);return}
+  clipBackT=setTimeout(()=>{document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||w.closest("tr").matches(":hover"))return;if(w.scrollTop)clipScroll(w,0)})},450);
+}
+function clipGo(n){
+  document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||w.contains(n))return;if(w.scrollTop)clipScroll(w,0)});
+  const w=n.closest(".cclip");if(!w||!n.isConnected||w.classList.contains("open")||!w.closest("td.clamp"))return;
   // already in sight (not under a faded edge): leave it where it is
   const top=n.offsetTop-w.offsetTop,st=w.scrollTop,h=w.clientHeight;
   const vis0=st+(st>1?16:0),vis1=st+h-(st+h<w.scrollHeight-1?18:0);
