@@ -868,6 +868,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .odlg-field>label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
 .odlg-field>label i{font-style:normal;opacity:.75}
 .odlg-row{display:flex;gap:6px}
+/* the note field: three lines, so a long note is seen and edited whole (Enter saves, the text just wraps) */
+.odlg textarea.note-text{display:block;box-sizing:border-box;width:100%;min-height:calc(3 * 1.4em + 20px);max-height:40vh;resize:none;font:inherit;font-size:16px;line-height:1.4;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none;overflow:auto}
+.odlg textarea.note-text:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 .odlg input{flex:1;min-width:0;box-sizing:border-box;width:100%;font:inherit;font-size:16px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;outline:none}
 .odlg input#ordNum{font-family:var(--font-mono);letter-spacing:.03em}
 .odlg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
@@ -1154,7 +1157,7 @@ const MARKUP=`<div class="wrap">
       <h2 id="noteTitle" class="odlg-title">Заметка</h2>
       <div class="odlg-field">
         <label for="noteText" id="noteSub"></label>
-        <input id="noteText" autocomplete="off" maxlength="300">
+        <textarea id="noteText" class="note-text" rows="3" maxlength="300" autocomplete="off"></textarea>
       </div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="noteCancel">Отмена</button><button type="submit" class="odlg-btn" id="noteSave">Сохранить</button></div>
       <button type="button" class="odlg-del" id="noteDel" hidden>Удалить заметку</button>
@@ -2926,8 +2929,13 @@ function openNoteDlg(id,k){
   const sub=document.getElementById("noteSub");sub.textContent="Заметка к заказу ";const n=el("span","num");n.innerHTML="<small>#</small>";n.append(String(id));sub.append(n);
   const cur=noteText(orders[id],k);nText.value=cur;nDel.hidden=!cur;
   try{nDlg.showModal()}catch(_){nDlg.setAttribute("open","")}
-  setTimeout(()=>{try{nText.focus({preventScroll:true})}catch(_){nText.focus()}},30);
+  noteSize();
+  setTimeout(()=>{try{nText.focus({preventScroll:true})}catch(_){nText.focus()}const e=nText.value.length;try{nText.setSelectionRange(e,e)}catch(_){}},30);
 }
+// grows with the text past three lines (up to 40% of the screen, then scrolls)
+function noteSize(){nText.style.height="auto";nText.style.height=Math.max(nText.scrollHeight+2,0)+"px"}
+nText.addEventListener("input",noteSize);
+nText.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();document.getElementById("noteForm").requestSubmit()}});
 function closeNoteDlg(){try{nDlg.close()}catch(_){nDlg.removeAttribute("open")}nFor=null}
 async function setNote(id,k,val){
   if(!db||!orders[id])return;
