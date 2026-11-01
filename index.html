@@ -519,12 +519,15 @@ body.svc-open .wrap{padding-bottom:110px}
   /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
   .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
   /* one order column for everyone (guest, editor, owner): it just fits the number, so "Где" sits close */
-  .dtable:not(.all-done) :is(th,td).c-num{width:84px!important;min-width:84px!important;padding-left:16px!important;padding-right:6px!important;text-align:left}
+  .dtable:not(.all-done) :is(th,td).c-num{width:84px!important;min-width:84px!important;padding-left:14px!important;padding-right:8px!important;text-align:center}
   .dtable th.c-part{letter-spacing:.025em;padding-left:7px;padding-right:7px}
   /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
   .dtable:not(.all-done) :is(th,td).c-loc{width:56px;min-width:56px;box-sizing:border-box;padding-right:2px}
   .dtable:not(.all-done) :is(th,td).c-kind{width:76px;min-width:76px;box-sizing:border-box;padding-left:2px}
+  /* titles exactly over their contents (the letters' tracking pulls short titles a hair to the left) */
+  .dtable th.c-loc{text-indent:2px}
+  .dtable th.c-kind{text-indent:-2px}
   /* order numbers centred in their column (for viewers there is nothing else in the cell) */
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
   .dtable:not(.all-done) td.c-com{width:100%}
