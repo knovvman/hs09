@@ -756,6 +756,9 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 /* sign-in button in the header: grey "enter" arrow = not signed in, accent = owner, red "leave" arrow = tap again to sign out */
 .acct-btn{position:relative;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .15s ease}
 .acct-btn:active{transform:scale(.9)}
+/* its place is kept while the page finds out who's looking, so the buttons beside it never shift when it appears
+   (on iPhone that shift left stray bits of the old circles on screen until a reload) */
+header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer-events:none}
 .acct-btn .ic-out{display:none}
 .acct-btn.in{color:var(--accent);border-color:var(--accent)}
 .acct-btn.ask{color:var(--bad);border-color:var(--bad)}
@@ -2582,12 +2585,17 @@ async function fbInit(){
     q=>cb({docs:q.docs.map(wrap),empty:q.empty,fromCache:q.metadata.fromCache,metadata:{hasPendingWrites:q.metadata.hasPendingWrites}}),eb)});
   return{db:{doc,collection},user:{can:async()=>isAdmin||isEditor,isOwner:async()=>isAdmin,isEditor:async()=>isEditor,id:async()=>u?u.uid:null}};
 }
+// Safari sometimes leaves old pixels in the header after it changes (stray bits of the round buttons):
+// a one-frame layer flip makes it paint the header afresh; also when the app comes back from the background
+function repaintHeader(){const h=document.querySelector("header");if(!h)return;h.style.webkitTransform="translateZ(0)";requestAnimationFrame(()=>requestAnimationFrame(()=>{h.style.webkitTransform=""}))}
+window.addEventListener("pageshow",repaintHeader);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")repaintHeader()});
 function authFoot(u,err,ctx){
   const btn=document.getElementById("acctBtn");if(!btn)return;
   if(err){setStatus(err);return}
   if(!ctx)return;
   const {auth,Au,isAdmin,isEditor}=ctx;
-  btn.hidden=false;
+  btn.hidden=false;repaintHeader();
   const label=t=>{btn.title=t;btn.setAttribute("aria-label",t)};
   let askT=0;
   const idle=()=>{btn.classList.remove("ask");label(u?(isAdmin?"Владелец: ":isEditor?"Редактор: ":"Вошёл: ")+(u.email||"")+(isAdmin||isEditor?"":" — только просмотр")+". Нажми, чтобы выйти":"Вход")};
