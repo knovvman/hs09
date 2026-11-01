@@ -29,12 +29,8 @@ jobs:
             tail -n 3 "$RUNNER_TEMP/deploy.log" | while IFS= read -r l; do echo "::error::$l"; done
             exit 1
           fi
-      # database rules (who may change what) — tried separately, so a missing permission never blocks the site itself
-      - name: Deploy Firestore rules
-        continue-on-error: true
-        run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          npx --yes firebase-tools@15.34.0 deploy --only firestore:rules --project dyson-hs09 --non-interactive
+      # database rules (firestore.rules) are NOT deployed here: the deploy key may not touch them
+      # (403 on serviceusage). Paste the file into Firebase console → Firestore → Rules → Publish.
       - name: Remove the key file
         if: always()
         run: rm -f "$RUNNER_TEMP/sa.json"
