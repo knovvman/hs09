@@ -518,7 +518,6 @@ body.svc-open .wrap{padding-bottom:110px}
   /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
   .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
   .dtable th.c-part{letter-spacing:.025em;padding-left:7px;padding-right:7px}
-  .dtable-wrap{overflow-x:clip} /* EXPERIMENT cloud: an opened comment may hang below the table */
   /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
   .dtable:not(.all-done) :is(th,td).c-loc{width:56px;min-width:56px;box-sizing:border-box;padding-right:2px}
@@ -537,24 +536,6 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable td.c-com{min-width:110px;padding-right:10px}
   .dtable th.c-com{padding-left:8px}
 }
-/* EXPERIMENT cloud: start — every row is four comment lines tall; a longer comment fades out and, on a click, opens from its
-   middle up and down over the neighbours (a click outside or Escape closes it); hovering a part with a note scrolls the closed comment to it */
-@media (min-width:900px){
-  /* the comment never sits in the row's flow, so opening and closing can't reflow the table */
-  .dtable td.c-com.clamp-v{position:relative}
-  .dtable td.c-com.clamp-v>.cclip{position:absolute;box-sizing:border-box}
-  .dtable tbody tr{height:112px}
-  .dtable td.c-com.clamp>.cclip{--mt:0px;--mb:18px;max-height:92px;overflow:hidden;cursor:pointer;-webkit-mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);border-radius:10px}
-  .dtable td.c-com.clamp>.cclip.ft{--mt:16px}
-  .dtable td.c-com.clamp>.cclip.nb{--mb:0px}
-  .dtable td.c-com.clamp>.cclip.open,.dtable td.c-com.clamp>.cclip.closing{z-index:7;cursor:auto;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .3s cubic-bezier(.2,.8,.2,1),top .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease}
-  /* the one folding away stays under the one opening next to it and folds a little quicker */
-  .dtable td.c-com.clamp>.cclip.open textarea[readonly],.dtable td.c-com.clamp>.cclip:not(.open) textarea{cursor:pointer}
-  .dtable td.c-com.clamp>.cclip.closing{z-index:6;transition:max-height .22s ease-in-out,top .22s ease-in-out,box-shadow .22s ease}
-  .dtable td.c-com.clamp>.cclip.closing.done{box-shadow:0 0 0 6px transparent,0 0 0 7px transparent,0 14px 34px -6px transparent}
-}
-@media (prefers-reduced-motion:reduce){.dtable td.c-com.clamp>.cclip{transition:none!important}}
-/* EXPERIMENT cloud: end */
 /* "install the app": a small card at the bottom for visitors in a browser — a real install button where the browser offers one
    (Chrome, Edge), short steps elsewhere (iPhone/iPad, Safari on Mac, Android); hidden in the installed app and for 30 days after closing */
 .inst{position:fixed;z-index:29;left:max(20px,env(safe-area-inset-left,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100vw - 40px));box-sizing:border-box;
@@ -1259,7 +1240,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   const t=document.getElementById("dtable");
   // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
-  const hit=(c,n,still)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit");if(!still)clipShow(n||null)};
+  const hit=(c,n,still)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit");};
   // a note in the comment makes its part's mark (or the number) stand out but does not underline the column title;
   // leaving a note for the gap before the next one waits a moment, so the mark doesn't blink off between notes
   let gapT=0;const now=(f)=>{clearTimeout(gapT);f()};
@@ -1954,7 +1935,6 @@ function renderTable(ids){
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f+"/"+PARTS.length;
     tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
-    /* EXPERIMENT cloud: start */ {const c=tr.lastChild,w=document.createElement("div");w.className="cclip";w.append(...c.childNodes);c.append(w);c.classList.add("clamp-v");c.dataset.id=id} /* EXPERIMENT cloud: end */
     return tr;
   }));
   {// every part column as wide as the widest part header
@@ -1976,91 +1956,7 @@ function renderTable(ids){
   tbl.classList.toggle("all-done",allDone);
   syncHeadTable();
   body.querySelectorAll("textarea.comment").forEach(autosize);
-  clampRows(body); // EXPERIMENT cloud
 }
-/* EXPERIMENT cloud: start */
-const CLIP_H=92;let cloudId=null; // the order whose comment is open (kept open across redraws)
-function clipFade(w){const st=w.scrollTop;w.classList.toggle("ft",st>1);w.classList.toggle("nb",st+w.clientHeight>=w.scrollHeight-1)}
-// slow, soft scrolling of a closed comment (the browser's own "smooth" is too quick here)
-function clipScroll(w,to){
-  cancelAnimationFrame(w._sa||0);const from=w.scrollTop,d=to-from;if(Math.abs(d)<1)return;
-  if(reduceMotion()){w.scrollTop=to;return}
-  const T=Math.min(700,320+Math.abs(d)*2),t0=performance.now(),ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
-  const step=now=>{const k=Math.min(1,(now-t0)/T);w.scrollTop=from+d*ease(k);if(k<1)w._sa=requestAnimationFrame(step)};w._sa=requestAnimationFrame(step);
-}
-// a part's note: the closed comment scrolls so the note sits in its middle (the row keeps its height).
-// Calm on purpose: it only moves after the pointer rests on a mark for a moment (sweeping across marks does nothing),
-// it stays where it is while the pointer is still in that row, and drifts back to the top a little after leaving the row
-let clipT=0,clipBackT=0;
-function clipShow(n){
-  clearTimeout(clipT);clearTimeout(clipBackT);
-  if(n){clipT=setTimeout(()=>clipGo(n),170);return}
-  clipBackT=setTimeout(()=>{document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||w.closest("tr").matches(":hover"))return;if(w.scrollTop)clipScroll(w,0)})},450);
-}
-function clipGo(n){
-  document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||w.contains(n))return;if(w.scrollTop)clipScroll(w,0)});
-  const w=n.closest(".cclip");if(!w||!n.isConnected||w.classList.contains("open")||!w.closest("td.clamp"))return;
-  // already in sight (not under a faded edge): leave it where it is
-  const top=n.offsetTop-w.offsetTop,st=w.scrollTop,h=w.clientHeight;
-  const vis0=st+(st>1?16:0),vis1=st+h-(st+h<w.scrollHeight-1?18:0);
-  if(top>=vis0&&top+n.offsetHeight<=vis1)return;
-  const y=top-(h-n.offsetHeight)/2; // offsets are from the cell
-  clipScroll(w,Math.max(0,Math.min(y,w.scrollHeight-h)));
-}
-function cloudTop(c,w,h0,full){
-  const top0=parseFloat(w.style.top)||0,tr=c.parentNode,first=tr.parentNode.firstElementChild,cy=c.getBoundingClientRect().top;
-  // stays on screen: not under the pinned header, not above the first row, not past the bottom edge
-  let pin=0;["header","#hdrOrders"].forEach(q=>{const e=document.querySelector(q);if(e&&e.offsetParent!==null)pin=Math.max(pin,e.getBoundingClientRect().bottom)});
-  const minTop=Math.max((first?first.offsetTop:0)-tr.offsetTop-2,pin+8-cy);
-  return Math.max(minTop,Math.min(top0-(full-h0)/2,innerHeight-8-cy-full));
-}
-function openCloud(c,instant){
-  const w=c&&c.querySelector(".cclip");if(!w||!c.classList.contains("clamp"))return;
-  clearTimeout(w._ct);cancelAnimationFrame(w._sa||0);
-  if(!w.classList.contains("closing"))w._top0=parseFloat(w.style.top)||0;
-  w.style.top=w._top0+"px";const h0=w.classList.contains("closing")?w.offsetHeight:Math.min(w.offsetHeight,CLIP_H);
-  w.classList.remove("closing","done");w.scrollTop=0;w.style.maxHeight=h0+"px";
-  if(instant)w.style.transition="none";
-  w.classList.add("open");cloudId=c.dataset.id;
-  const full=w.scrollHeight,t=cloudTop(c,w,h0,full);
-  const go=()=>{w.style.top=t+"px";w.style.maxHeight=full+"px"};
-  if(instant){go();void w.offsetHeight;w.style.transition=""}else requestAnimationFrame(go);
-}
-function closeCloud(c){
-  const w=c&&c.querySelector(".cclip");if(!w||!w.classList.contains("open"))return;
-  if(cloudId===c.dataset.id)cloudId=null;
-  const a=document.activeElement;if(a&&w.contains(a))a.blur();
-  w.classList.remove("open");w.classList.add("closing");
-  w.style.top=w._top0+"px";w.style.maxHeight=CLIP_H+"px";
-  requestAnimationFrame(()=>w.classList.add("done"));
-  clearTimeout(w._ct);w._ct=setTimeout(()=>{w.classList.remove("closing","done");w.style.maxHeight="";clipFade(w)},240);
-}
-function clampRows(body){
-  body.querySelectorAll("td.clamp-v").forEach(c=>{
-    const w=c.querySelector(".cclip");if(!w||w.classList.contains("open")||w.classList.contains("closing"))return;
-    const cs=getComputedStyle(c);if(w.style.left!==cs.paddingLeft||w.style.right!==cs.paddingRight){w.style.left=cs.paddingLeft;w.style.right=cs.paddingRight;w.querySelectorAll("textarea.comment").forEach(autosize)}
-    c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
-    w.style.top=Math.round((c.clientHeight-Math.min(w.scrollHeight,CLIP_H))/2)+"px"; // centred in the row
-    if(!c.dataset.cl){c.dataset.cl=1;w.addEventListener("scroll",()=>clipFade(w),{passive:true});
-      w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px"})}
-  });
-  // the page redraws on every data update: an open comment comes back open, without animating again
-  if(cloudId){const c=body.querySelector('td.clamp-v[data-id="'+cloudId+'"]');if(c&&c.classList.contains("clamp"))openCloud(c,true);else cloudId=null}
-}
-// a click on a cut comment opens it; a click anywhere else (or on another comment) closes it; Escape closes it too
-{let swallow=null;
- document.addEventListener("pointerdown",e=>{
-   const openC=document.querySelector("#dtbody td.clamp>.cclip.open");const cur=openC&&openC.parentNode;
-   if(openC&&openC.contains(e.target))return;
-   const c=e.target.closest&&e.target.closest("#dtbody td.clamp");
-   if(cur&&cur!==c)closeCloud(cur);
-   if(c&&c!==cur){openCloud(c);swallow=c} // the click that opens it doesn't also open a note or start typing
- },true);
- document.addEventListener("click",e=>{if(swallow&&swallow.contains(e.target)){e.stopPropagation();e.preventDefault()}swallow=null},true);
- document.addEventListener("mousedown",e=>{if(swallow&&swallow.contains(e.target))e.preventDefault()},true);
- document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;const w=document.querySelector("#dtbody td.clamp>.cclip.open");if(w){closeCloud(w.parentNode)}});}
-window.addEventListener("resize",()=>{const b=document.getElementById("dtbody");if(b)clampRows(b)});
-/* EXPERIMENT cloud: end */
 function syncHeadTable(){
   const tbl=document.getElementById("dtable"),head=document.getElementById("dthead"),clone=document.getElementById("dtHeadClone"),ht=document.getElementById("dtHeadTable");
   if(!tbl||!head||!clone||!ht)return;
