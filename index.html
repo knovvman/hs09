@@ -804,9 +804,8 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
 /* iPhone home-screen app only: iOS blurs a band under the status bar there, so the header starts lower
    and that band is filled with the plain page background (experiment; Safari is not affected) */
 @media (display-mode: standalone) and (max-width:899px){
-  /* EXPERIMENT app-top-0: start — owner checks the header right under the status bar (was 11px) */
+  /* owner's choice: no extra gap (was 11px); iOS may still blur the band under the status bar on some iPhones */
   :root{--app-top:0px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
-  /* EXPERIMENT app-top-0: end */
   body::before{height:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   header{top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
 }
