@@ -834,15 +834,17 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
 /* adding, editing and deleting orders (owner only) */
 .ord-chip{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex-shrink:0;box-sizing:border-box;padding:0;border-radius:999px;border:1px dashed color-mix(in srgb,var(--accent) 65%,transparent);background:transparent;color:var(--accent);cursor:pointer;-webkit-tap-highlight-color:transparent;vertical-align:middle;transition:transform .15s ease}
 .ord-chip svg{width:15px;height:15px}
+.card-edit{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:8px 12px 8px 10px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--accent);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.card-edit svg{width:15px;height:15px}
+.card-edit:active{transform:scale(.97)}
 .ord-chip:active{transform:scale(.88)}
-.ord-chip.edit{display:none;border-style:solid;border-color:color-mix(in srgb,var(--purple) 70%,transparent);color:var(--purple)}
-.svc-open .ord-chip.edit,.editor .ord-chip.edit{display:inline-flex}
+.ord-chip.edit{border-style:solid;border-color:color-mix(in srgb,var(--accent) 60%,transparent);color:var(--accent)}
 /* the owner's pencil hangs right after the number and takes no room, so the number stays centred in its column */
 .dtable td.c-num .num-wrap{position:relative;display:inline-block}
 .dtable td.c-num .ord-chip{width:24px;height:24px;position:absolute;left:100%;top:50%;margin:-13px 0 0 4px}
 /* table: every owner row keeps the chip's place (the pencil is only invisible outside service mode), so the numbers stay lined up */
-.dtable td.c-num .ord-chip.edit{display:inline-flex;visibility:hidden}
-.svc-open .dtable td.c-num .ord-chip.edit,.editor .dtable td.c-num .ord-chip.edit{visibility:visible}
+.dtable td.c-num .ord-chip.edit{display:inline-flex;opacity:0;transform:scale(.85);transition:opacity .18s ease,transform .18s ease}
+.dtable tbody tr:hover td.c-num .ord-chip.edit,.dtable td.c-num .ord-chip.edit:focus-visible{opacity:1;transform:none}
 .dtable td.c-num .ord-chip svg{width:13px;height:13px}
 @media (hover:hover){.ord-chip:hover{background:color-mix(in srgb,currentColor 10%,transparent)}}
 .svc-btn.svc-add{background:var(--purple);color:var(--card)}
@@ -1605,13 +1607,14 @@ const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,"0")+"
 function histItem(x,withDay){
   const r=el("div","hitem hi-"+x.t),b=el("div","hb"),line=el("div","hl1");
   // drawn icons, not font glyphs: a "+" from the font sits low on iPhone
-  const P={add:"M12 6v12M6 12h12",sadd:"M12 6v12M6 12h12",sdel:"M6 12h12",close:"M6.5 12.5l3.5 3.5 7.5-8",sedit:"M18.5 9A7 7 0 1 0 19 13.5M19 4.5V9h-4.5"};
+  const P={add:"M12 6v12M6 12h12",rename:"M5 17.5V19h1.5L17 8.5 15.5 7 5 17.5zM14 8.5l1.5 1.5",sadd:"M12 6v12M6 12h12",sdel:"M6 12h12",close:"M6.5 12.5l3.5 3.5 7.5-8",sedit:"M18.5 9A7 7 0 1 0 19 13.5M19 4.5V9h-4.5"};
   let time=hhmm(x.at);if(withDay){const dl=dayLabel(x.at),d=new Date(x.at);if(dl!=="Сегодня")time=(dl==="Вчера"?"вчера":d.getDate()+" "+MONTHS[d.getMonth()].slice(0,3))+" "+time}
   const ic=el("span","hic");ic.innerHTML='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+(P[x.t]||"M12 12h.01")+'"/></svg>';
   r.append(el("span","ht",time),ic,b);
   const ord=n=>{const e=el("b",null,"#"+n);return e};
   const sub=el("div","hsub");
   if(x.t==="add"){line.append("Новый заказ ",ord(x.o))}
+  else if(x.t==="rename"){line.append("Заказ ",ord(x.from)," теперь ",ord(x.o))}
   else if(x.t==="close"){line.append("Закрыт заказ ",ord(x.o));
     if(x.parts&&x.parts.length){sub.classList.add("hcol");sub.append(el("span",null,x.parts.length>1?"Перенесены во «Вне заказов»:":"Перенесена во «Вне заказов»:"));x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}
     else sub.append("Во «Вне заказов» ничего не перенесено")}
@@ -2208,6 +2211,12 @@ function card(id,o){
     t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
     body.append(withNotes(t,id,o));
   }
+  if(isOwnerUI()&&canWrite){
+    const eb=document.createElement("button");eb.type="button";eb.className="card-edit";
+    eb.innerHTML=ICON_EDIT+"<span>Изменить заказ</span>";
+    eb.addEventListener("click",e=>{e.stopPropagation();openOrderDlg(id)});
+    body.append(eb);
+  }
   {
     // phone: a small arrow at the very end of an open card; the whole strip folds the card
     const f=document.createElement("button");f.type="button";f.className="fold";
@@ -2565,16 +2574,11 @@ const isOwnerUI=()=>document.body.classList.contains("admin");
 const hasCrm=o=>!!o&&typeof o.crm==="string"&&CRM_RE.test(o.crm);
 // next to the order number: "add a CRM link" while the order has none; "edit / delete" in service mode
 function ordChip(id,o,inTable){
-  if(!isOwnerUI())return null;
-  if(!editable()){
-    // table: an invisible stand-in keeps the column as wide as when unlocked, so nothing shifts on the lock
-    if(!inTable)return null;
-    const ph=document.createElement("span");ph.className="ord-chip ph";ph.setAttribute("aria-hidden","true");return ph;
-  }
-  const has=hasCrm(o);
-  const b=document.createElement("button");b.type="button";b.className="ord-chip "+(has?"edit":"add");
-  const t=has?(IS_OWNER?"Изменить или удалить заказ #":"Изменить или закрыть заказ #")+id:"Добавить ссылку на HelloClient для заказа #"+id;
-  b.title=t;b.setAttribute("aria-label",t);b.innerHTML=has?ICON_EDIT:ICON_LINK;
+  // owner and editors: a pencil that opens the order window (number, HelloClient link, close, delete for the owner);
+  // in the table it shows while the pointer is over the row; phone cards get an "Изменить заказ" button instead
+  if(!isOwnerUI()||!inTable)return null;
+  const b=document.createElement("button");b.type="button";b.className="ord-chip edit";
+  const t="Изменить заказ #"+id;b.setAttribute("aria-label",t);b.innerHTML=ICON_EDIT;
   b.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();openOrderDlg(id)});
   return b;
 }
@@ -2603,22 +2607,21 @@ function dlgShowCheck(){
 }
 function resetDel(){clearTimeout(delAskT);dlgDel.classList.remove("ask");dlgDel.textContent="Удалить заказ";const c=document.getElementById("ordClose");if(c){c.classList.remove("ask");c.textContent="Закрыть заказ"}}
 function openOrderDlg(id){
-  if(!db||(id?!editable():!canAddOrder())){setStatus("Изменения закрыты замком");return}
+  if(!db||!canAddOrder())return; // the order window doesn't follow the lock (changes there are deliberate)
   dlgId=id||null;
   const o=id?orders[id]:null;
   if(id&&!o)return;
   const title=document.getElementById("ordTitle");
   if(id){title.textContent="Заказ ";const n=el("span","num");n.innerHTML="<small>#</small>";n.append(String(id));title.append(n)}
   else title.textContent="Новый заказ";
-  document.getElementById("ordNumField").hidden=!!id;
-  dlgNum.value="";dlgNum.classList.remove("bad");
+  dlgNum.value=id?String(id):"";dlgNum.classList.remove("bad");
   dlgLink.value=hasCrm(o)?"https://app.helloclient.by/order/"+o.crm:"";
   dlgSave.textContent=id?"Сохранить":"Добавить";dlgSave.disabled=false;
   dlgDel.hidden=!id||!IS_OWNER;document.getElementById("ordClose").hidden=!id;resetDel();
   dlgMsg.textContent="";dlgShowCheck();
   try{dlg.showModal()}catch(_){dlg.setAttribute("open","")}
   // a new order starts with the number; an existing one with the link (unless it already has one)
-  const f=id?(hasCrm(o)?null:dlgLink):dlgNum;
+  const f=id?null:dlgNum;
   if(f)setTimeout(()=>{try{f.focus({preventScroll:true})}catch(_){f.focus()}},30);
 }
 function closeOrderDlg(){resetDel();try{dlg.close()}catch(_){dlg.removeAttribute("open")}dlgId=null}
@@ -2718,6 +2721,27 @@ function addOrder(){
     if(target&&target.animate&&!reduceMotion())target.animate([{boxShadow:"0 0 0 3px var(--accent)"},{boxShadow:"0 0 0 3px transparent"}],{duration:1600,easing:"ease-out"});
   });
 }
+// an existing order: a new number and/or link. A new number = the order is copied under the new number and the
+// old record is closed with renamedTo (editors can't delete; closed records are hidden everywhere)
+async function saveOrderEdit(){
+  const id=dlgId,o=orders[id];if(!o){closeOrderDlg();return}
+  const n=dlgNum.value.trim().replace(/^#/,"");
+  if(n===String(id)){saveOrderLink();return}
+  if(!/^\d{3,8}$/.test(n)){dlgNum.classList.add("bad");dlgMsg.textContent="Номер — только цифры, от 3 до 8";dlgNum.focus();return}
+  if(orders[n]){dlgNum.classList.add("bad");dlgMsg.textContent="Заказ #"+n+" уже есть";dlgNum.focus();return}
+  const r=parseCrm(dlgLink.value);if(r.bad){dlgMsg.textContent=r.bad;dlgLink.focus();return}
+  try{const g=await db.doc("orders/"+n).get();if(g.exists){dlgNum.classList.add("bad");dlgMsg.textContent="Номер #"+n+" уже был (закрытый заказ)";dlgNum.focus();return}}catch(_){}
+  if(id in drafts){if(typeof drafts[id]==="string")o.comment=drafts[id];clearTimeout(commentTimers[id]);delete drafts[id]}
+  const copy=JSON.parse(JSON.stringify(o));copy.num=Number(n);if(r.id)copy.crm=r.id;else delete copy.crm;delete copy.closed;delete copy.closedAt;delete copy.renamedTo;
+  closeOrderDlg();
+  seenIds.add(n);if(!collapsed.has(id))collapsed.delete(n);else collapsed.add(n);
+  delete orders[id];orders[n]=copy;render();
+  try{
+    await db.doc("orders/"+n).set(copy);
+    await enqueue(id,()=>db.doc("orders/"+id).update({closed:true,closedAt:new Date().toISOString(),renamedTo:n}));
+    setStatus("Сохранено");logEvent({t:"rename",o:n,from:id});toast("Заказ #"+id+" теперь #"+n);
+  }catch(e){delete orders[n];orders[id]=o;render();writeErr("Не удалось сменить номер #"+id)(e)}
+}
 function saveOrderLink(){
   const id=dlgId,o=orders[id];if(!o){closeOrderDlg();return}
   const r=parseCrm(dlgLink.value);
@@ -2749,9 +2773,9 @@ function deleteOrder(){
     toast("Заказ #"+id+" возвращён");
   });
 }
-document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||(dlgId?!editable():!canAddOrder())){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderLink();else addOrder()});
+document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||!canAddOrder()){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderEdit();else addOrder()});
 document.getElementById("ordCancel").addEventListener("click",closeOrderDlg);
-dlgDel.addEventListener("click",()=>{if(db&&editable()&&IS_OWNER)deleteOrder()});
+dlgDel.addEventListener("click",()=>{if(db&&canAddOrder()&&IS_OWNER)deleteOrder()});
 // closing a finished order: it leaves the list and every count; its working parts are gone with it,
 // its non-working (and unchecked) boards and power supply move to "Вне заказов" with a note where they came from
 function closeOrder(){
