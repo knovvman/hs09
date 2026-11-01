@@ -820,13 +820,13 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .ord-chip svg{width:15px;height:15px}
 .ord-chip:active{transform:scale(.88)}
 .ord-chip.edit{display:none;border-style:solid;border-color:color-mix(in srgb,var(--purple) 70%,transparent);color:var(--purple)}
-.svc-open .ord-chip.edit{display:inline-flex}
+.svc-open .ord-chip.edit,.editor .ord-chip.edit{display:inline-flex}
 /* the owner's pencil hangs right after the number and takes no room, so the number stays centred in its column */
 .dtable td.c-num .num-wrap{position:relative;display:inline-block}
 .dtable td.c-num .ord-chip{width:24px;height:24px;position:absolute;left:100%;top:50%;margin:-13px 0 0 4px}
 /* table: every owner row keeps the chip's place (the pencil is only invisible outside service mode), so the numbers stay lined up */
 .dtable td.c-num .ord-chip.edit{display:inline-flex;visibility:hidden}
-.svc-open .dtable td.c-num .ord-chip.edit{visibility:visible}
+.svc-open .dtable td.c-num .ord-chip.edit,.editor .dtable td.c-num .ord-chip.edit{visibility:visible}
 .dtable td.c-num .ord-chip svg{width:13px;height:13px}
 @media (hover:hover){.ord-chip:hover{background:color-mix(in srgb,currentColor 10%,transparent)}}
 .svc-btn.svc-add{background:var(--purple);color:var(--card)}
@@ -1573,7 +1573,8 @@ function histItem(x,withDay){
   const sub=el("div","hsub");
   if(x.t==="add"){line.append("Новый заказ ",ord(x.o))}
   else if(x.t==="close"){line.append("Закрыт заказ ",ord(x.o));
-    if(x.parts&&x.parts.length){sub.append("во «Вне заказов»:");x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}}
+    if(x.parts&&x.parts.length){sub.append(x.parts.length>1?"Перенесены во «Вне заказов»:":"Перенесена во «Вне заказов»:");x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}
+    else sub.append("Во «Вне заказов» ничего не перенесено")}
   else if(x.t==="sadd"){line.append("Добавлено во «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   else if(x.t==="sdel"){line.append("Убрано из «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   else if(x.t==="sedit"){line.append("Изменено во «Вне заказов»");
@@ -2566,7 +2567,7 @@ function ordChip(id,o,inTable){
   }
   const has=hasCrm(o);
   const b=document.createElement("button");b.type="button";b.className="ord-chip "+(has?"edit":"add");
-  const t=has?"Изменить или удалить заказ #"+id:"Добавить ссылку на HelloClient для заказа #"+id;
+  const t=has?(IS_OWNER?"Изменить или удалить заказ #":"Изменить или закрыть заказ #")+id:"Добавить ссылку на HelloClient для заказа #"+id;
   b.title=t;b.setAttribute("aria-label",t);b.innerHTML=has?ICON_EDIT:ICON_LINK;
   b.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();openOrderDlg(id)});
   return b;
