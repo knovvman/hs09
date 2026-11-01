@@ -445,8 +445,13 @@ body.svc-open .wrap{padding-bottom:110px}
   header{flex-wrap:nowrap;gap:24px;padding-block:2px 14px}
   header .title-row{order:1;flex:0 0 auto}
   header .tabs{order:2;flex:0 0 300px;flex-basis:300px}
-  header .status{order:3;margin-left:0;flex:1 1 auto;min-width:0;text-align:left;align-items:flex-start}
-  header .theme{order:4}
+  /* right-hand group: [your buttons] status | history theme sign-in. The status has a fixed width (its changing text moves
+     nothing), the tabs push the group to the right, and nothing in it can run over the tabs */
+  header .tabs{margin-right:auto}
+  header .status{order:5;flex:0 0 150px;width:150px;margin-left:0;min-width:0;overflow:hidden;text-align:right;align-items:flex-end}
+  header .status span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  header .title-row h1{white-space:nowrap}
+  header .theme{order:7}
   header{flex-wrap:wrap;row-gap:0}
   .hdr-orders{display:none}
   header.sub-on{padding-bottom:0;border-bottom:0}
@@ -534,11 +539,14 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable th.c-part>.hl{display:inline-block}
 }
 @media (min-width:900px) and (max-width:1180px){
+  /* narrower windows: "+" without words, so the header stays one line for every role */
+  header #addOrderBtn .add-txt{display:none}
+  header #addOrderBtn{width:28px!important;padding:0!important;justify-content:center}
   .dtable th{padding-left:3px;padding-right:3px;letter-spacing:0;font-size:10px}
   .dtable th.c-part{letter-spacing:0;padding-left:6px;padding-right:6px} /* EXPERIMENT narrow-cols */
   .dtable td{padding-left:4px;padding-right:4px}
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
-  .dtable td.c-com{min-width:110px;padding-right:7px}
+  .dtable td.c-com{min-width:100px;padding-right:7px}
   .dtable th.c-com{padding-left:8px}
 }
 /* "install the app": a small card at the bottom for visitors in a browser — a real install button where the browser offers one
@@ -575,7 +583,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .hd-list{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
 }
 @media (min-width:900px){
-  header .hist-btn{order:4;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);cursor:pointer;position:relative;top:7px;align-self:center;margin-right:-12px;transition:color .2s ease,background-color .2s ease,transform .15s ease}
+  header .hist-btn{order:6;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);cursor:pointer;position:relative;top:7px;align-self:center;margin-right:-12px;transition:color .2s ease,background-color .2s ease,transform .15s ease}
   header .hist-btn:active{transform:scale(.9)}
 }
 @media (hover:hover){header .hist-btn:hover{color:var(--fg)}}
@@ -608,6 +616,8 @@ body.svc-open .wrap{padding-bottom:110px}
 .hd-list{flex:1;overflow:auto;padding:0 22px 22px;overscroll-behavior:contain}
 .hd-day{position:sticky;top:0;background:var(--card);padding:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1}
 @media (prefers-reduced-motion:reduce){.hdrawer[open],.hdrawer.out,.hdrawer::backdrop{animation:none}}
+/* below ~980px the "Готово" column steps aside so the table fits (the overall progress above still shows it) */
+@media (min-width:900px) and (max-width:979px){.dtable .c-prog{display:none}.dtable td.c-com{min-width:84px!important}header .status{flex-basis:110px!important;width:110px!important}}
 /* table details for every desktop width (were stuck inside the 900–1180 block by mistake) */
 @media (min-width:900px){
   .dtable .comment{margin-top:0;font-size:14px;padding:6px 8px;min-height:32px;background:transparent}
@@ -785,7 +795,7 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
 
   header .status{justify-self:stretch;align-items:stretch;min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box;margin-right:0!important;padding-right:4px}
   header .status span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}}
-@media (min-width:900px){header .acct-btn{order:5;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
+@media (min-width:900px){header .acct-btn{order:9;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
   header .acct-btn.in{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   header .acct-btn.ask{background:var(--bad-bg)}}
 @media (hover:hover){.acct-btn:hover{color:var(--fg)}}
@@ -821,7 +831,7 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
   /* one tight group on the right: lock, key, theme, sign-in (header gap is 24px, pulled in to 8px) */
   header>.lock,header>.svc-toggle{margin:0 -16px 0 0}
   header .acct-btn{margin-left:-16px}
-  header .theme{order:4}
+  header .theme{order:7}
 }
 /* computer header: every control is 28px tall, every icon 15px, and they sit 8px apart on one centre line */
 @media (min-width:900px){
@@ -2004,6 +2014,7 @@ function spreadCols(){
   spreadLast={key,w:lo};
 }
 let spreadLast=null;
+try{document.fonts&&document.fonts.ready.then(()=>{spreadLast=null;const t=document.getElementById("dtable");if(t&&t.offsetParent)render()})}catch(_){}
 {let st=0;window.addEventListener("resize",()=>{clearTimeout(st);st=setTimeout(()=>{const t=document.getElementById("dtable");if(t&&t.offsetParent)render()},200)})}
 function syncHeadTable(){
   const tbl=document.getElementById("dtable"),head=document.getElementById("dthead"),clone=document.getElementById("dtHeadClone"),ht=document.getElementById("dtHeadTable");
