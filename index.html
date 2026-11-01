@@ -441,7 +441,7 @@ body.svc-open .wrap{padding-bottom:110px}
 .svc-btn:disabled{opacity:.35;cursor:default}
 /* Desktop layout (wide screens only; phone layout untouched) */
 @media (min-width:900px){
-  .wrap{padding-block:0 16px;max-width:1520px;padding-left:10px;padding-right:10px} /* slimmer side margins on the computer */
+  .wrap{padding-block:0 16px;max-width:1544px;padding-left:22px;padding-right:22px} /* slimmer side margins on the computer */
   header{flex-wrap:nowrap;gap:24px;padding-block:2px 14px}
   header .title-row{order:1;flex:0 0 auto}
   header .tabs{order:2;flex:0 0 300px;flex-basis:300px}
@@ -653,7 +653,8 @@ body.admin .chosen:not(:disabled):hover{background:var(--none-bg)}
    The mini-header (progress, legend, column titles / expand buttons) lives at the top of the Orders page,
    sticks there while scrolling and slides sideways together with it as one piece. */
 :root{--edge-l:max(16px,env(safe-area-inset-left,0px));--edge-r:max(16px,env(safe-area-inset-right,0px))}
-@media (min-width:900px){:root{--edge-l:max(10px,(100vw - 1520px) / 2 + 10px);--edge-r:var(--edge-l)}}
+@media (min-width:900px){:root{--edge-l:max(22px,(100vw - 1544px) / 2 + 22px);--edge-r:var(--edge-l)}}
+@media (min-width:900px) and (max-width:979px){:root{--edge-l:14px}.wrap{padding-left:14px!important;padding-right:14px!important}} /* narrow windows: a bit more room for the table */
 html,body,#app{height:100%}html,body{overflow:hidden}
 .wrap{height:100%;box-sizing:border-box;display:flex;flex-direction:column;padding-bottom:0!important}
 header{flex:none;position:relative}
