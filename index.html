@@ -1225,7 +1225,7 @@ let SNAP={orders:{},at:null};
 try{SNAP=JSON.parse(document.getElementById("snapshot").textContent)||SNAP}catch(_){}
 const PARTS=[
   ["box","Коробка"],["psu","Блок питания"],["heater","Плата ТЭНа"],
-  ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."],["engine","Двигатель"],["ten","ТЭН"]
+  ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнопки вкл."],["engine","Двигатель"],["ten","ТЭН"]
 ];
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
 const KINDS=[["warranty","Гарантия"],["ours","Наш"]];
@@ -1367,11 +1367,11 @@ function renderOverall(ids){
   document.getElementById("overall").classList.toggle("complete",total>0&&filled===total);
   document.getElementById("overall").hidden=!ids.length||filled===total;
 }
-const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата с кнопками вкл."],["engine","Двигатель"],["ten","ТЭН"]];
+const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнопки вкл."],["engine","Двигатель"],["ten","ТЭН"]];
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
 // "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
-const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],engine:["рабочего","двигателя"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы с кнопками вкл."],ten:["рабочего","ТЭНа"]};
+const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],engine:["рабочего","двигателя"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы кнопки вкл."],ten:["рабочего","ТЭНа"]};
 // the Parts tab's own comment, kept in meta/statsNote as {text}; saved on leaving the field, after COMMENT_IDLE without typing, or when the tab is hidden
 let statsNote="",statsNoteDraft=null,statsNoteT=0;
 function renderStatsNote(){
@@ -1770,8 +1770,7 @@ function updateBulkButtons(ids){
     b.disabled=off;syncHap(b);
   });
 }
-const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопок вкл."],ten:["ТЭН"]};
-/* EXPERIMENT narrow-cols: start */ HEAD2.power=["Плата","кнопок"]; /* EXPERIMENT narrow-cols: end */
+const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопки вкл."],ten:["ТЭН"]};
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
