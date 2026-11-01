@@ -533,7 +533,8 @@ body.svc-open .wrap{padding-bottom:110px}
 .hitem{display:grid;grid-template-columns:auto 22px minmax(0,1fr);column-gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:20px}
 .hd-day+.hitem,.hd-list>.hitem:first-child{border-top:0}
 .ht{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:40px}
-.hic{width:20px;height:20px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;line-height:1;background:var(--none-bg);color:var(--muted)}
+.hic{width:20px;height:20px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:var(--none-bg);color:var(--muted)}
+.hic svg{display:block}
 .hi-add .hic{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
 .hi-close .hic{background:var(--ok-bg,color-mix(in srgb,var(--ok) 16%,transparent));color:var(--ok)}
 .hb b{font-weight:600}
@@ -1521,9 +1522,11 @@ function dayLabel(t){const d=new Date(t),n=new Date(),a=new Date(n.getFullYear()
 const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 function histItem(x,withDay){
   const r=el("div","hitem hi-"+x.t),b=el("div","hb"),line=el("div","hl1");
-  const ICON={add:"+",close:"✓",sadd:"+",sdel:"−",sedit:"↻"};
+  // drawn icons, not font glyphs: a "+" from the font sits low on iPhone
+  const P={add:"M12 6v12M6 12h12",sadd:"M12 6v12M6 12h12",sdel:"M6 12h12",close:"M6.5 12.5l3.5 3.5 7.5-8",sedit:"M18.5 9A7 7 0 1 0 19 13.5M19 4.5V9h-4.5"};
   let time=hhmm(x.at);if(withDay){const dl=dayLabel(x.at),d=new Date(x.at);if(dl!=="Сегодня")time=(dl==="Вчера"?"вчера":d.getDate()+" "+MONTHS[d.getMonth()].slice(0,3))+" "+time}
-  r.append(el("span","ht",time),el("span","hic",ICON[x.t]||"•"),b);
+  const ic=el("span","hic");ic.innerHTML='<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+(P[x.t]||"M12 12h.01")+'"/></svg>';
+  r.append(el("span","ht",time),ic,b);
   const ord=n=>{const e=el("b",null,"#"+n);return e};
   const sub=el("div","hsub");
   if(x.t==="add"){line.append("Новый заказ ",ord(x.o))}
