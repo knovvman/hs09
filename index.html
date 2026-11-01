@@ -1620,8 +1620,7 @@ document.getElementById("spareForm").addEventListener("submit",e=>{
   const item={id:sEdit?sEdit.id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:sPick.k,s:sPick.s||"bad",note};
   const next=sEdit?spares.map(x=>x.id===item.id?item:x):[...spares,item];
   if(!sEdit)logEvent({t:"sadd",k:item.k,s:item.s,note});
-  // history keeps only big events: a changed note alone is not one
-  else if(sEdit.k!==item.k||sEdit.s!==item.s)logEvent({t:"sedit",k:item.k,s:item.s,note,pk:sEdit.k,ps:sEdit.s});
+  // edits of an existing spare (part, mark, note) are corrections, not events: never logged
   closeSpareDlg();saveSpares(next);
 });
 document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)return;const x=sEdit,id=x.id;logEvent({t:"sdel",k:x.k,s:x.s,note:x.note||""});closeSpareDlg();saveSpares(spares.filter(x=>x.id!==id))});
@@ -1686,8 +1685,8 @@ function histItem(x,withDay){
 function renderHistory(){const dlg=document.getElementById("histDlg");if(dlg&&dlg.open)renderHistFull()}
 function renderHistFull(){
   const box=document.getElementById("histFull");if(!box)return;
-  // older "sedit" entries made by a note change only are hidden
-  const items=hlog.filter(x=>x.t!=="sedit"||(x.pk!=null&&(x.pk!==x.k||x.ps!==x.s))).reverse(),out=[];let day=null;
+  // older "sedit" (spare edited) entries are hidden: edits are corrections, not events
+  const items=hlog.filter(x=>x.t!=="sedit").reverse(),out=[];let day=null;
   items.forEach(x=>{const d=dayLabel(x.at);if(d!==day){day=d;out.push(el("div","hd-day",d))}out.push(histItem(x,false))});
   box.replaceChildren(...(out.length?out:[el("div","hist-empty","Пока пусто")]));
 }
