@@ -517,11 +517,13 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable td.c-com{min-width:110px;padding-right:10px}
   .dtable th.c-com{padding-left:8px}
 }
-/* EXPERIMENT even-rows: start — every second order: the comment never makes the row taller; longer text fades out and opens over the rows below on hover/focus */
+/* EXPERIMENT even-rows: start — every order: the comment never makes the row taller; longer text fades out, opens from its middle up and down over the neighbours on hover/focus, and scrolls to a part's note when that part is hovered */
 @media (min-width:900px){
   .dtable td.c-com.clamp{position:relative}
-  .dtable td.c-com.clamp>.cclip{max-height:52px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 calc(100% - 16px),transparent);mask-image:linear-gradient(#000 calc(100% - 16px),transparent);border-radius:10px}
-  .dtable td.c-com.clamp>.cclip.open{position:absolute;z-index:6;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .25s ease}
+  .dtable td.c-com.clamp>.cclip{--mt:0px;--mb:16px;max-height:52px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);border-radius:10px}
+  .dtable td.c-com.clamp>.cclip.ft{--mt:14px}
+  .dtable td.c-com.clamp>.cclip.nb{--mb:0px}
+  .dtable td.c-com.clamp>.cclip.open{position:absolute;z-index:6;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .25s ease,top .25s ease}
 }
 /* EXPERIMENT even-rows: end */
 /* history: a short feed on the Parts tab and the whole feed in a panel that slides in from the right */
@@ -1160,7 +1162,7 @@ try{matchMedia("(min-width: 900px)").addEventListener("change",placeAdminBtns)}c
   const t=document.getElementById("dtable");
   // the comment column itself is never marked; a note in the comment marks its part's column and value in the row (the order's own note: the Order column and the number)
   // a part's value and its note in the comment light up together, whichever of the two is hovered
-  const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit")};
+  const hit=(c,n)=>{document.querySelectorAll("#dtable td.note-hit").forEach(e=>e.classList.remove("note-hit"));document.querySelectorAll("#dtable .cnote.lit").forEach(e=>e.classList.remove("lit"));if(c)c.classList.add("note-hit");if(n)n.classList.add("lit");clipShow(n||null)};
   // a note in the comment makes its part's mark (or the number) stand out but does not underline the column title;
   // leaving a note for the gap before the next one waits a moment, so the mark doesn't blink off between notes
   let gapT=0;const now=(f)=>{clearTimeout(gapT);f()};
@@ -1823,7 +1825,7 @@ function renderTable(ids){
     const f=PARTS.filter(([k])=>o[k]).length;
     const pr=document.createElement("span");pr.className="tprog"+(f===PARTS.length?" done":"");pr.textContent=f+"/"+PARTS.length;
     tr.append(td("c-prog",pr),td("c-com",withNotes(commentBox(id,o,"t"),id,o)));
-    /* EXPERIMENT even-rows: start */ if(ids.indexOf(id)%2===1){const c=tr.lastChild,w=document.createElement("div");w.className="cclip";w.append(...c.childNodes);c.append(w);c.classList.add("clamp-v")} /* EXPERIMENT even-rows: end */
+    /* EXPERIMENT even-rows: start */ {const c=tr.lastChild,w=document.createElement("div");w.className="cclip";w.append(...c.childNodes);c.append(w);c.classList.add("clamp-v")} /* EXPERIMENT even-rows: end */
     return tr;
   }));
   {// every part column as wide as the widest part header
@@ -1848,17 +1850,33 @@ function renderTable(ids){
   clampRows(body); // EXPERIMENT even-rows
 }
 /* EXPERIMENT even-rows: start */
+const CLIP_H=52;
+function clipFade(w){const st=w.scrollTop;w.classList.toggle("ft",st>1);w.classList.toggle("nb",st+w.clientHeight>=w.scrollHeight-1)}
+// a part's note: scroll the closed comment so the note sits in its middle (the row keeps its height); null scrolls the others back
+function clipShow(n){
+  document.querySelectorAll("#dtbody .cclip").forEach(w=>{if(w.classList.contains("open")||(n&&w.contains(n)))return;if(w.scrollTop)w.scrollTo({top:0,behavior:reduceMotion()?"auto":"smooth"})});
+  const w=n&&n.closest(".cclip");if(!w||w.classList.contains("open")||!w.closest("td.clamp"))return;
+  const y=n.offsetTop-w.offsetTop-(w.clientHeight-n.offsetHeight)/2; // offsets are from the cell
+  w.scrollTo({top:Math.max(0,Math.min(y,w.scrollHeight-w.clientHeight)),behavior:reduceMotion()?"auto":"smooth"});
+}
 function clampRows(body){
   body.querySelectorAll("td.clamp-v").forEach(c=>{
     const w=c.querySelector(".cclip");if(!w||w.classList.contains("open"))return;
-    c.classList.remove("clamp");c.classList.toggle("clamp",w.scrollHeight>52+1);
+    c.classList.remove("clamp");c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
     if(c.dataset.cl)return;c.dataset.cl=1;
-    let hov=false,tmo=0;
+    w.addEventListener("scroll",()=>clipFade(w),{passive:true});
+    let hov=false,tmo=0,top0=0;
+    // opens like a cloud: from its middle up and down at once, never above the first row; the rows stay where they are
     const open=()=>{if(!c.classList.contains("clamp")||w.classList.contains("open"))return;clearTimeout(tmo);
-      const top=w.offsetTop,left=w.offsetLeft,wd=w.offsetWidth;w.classList.add("open");w.style.top=top+"px";w.style.left=left+"px";w.style.width=wd+"px";w.style.maxHeight="52px";
-      requestAnimationFrame(()=>{w.style.maxHeight=w.scrollHeight+"px"})};
+      top0=w.offsetTop;const left=w.offsetLeft,wd=w.offsetWidth,h0=w.offsetHeight;
+      w.scrollTop=0;w.classList.add("open");Object.assign(w.style,{top:top0+"px",left:left+"px",width:wd+"px",maxHeight:h0+"px"});
+      const full=w.scrollHeight,tr=c.parentNode,first=tr.parentNode.firstElementChild;
+      const minTop=(first?first.offsetTop:0)-tr.offsetTop+4;
+      const t=Math.max(minTop,top0-(full-h0)/2);
+      requestAnimationFrame(()=>{w.style.top=t+"px";w.style.maxHeight=full+"px"})};
     const close=()=>{if(!w.classList.contains("open")||hov||c.contains(document.activeElement))return;
-      w.style.maxHeight="52px";clearTimeout(tmo);tmo=setTimeout(()=>{w.classList.remove("open");w.style.top=w.style.left=w.style.width=w.style.maxHeight="";clampRows(body)},260)};
+      w.style.top=top0+"px";w.style.maxHeight=CLIP_H+"px";clearTimeout(tmo);
+      tmo=setTimeout(()=>{w.classList.remove("open");w.style.top=w.style.left=w.style.width=w.style.maxHeight="";clampRows(body)},260)};
     c.addEventListener("mouseenter",()=>{hov=true;open()});
     c.addEventListener("mouseleave",()=>{hov=false;close()});
     c.addEventListener("focusin",open);
