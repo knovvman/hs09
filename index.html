@@ -211,8 +211,13 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sb-bar button{font:inherit;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;border:0;background:var(--bg);color:var(--fg);cursor:pointer}
 /* EXPERIMENT spares: start */
 .spare-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.stats-note-text{min-height:96px;margin-top:6px;resize:none}
-.stats-note-text[readonly]{border-color:transparent;background:transparent;padding-left:0}
+/* P. S.: a larger, calm title and the text close under it, in the regular body font */
+/* the field keeps the same size with the lock open or closed (only its background shows), and its text lines up with the title */
+#view-stats #statsNoteBox .panel-title{font-size:17px;line-height:22px;letter-spacing:.01em;text-transform:none;font-weight:600;color:var(--fg);margin:0}
+#view-stats .stats-note-text{display:block;box-sizing:border-box;width:calc(100% + 24px);min-height:0;margin:0 -12px;resize:none;font:inherit;font-size:15px;line-height:1.55;letter-spacing:.005em;color:var(--fg);padding:6px 12px;border-radius:10px}
+#view-stats .stats-note-text[readonly]{border-color:transparent;background:transparent}
+#view-stats .stats-note-text::placeholder{color:var(--muted);opacity:.8}
+@media (max-width:899px){#view-stats .stats-note-text{font-size:16px}}
 .stats-total .panel-title{min-height:30px;display:flex;align-items:center;margin:0}
 .sg{border-top:1px solid var(--line)}
 .spare-head+#spareList>.sg:first-child{margin-top:6px}
@@ -985,7 +990,7 @@ const MARKUP=`<div class="wrap">
     <!-- EXPERIMENT spares: end -->
     <section class="panel stats-note" id="statsNoteBox" hidden>
       <h2 class="panel-title">P.&nbsp;S.</h2>
-      <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="4" placeholder="Приписка ко всей вкладке" aria-label="P. S. — приписка ко всей вкладке «Запчасти»"></textarea>
+      <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="1" placeholder="Приписка ко всей вкладке" aria-label="P. S. — приписка ко всей вкладке «Запчасти»"></textarea>
     </section>
   </div>
   </div>
@@ -1305,7 +1310,8 @@ function renderStatsNote(){
   const own=isOwnerUI();
   box.hidden=!own&&!statsNote.trim(); // guests see it only when there is text; the owner always, so nothing jumps on the lock
   t.readOnly=!editable();
-  if(document.activeElement!==t&&statsNoteDraft===null&&t.value!==statsNote){t.value=statsNote;autosize(t)}
+  if(document.activeElement!==t&&statsNoteDraft===null&&t.value!==statsNote)t.value=statsNote;
+  autosize(t); // its height follows the text (and the lock: no empty box under a short note)
 }
 async function saveStatsNote(){
   if(statsNoteDraft===null||!db)return;
@@ -2428,7 +2434,7 @@ dlgDel.addEventListener("click",()=>{if(db&&editable())deleteOrder()});
 // its non-working (and unchecked) boards and power supply move to "Вне заказов" with a note where they came from
 function closeOrder(){
   const id=dlgId,o=orders[id],btn=document.getElementById("ordClose");if(!o){closeOrderDlg();return}
-  const moved=STAT_PARTS.filter(([k])=>o[k]==="bad"||o[k]==="q").map(([k])=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k,s:o[k],note:"из заказа #"+id,from:id}));
+  const moved=STAT_PARTS.filter(([k])=>o[k]==="bad"||o[k]==="q").map(([k])=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k,s:o[k],note:"от #"+id,from:id}));
   if(!btn.classList.contains("ask")){
     btn.classList.add("ask");
     btn.textContent=moved.length?"Ещё раз — и "+moved.length+" "+plural(moved.length,"запчасть уйдёт","запчасти уйдут","запчастей уйдут")+" во «Вне заказов»":"Нажми ещё раз, чтобы закрыть #"+id;
