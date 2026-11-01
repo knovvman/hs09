@@ -821,7 +821,7 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
    and that band is filled with the plain page background (experiment; Safari is not affected) */
 @media (display-mode: standalone) and (max-width:899px){
   /* owner's choice: no extra gap (was 11px); iOS may still blur the band under the status bar on some iPhones */
-  :root{--app-top:0px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
+  :root{--app-top:11px;padding-top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   body::before{height:calc(env(safe-area-inset-top,0px) + var(--app-top))}
   header{top:calc(env(safe-area-inset-top,0px) + var(--app-top))}
 }
@@ -2713,11 +2713,14 @@ function closeOnBackdrop(d,close){
    const A=()=>{const e=I("arr");e.classList.add("st-arr");return e};
    const steps=(...xs)=>xs.forEach((x,i)=>{if(i)text.append(" ",A()," ");text.append(typeof x==="string"?el("b",null,x):x)});
    if(how==="native")text.append("Отдельным окном, без вкладок");
-   else if(how==="ios")steps(I(iosVer>=27?"lines":iosVer>=26?"dots3":"share"),"Поделиться","На экран Домой");
+   else if(how==="ios"){text.append("Нажми ");steps(I(iosVer>=27?"lines":iosVer>=26?"dots3":"share"),"Поделиться","На экран Домой")}
    else if(how==="mac")steps("Файл","Добавить в Dock");
-   else if(how==="android")steps(I("dots"),"Добавить на главный экран");
-   card.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
+   else if(how==="android"){text.append("Нажми ");steps(I("dots"),"Добавить на главный экран")}
+   card.hidden=false;fit();requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
  };
+ // the steps stay on one line: on a narrow phone the line gets a touch smaller (down to 11px) instead of being cut
+ const fit=()=>{if(card.hidden)return;text.style.fontSize="";let f=13;while(f>11&&text.scrollWidth>text.clientWidth+.5){f-=.25;text.style.fontSize=f+"px"}};
+ window.addEventListener("resize",fit);
  const hide=(remember)=>{if(remember)try{const v=st();localStorage.setItem(KEY,JSON.stringify({n:(v.n>=2?0:v.n)+1,t:Date.now()}))}catch(_){}
    card.classList.remove("show");setTimeout(()=>{card.hidden=true},350)};
  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();native=e;if(!shown)setTimeout(()=>show("native"),1500)});
