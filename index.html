@@ -709,15 +709,24 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .acct-btn.ask{color:var(--bad);border-color:var(--bad)}
 .acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
 @media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto auto}
-  /* owner: the key sits before the theme button; the status keeps its place on the title line */
-  header:has(>#svcToggle:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto auto;column-gap:6px}
-  header:has(>#svcToggle:not([hidden]))>:is(.svc-toggle,.theme-btn,.acct-btn,.hist-btn){width:36px!important;height:36px!important}
-  header>.svc-toggle{width:40px;height:40px;flex-shrink:0}
+  /* the service key floats above the lock, the same round button; the open service panel keeps clear of both */
+  body>.svc-toggle{position:fixed;z-index:21;margin:0;right:max(30px,env(safe-area-inset-right,0px));bottom:calc(18px + 54px + 12px + env(safe-area-inset-bottom,0px));width:54px;height:54px;padding:0;border-radius:999px;
+    border:1px solid color-mix(in srgb,var(--fg) 14%,transparent);background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4);color:var(--fg);
+    box-shadow:0 1px 2px rgba(0,0,0,.12),0 6px 16px rgba(0,0,0,.16),0 14px 34px rgba(0,0,0,.18);transition:transform .15s ease,background-color .25s ease,color .25s ease,box-shadow .25s ease}
+  body>.svc-toggle svg{width:22px;height:22px}
+  body>.svc-toggle[aria-pressed="true"]{background:var(--purple);border-color:transparent;color:var(--card)}
+  @media (prefers-color-scheme:dark){body>.svc-toggle{box-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.45),0 18px 40px rgba(0,0,0,.4)}}
+  :root[data-theme="dark"] body>.svc-toggle{box-shadow:0 1px 2px rgba(0,0,0,.4),0 8px 20px rgba(0,0,0,.45),0 18px 40px rgba(0,0,0,.4)}
+  :root[data-theme="light"] body>.svc-toggle{box-shadow:0 1px 2px rgba(0,0,0,.12),0 6px 16px rgba(0,0,0,.16),0 14px 34px rgba(0,0,0,.18)}
+  body>.svc-toggle:active{transform:scale(.92)}
+  body>.svc-toggle[hidden]{display:none}
+  .svc{right:calc(max(30px,env(safe-area-inset-right,0px)) + 54px + 10px)}
+  /* the end of the list can always be scrolled clear of the two floating buttons */
+  body:has(>.svc-toggle:not([hidden])) .views>.view{padding-bottom:calc(160px + env(safe-area-inset-bottom,0px))}
 }
 /* very narrow phones: "+ Добавить" without the second word */
 @media (max-width:380px){.tools>#addOrderBtn .w-zak{display:none}}
 @media (max-width:899px){
-  header>.svc-toggle svg{width:20px;height:20px}
   /* the lock in the phone header: a round icon, the same size as the theme button */
   /* the lock floats in the bottom-right corner, above the page */
   /* a proper floating button: bottom-right corner, frosted when open, accent when locked; a layered shadow lifts it off the list in both themes */
@@ -1142,9 +1151,7 @@ function placeAdminBtns(){
     // phone: + and the service key stay in the tools row; the lock goes to the header, just before the theme button
     // phone: the lock and the service key live in the header before the theme button; "+ Добавить заказ" takes their old place
     const add=document.getElementById("addOrderBtn");if(add)tools.append(gap,add);else tools.append(gap);
-    const hdr=document.querySelector("header"),tb=document.getElementById("themeBtn");
-    if(hdr&&tb)hdr.insertBefore(svc,tb);
-    document.body.append(lb); // the lock floats in the bottom-right corner
+    document.body.append(lb,svc); // the lock floats in the bottom-right corner, the service key right above it
   }else{
     // computer: the same two round icons sit in the header, just before the theme switch
     if(gap)gap.remove();
