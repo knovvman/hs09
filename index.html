@@ -300,6 +300,17 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 #view-stats .sgp-head{display:flex;align-items:baseline;gap:10px;font-size:14px}
 #view-stats .sgp-head .sg-name{flex:1 1 auto;color:var(--fg)}
 #view-stats .sgp-items{margin-top:5px}
+/* one column: groups fold to a header row; the list slides open under it */
+.sgp-arr{display:none;color:var(--muted);font-size:14px;transition:transform .25s ease;align-self:center}
+#spareList.fold1 .sgp-arr{display:inline-flex}
+#spareList.fold1 .sgp.exp .sgp-arr{transform:rotate(180deg)}
+#spareList.fold1 .sgp-head{cursor:pointer;-webkit-tap-highlight-color:transparent;align-items:center;outline:none}
+#spareList.fold1 .sgp-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+#spareList.fold1 .sgp-items{display:grid;grid-template-rows:0fr;margin-top:0;transition:grid-template-rows .25s ease}
+#spareList.fold1 .sgp.exp .sgp-items{grid-template-rows:1fr}
+#spareList.fold1 .sgp-in{min-height:0;overflow:hidden}
+#spareList.fold1 .sgp-in>:first-child{margin-top:5px}
+#spareList:not(.fold1) .sg-st.single{display:none}
 #view-stats .sgp-items .spare{display:flex;align-items:baseline;gap:8px;border-top:0;padding:3px 0;font-size:13px}
 #view-stats .sgp-items .spare .mk{flex:0 0 14px;font-size:13px}
 #view-stats .sgp-items .spare .nt.none{opacity:.55;font-style:italic}
@@ -1523,6 +1534,13 @@ async function saveStatsNote(){
 let spares=[];
 const SPARE_STATES=[["ok","✓","рабочая"],["bad","✗","нерабочая"],["q","?","не проверено"]];
 const spareOpen=new Set(); // part kinds whose spares are unfolded in the left list
+// when the groups stack in one column (phone, narrow window) each group is just a header
+// (name, counts) that unfolds its list on tap; spareExp remembers the unfolded ones
+const spareExp=new Set();
+function spareFold(){const l=document.getElementById("spareList");if(!l)return;
+  const one=!l.querySelector(".spare-empty")&&getComputedStyle(l).gridTemplateColumns.trim().split(/\s+/).length<=1;
+  l.classList.toggle("fold1",one);l.querySelectorAll(".sgp-head").forEach(h=>{if(one){h.tabIndex=0;h.setAttribute("role","button");h.setAttribute("aria-expanded",h.parentNode.classList.contains("exp")?"true":"false")}else{h.removeAttribute("tabindex");h.removeAttribute("role");h.removeAttribute("aria-expanded")}})}
+window.addEventListener("resize",spareFold);
 function renderSpares(st,n){
   const box=document.getElementById("statsSpare"),list=document.getElementById("spareList"),add=document.getElementById("spareAdd"),tot=document.getElementById("spareTotals");
   if(!box)return;
@@ -1540,9 +1558,18 @@ function renderSpares(st,n){
     const g=el("div","sgp");
     const head=el("div","sgp-head");
     const states=el("span","sg-st");
-    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c&&its.length>1){states.append(icon(v,"mk "+v),el("span","sg-c",String(c)))}});
-    const nb=el("b","sg-n",String(its.length));nb.append(el("small",null," шт."));head.append(el("span","sg-name",name),states,nb);
-    const lst=el("div","sgp-items");
+    // counts per state are always drawn; with a single spare they show only in the folded view (its list is hidden there)
+    if(its.length===1)states.classList.add("single");
+    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c){states.append(icon(v,"mk "+v),el("span","sg-c",String(c)))}});
+    const nb=el("b","sg-n",String(its.length));nb.append(el("small",null," шт."));
+    const arr=el("span","sgp-arr");arr.innerHTML='<svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    head.append(el("span","sg-name",name),states,nb,arr);
+    if(spareExp.has(k))g.classList.add("exp");
+    const tog=()=>{const l=document.getElementById("spareList");if(!l||!l.classList.contains("fold1"))return;
+      const on=!g.classList.contains("exp");g.classList.toggle("exp",on);head.setAttribute("aria-expanded",on?"true":"false");if(on)spareExp.add(k);else spareExp.delete(k)};
+    head.addEventListener("click",tog);
+    head.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tog()}});
+    const wrapI=el("div","sgp-items"),lst=el("div","sgp-in");wrapI.append(lst);
     (open||its.length<=SPARE_SHOW+1?its:its.slice(0,SPARE_SHOW)).forEach(x=>{
       const s0=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2];
       const r=el("div","spare");const mk=icon(s0[0],"mk "+s0[0]);
@@ -1551,9 +1578,10 @@ function renderSpares(st,n){
       lst.append(r)});
     if(its.length>SPARE_SHOW+1){const more=el("button","sgp-more",open?"свернуть":"ещё "+(its.length-SPARE_SHOW));more.type="button";
       more.addEventListener("click",()=>{if(spareOpen.has(k))spareOpen.delete(k);else spareOpen.add(k);renderSpares(st,n)});lst.append(more)}
-    g.append(head,lst);
+    g.append(head,wrapI);
     return g;
   }));
+  spareFold();
   // right: a plain table of everything on hand — in orders, outside them, total, working
   if(tot&&st){
     const hr=document.createElement("tr");[["",""],["в заказах","заказ"],["вне","вне"],["всего","всего"],["рабочих","✓"],["нерабочих","✗"]].forEach(([full,sh],i)=>{const h=el("th",i===4?"h-ok":i===5?"h-bad":null);h.append(el("span","h-full",full),i>=4?icon(i===4?"ok":"bad","h-short"):el("span","h-short",sh));hr.append(h)});
