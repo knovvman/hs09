@@ -493,7 +493,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable td.c-loc>.seg .loc,.dtable td.c-kind>.seg .kind-pick{min-height:24px;padding-top:0;padding-bottom:0}
   .dtable:not(.all-done) :is(th,td):is(.c-part,.c-num){width:var(--part-w,auto);min-width:var(--part-w,0);box-sizing:border-box}
   /* a little room between the card's left edge and the Order column (about what the comment keeps on the right) */
-  .dtable :is(th,td).c-num{padding-left:18px!important;padding-right:6px!important}
+  .dtable :is(th,td).c-num{padding-left:10px!important;padding-right:14px!important}
   .dtable:not(.all-done) :is(th,td).c-num{width:calc(var(--part-w,90px) + 12px);min-width:calc(var(--part-w,90px) + 12px)}
   /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
   .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
@@ -501,8 +501,8 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable th.c-part{letter-spacing:.025em;padding-left:5px;padding-right:5px}
   /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
-  .dtable:not(.all-done) :is(th,td).c-loc{width:60px;min-width:60px;box-sizing:border-box}
-  .dtable:not(.all-done) :is(th,td).c-kind{width:78px;min-width:78px;box-sizing:border-box}
+  .dtable:not(.all-done) :is(th,td).c-loc{width:56px;min-width:56px;box-sizing:border-box;padding-right:2px}
+  .dtable:not(.all-done) :is(th,td).c-kind{width:76px;min-width:76px;box-sizing:border-box;padding-left:2px}
   /* order numbers centred in their column (for viewers there is nothing else in the cell) */
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
   .dtable:not(.all-done) td.c-com{width:100%}
@@ -519,8 +519,11 @@ body.svc-open .wrap{padding-bottom:110px}
 }
 /* EXPERIMENT even-rows: start — every order: the comment never makes the row taller; longer text fades out, opens from its middle up and down over the neighbours on hover/focus, and scrolls to a part's note when that part is hovered */
 @media (min-width:900px){
-  .dtable td.c-com.clamp{position:relative}
-  .dtable td.c-com.clamp>.cclip{--mt:0px;--mb:16px;max-height:52px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);border-radius:10px}
+  /* the comment never sits in the row's flow: the cell is the same with the comment closed or open, so nothing in the table can reflow */
+  .dtable td.c-com.clamp-v{position:relative}
+  .dtable td.c-com.clamp-v>.cclip{position:absolute;box-sizing:border-box}
+  .dtable tbody tr{height:106px} /* every row the same height, about one and a half times the old one */
+  .dtable td.c-com.clamp>.cclip{--mt:0px;--mb:16px;max-height:86px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);mask-image:linear-gradient(transparent,#000 var(--mt),#000 calc(100% - var(--mb)),transparent);border-radius:10px}
   .dtable td.c-com.clamp>.cclip.ft{--mt:14px}
   .dtable td.c-com.clamp>.cclip.nb{--mb:0px}
   .dtable td.c-com.clamp>.cclip.open{position:absolute;z-index:6;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .25s ease,top .25s ease}
@@ -1225,7 +1228,7 @@ let SNAP={orders:{},at:null};
 try{SNAP=JSON.parse(document.getElementById("snapshot").textContent)||SNAP}catch(_){}
 const PARTS=[
   ["box","Коробка"],["psu","Блок питания"],["heater","Плата ТЭНа"],
-  ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнопки вкл."],["engine","Двигатель"],["ten","ТЭН"]
+  ["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнп. вкл."],["engine","Двигатель"],["ten","ТЭН"]
 ];
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
 const KINDS=[["warranty","Гарантия"],["ours","Наш"]];
@@ -1367,11 +1370,11 @@ function renderOverall(ids){
   document.getElementById("overall").classList.toggle("complete",total>0&&filled===total);
   document.getElementById("overall").hidden=!ids.length||filled===total;
 }
-const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнопки вкл."],["engine","Двигатель"],["ten","ТЭН"]];
+const STAT_PARTS=[["psu","Блок питания"],["heater","Плата ТЭНа"],["motor","Плата двигателя"],["bt","Плата Bluetooth"],["power","Плата кнп. вкл."],["engine","Двигатель"],["ten","ТЭН"]];
 function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e}
 function plural(n,a,b,c){const m10=n%10,m100=n%100;if(m10===1&&m100!==11)return a;if(m10>=2&&m10<=4&&(m100<12||m100>14))return b;return c}
 // "только <рабочего блока питания / рабочей платы …>" — the part names in the genitive for the "+N фенам не хватает" line
-const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],engine:["рабочего","двигателя"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы кнопки вкл."],ten:["рабочего","ТЭНа"]};
+const GEN_WORKING={psu:["рабочего","блока питания"],heater:["рабочей","платы ТЭНа"],engine:["рабочего","двигателя"],motor:["рабочей","платы двигателя"],bt:["рабочей","платы Bluetooth"],power:["рабочей","платы кнп. вкл."],ten:["рабочего","ТЭНа"]};
 // the Parts tab's own comment, kept in meta/statsNote as {text}; saved on leaving the field, after COMMENT_IDLE without typing, or when the tab is hidden
 let statsNote="",statsNoteDraft=null,statsNoteT=0;
 function renderStatsNote(){
@@ -1770,7 +1773,7 @@ function updateBulkButtons(ids){
     b.disabled=off;syncHap(b);
   });
 }
-const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнопки вкл."],ten:["ТЭН"]};
+const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Двигатель"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнп. вкл."],ten:["ТЭН"]};
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
@@ -1849,7 +1852,7 @@ function renderTable(ids){
   clampRows(body); // EXPERIMENT even-rows
 }
 /* EXPERIMENT even-rows: start */
-const CLIP_H=52;
+const CLIP_H=86;
 function clipFade(w){const st=w.scrollTop;w.classList.toggle("ft",st>1);w.classList.toggle("nb",st+w.clientHeight>=w.scrollHeight-1)}
 // a part's note: scroll the closed comment so the note sits in its middle (the row keeps its height); null scrolls the others back
 function clipShow(n){
@@ -1861,26 +1864,30 @@ function clipShow(n){
 function clampRows(body){
   body.querySelectorAll("td.clamp-v").forEach(c=>{
     const w=c.querySelector(".cclip");if(!w||w.classList.contains("open"))return;
-    c.classList.remove("clamp");c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
+    const cs=getComputedStyle(c);if(w.style.left!==cs.paddingLeft||w.style.right!==cs.paddingRight){w.style.left=cs.paddingLeft;w.style.right=cs.paddingRight;w.querySelectorAll("textarea.comment").forEach(autosize)}
+    c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
+    w.style.top=Math.round((c.clientHeight-w.offsetHeight)/2)+"px"; // centred in the row
     if(c.dataset.cl)return;c.dataset.cl=1;
     w.addEventListener("scroll",()=>clipFade(w),{passive:true});
     let hov=false,tmo=0,top0=0;
     // opens like a cloud: from its middle up and down at once, never above the first row; the rows stay where they are
     const open=()=>{if(!c.classList.contains("clamp")||w.classList.contains("open"))return;clearTimeout(tmo);
-      top0=w.offsetTop;const left=w.offsetLeft,wd=w.offsetWidth,h0=w.offsetHeight;
-      w.scrollTop=0;w.classList.add("open");Object.assign(w.style,{top:top0+"px",left:left+"px",width:wd+"px",maxHeight:h0+"px"});
-      const full=w.scrollHeight,tr=c.parentNode,first=tr.parentNode.firstElementChild;
-      const minTop=(first?first.offsetTop:0)-tr.offsetTop+4;
-      const t=Math.max(minTop,top0-(full-h0)/2);
+      top0=parseFloat(w.style.top)||0;const h0=w.offsetHeight;
+      w.scrollTop=0;w.style.maxHeight=h0+"px";w.classList.add("open");
+      const full=w.scrollHeight,tr=c.parentNode,first=tr.parentNode.firstElementChild,cy=c.getBoundingClientRect().top;
+      // stays on screen: not under the pinned header, not above the first row, not past the bottom edge
+      let pin=0;["header","#hdrOrders"].forEach(q=>{const e=document.querySelector(q);if(e&&e.offsetParent!==null)pin=Math.max(pin,e.getBoundingClientRect().bottom)});
+      const minTop=Math.max((first?first.offsetTop:0)-tr.offsetTop+4,pin+8-cy);
+      const t=Math.max(minTop,Math.min(top0-(full-h0)/2,innerHeight-8-cy-full));
       requestAnimationFrame(()=>{w.style.top=t+"px";w.style.maxHeight=full+"px"})};
     const close=()=>{if(!w.classList.contains("open")||hov||c.contains(document.activeElement))return;
       w.style.top=top0+"px";w.style.maxHeight=CLIP_H+"px";clearTimeout(tmo);
-      tmo=setTimeout(()=>{w.classList.remove("open");w.style.top=w.style.left=w.style.width=w.style.maxHeight="";clampRows(body)},260)};
+      tmo=setTimeout(()=>{w.classList.remove("open");w.style.maxHeight="";clampRows(body)},260)};
     c.addEventListener("mouseenter",()=>{hov=true;open()});
     c.addEventListener("mouseleave",()=>{hov=false;close()});
     c.addEventListener("focusin",open);
     c.addEventListener("focusout",()=>setTimeout(close,0));
-    w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px"});
+    w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px";else clampRows(body)});
   });
 }
 window.addEventListener("resize",()=>{const b=document.getElementById("dtbody");if(b)clampRows(b)});
