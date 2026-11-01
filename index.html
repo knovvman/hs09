@@ -2024,10 +2024,14 @@ function syncHeadTable(){
 }
 // order number; becomes a link to the order in HelloClient when its id is known
 const CRM_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// with the lock open (owner / editors) the number opens the order window instead of HelloClient
+const editByNumber=()=>isOwnerUI()&&canWrite&&!!db&&editable();
 function numEl(tag,id,o){
   const crm=o&&typeof o.crm==="string"&&CRM_RE.test(o.crm)?o.crm:null;
   const e=document.createElement(crm?"a":tag);e.className="num"+(crm?" num-link":"");
   e.innerHTML="<small>#</small>";e.append(String(id));
+  // checked at the moment of the click, so it always follows the lock as it is now
+  e.addEventListener("click",ev=>{if(!editByNumber())return;ev.stopImmediatePropagation();ev.preventDefault();openOrderDlg(id)},true);
   if(!crm)return e;
   const url="https://app.helloclient.by/order/"+crm;
   e.title="Открыть заказ #"+id+" в HelloClient";
@@ -2215,7 +2219,7 @@ function card(id,o){
     t.addEventListener("blur",()=>{if(id in drafts){clearTimeout(commentTimers[id]);saveComment(id)}});
     body.append(withNotes(t,id,o));
   }
-  if(isOwnerUI()&&canWrite){
+  if(false){ // retired: with the lock open the number opens the order window
     const eb=document.createElement("button");eb.type="button";eb.className="card-edit";
     eb.innerHTML=ICON_EDIT+"<span>Изменить заказ</span>";
     eb.addEventListener("click",e=>{e.stopPropagation();openOrderDlg(id)});
@@ -2580,6 +2584,7 @@ const hasCrm=o=>!!o&&typeof o.crm==="string"&&CRM_RE.test(o.crm);
 function ordChip(id,o,inTable){
   // owner and editors: a pencil that opens the order window (number, HelloClient link, close, delete for the owner);
   // in the table it shows while the pointer is over the row; phone cards get an "Изменить заказ" button instead
+  return null; // the number itself opens the order window while the lock is open
   if(!isOwnerUI()||!inTable)return null;
   const b=document.createElement("button");b.type="button";b.className="ord-chip edit";
   const t="Изменить заказ #"+id;b.setAttribute("aria-label",t);b.innerHTML=ICON_EDIT;
@@ -2743,7 +2748,7 @@ async function saveOrderEdit(){
   try{
     await db.doc("orders/"+n).set(copy);
     await enqueue(id,()=>db.doc("orders/"+id).update({closed:true,closedAt:new Date().toISOString(),renamedTo:n}));
-    setStatus("Сохранено");logEvent({t:"rename",o:n,from:id});toast("Заказ #"+id+" теперь #"+n);
+    setStatus("Сохранено");toast("Заказ #"+id+" теперь #"+n); // a corrected typo: not written to the history
   }catch(e){delete orders[n];orders[id]=o;render();writeErr("Не удалось сменить номер #"+id)(e)}
 }
 function saveOrderLink(){
