@@ -2714,7 +2714,7 @@ function closeOnBackdrop(d,close){
    const steps=(...xs)=>xs.forEach((x,i)=>{if(i)text.append(" ",A()," ");text.append(typeof x==="string"?el("b",null,x):x)});
    if(how==="native")text.append("Отдельным окном, без вкладок");
    else if(how==="ios"){text.append("Нажми ");steps(I(iosVer>=27?"lines":iosVer>=26?"dots3":"share"),"Поделиться","На экран Домой")}
-   else if(how==="mac")steps("Файл","Добавить в Dock");
+   else if(how==="mac"){text.append("Нажми ");steps(I("share"),"Добавить в Dock")}
    else if(how==="android"){text.append("Нажми ");steps(I("dots"),"Добавить на главный экран")}
    card.hidden=false;fit();requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
  };
