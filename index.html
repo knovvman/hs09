@@ -497,7 +497,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable:not(.all-done) :is(th,td).c-num{width:calc(var(--part-w,90px) + 12px);min-width:calc(var(--part-w,90px) + 12px)}
   /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
   .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
-  .dtable th.c-part{letter-spacing:.025em;padding-left:5px;padding-right:5px}
+  .dtable th.c-part{letter-spacing:.025em;padding-left:7px;padding-right:7px}
   /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
   .dtable:not(.all-done) :is(th,td).c-loc{width:56px;min-width:56px;box-sizing:border-box;padding-right:2px}
@@ -509,7 +509,7 @@ body.svc-open .wrap{padding-bottom:110px}
 }
 @media (min-width:900px) and (max-width:1180px){
   .dtable th{padding-left:3px;padding-right:3px;letter-spacing:0;font-size:10px}
-  .dtable th.c-part{letter-spacing:0;padding-left:4px;padding-right:4px} /* EXPERIMENT narrow-cols */
+  .dtable th.c-part{letter-spacing:0;padding-left:6px;padding-right:6px} /* EXPERIMENT narrow-cols */
   .dtable:not(.all-done) :is(th,td).c-num{width:90px;min-width:90px} /* EXPERIMENT narrow-cols */
   .dtable td{padding-left:4px;padding-right:4px}
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
@@ -1760,7 +1760,7 @@ function updateBulkButtons(ids){
     b.disabled=off;syncHap(b);
   });
 }
-const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Движок"],motor:["Плата","двигателя"],bt:["Плата","Bluetooth"],power:["Плата","кнп. вкл."],ten:["ТЭН"]};
+const HEAD2={box:["Коробка"],psu:["Блок","питания"],heater:["Плата","ТЭНа"],engine:["Движок"],motor:["Плата","движка"],bt:["Плата","BT"],power:["Плата","кнп. вкл."],ten:["ТЭН"]};
 function mkBtn(cls,text,title,onClick){const b=document.createElement("button");b.className=cls;b.textContent=text;if(title)b.title=title;b.disabled=!editable();b.addEventListener("click",onClick);return b}
 function locCell(id,o){
   const cur=o.loc||(o.babushkina===true?"babushkina":null);
