@@ -2690,7 +2690,9 @@ function closeOnBackdrop(d,close){
 // "install the app" card
 {const card=document.getElementById("inst"),text=document.getElementById("instText"),go=document.getElementById("instGo"),KEY="hs09-install-off";
  const installed=()=>{try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(_){return false}};
- const off=()=>{try{const t=+localStorage.getItem(KEY)||0;return Date.now()-t<30*864e5}catch(_){return false}};
+ // closed once: back the next day; closed again: away for 30 days (then it starts over)
+ const st=()=>{try{const v=JSON.parse(localStorage.getItem(KEY)||"null");return v&&typeof v==="object"?v:{n:0,t:0}}catch(_){return{n:0,t:0}}};
+ const off=()=>{const v=st();if(!v.n)return false;const wait=v.n>=2?30*864e5:864e5;if(Date.now()-v.t<wait)return true;if(v.n>=2)try{localStorage.removeItem(KEY)}catch(_){}return false};
  const ua=navigator.userAgent||"",touchMac=/Macintosh/.test(ua)&&navigator.maxTouchPoints>1;
  const ios=/iPhone|iPad|iPod/.test(ua)||touchMac,android=/Android/.test(ua);
  const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari\//.test(ua)&&!/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
@@ -2705,11 +2707,11 @@ function closeOnBackdrop(d,close){
    else if(how==="android")text.append("Нажми ",I("dots")," в углу браузера, затем ",el("b",null,"«Добавить на главный экран»"),".");
    card.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
  };
- const hide=(remember)=>{if(remember)try{localStorage.setItem(KEY,String(Date.now()))}catch(_){}
+ const hide=(remember)=>{if(remember)try{const v=st();localStorage.setItem(KEY,JSON.stringify({n:(v.n>=2?0:v.n)+1,t:Date.now()}))}catch(_){}
    card.classList.remove("show");setTimeout(()=>{card.hidden=true},350)};
  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();native=e;if(!shown)setTimeout(()=>show("native"),1500)});
- window.addEventListener("appinstalled",()=>hide(true));
- go.addEventListener("click",async()=>{if(!native)return;go.disabled=true;try{native.prompt();const r=await native.userChoice;hide(r&&r.outcome==="accepted"||true)}catch(_){hide(false)}native=null;go.disabled=false});
+ window.addEventListener("appinstalled",()=>{try{localStorage.setItem(KEY,JSON.stringify({n:2,t:Date.now()}))}catch(_){}hide(false)});
+ go.addEventListener("click",async()=>{if(!native)return;go.disabled=true;try{native.prompt();const r=await native.userChoice;hide(true)}catch(_){hide(false)}native=null;go.disabled=false});
  document.getElementById("instX").addEventListener("click",()=>hide(true));
  // browsers without an install button of their own: short steps, a moment after the page opens
  setTimeout(()=>{if(native||shown)return;if(ios)show("ios");else if(macSafari)show("mac");else if(android)show("android")},3000);}
