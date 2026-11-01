@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset=utf8><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png?v=3"><link rel="apple-touch-icon" href="icon-180.png?v=3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="HS09"><meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12171b" media="(prefers-color-scheme: dark)"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="ru"><head><meta charset=utf8><link rel="manifest" href="manifest.webmanifest"><link rel="preconnect" href="https://www.gstatic.com" crossorigin><link rel="preconnect" href="https://firestore.googleapis.com" crossorigin><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" crossorigin><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" crossorigin><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" crossorigin><link rel="icon" href="icon-192.png?v=3"><link rel="apple-touch-icon" href="icon-180.png?v=3"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="HS09"><meta name="theme-color" content="#eef1f3" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#12171b" media="(prefers-color-scheme: dark)"><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Dyson HS09</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2570,7 +2570,9 @@ async function fbInit(){
   try{fs=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}
   catch(_){fs=F.getFirestore(app)}
   const auth=Au.getAuth(app);
-  try{await withTimeout(Au.getRedirectResult(auth),4000,null)}catch(e){authFoot(null,"Вход не удался: "+(e&&e.code||""))}
+  // the redirect check loads a hidden sign-in frame from Google (slow on phones): only after a redirect sign-in was started
+  let wasRedirect=false;try{wasRedirect=sessionStorage.getItem("hs09-redirect")==="1";sessionStorage.removeItem("hs09-redirect")}catch(_){}
+  if(wasRedirect){try{await withTimeout(Au.getRedirectResult(auth),4000,null)}catch(e){authFoot(null,"Вход не удался: "+(e&&e.code||""))}}
   const u=await withTimeout(new Promise(r=>{const off=Au.onAuthStateChanged(auth,x=>{off();r(x)})}),6000,auth.currentUser||null);
   Au.onAuthStateChanged(auth,x=>{if((x&&x.uid)!==(u&&u.uid))location.reload()});
   const isAdmin=!!u&&u.uid===ADMIN_UID;
@@ -2617,7 +2619,7 @@ function authFoot(u,err,ctx){
     try{await Au.signInWithPopup(auth,p)}
     catch(e){
       const c=e&&e.code;
-      if(c==="auth/popup-blocked"||c==="auth/operation-not-supported-in-this-environment"){try{await Au.signInWithRedirect(auth,p)}catch(e2){setStatus("Вход не удался: "+(e2&&e2.code||""))}}
+      if(c==="auth/popup-blocked"||c==="auth/operation-not-supported-in-this-environment"){try{try{sessionStorage.setItem("hs09-redirect","1")}catch(_){}await Au.signInWithRedirect(auth,p)}catch(e2){setStatus("Вход не удался: "+(e2&&e2.code||""))}}
       else if(c!=="auth/popup-closed-by-user"&&c!=="auth/cancelled-popup-request")setStatus("Вход не удался: "+(c||""));
     }
   };
@@ -3044,19 +3046,6 @@ showLock(false);
     return;
   }
   try{artifactNS=await null}catch(_){artifactNS=null}
-  try{
-    const uid=await user?.id?.();
-    if(uid){
-      prefRef=db.doc("prefs/"+uid);
-      const s=await withTimeout(prefRef.get(),3000,{exists:false});
-      if(s.exists){
-        const p=s.data()||{};
-        if(typeof p.locked==="boolean")locked=p.locked;
-        applyLock();render();armAutoLock();
-      }
-    }
-  }catch(_){}
-  try{const b=await withTimeout(db.doc("meta/markBackup").get(),3000,{exists:false});if(b.exists){markBackup=(b.data()||{}).orders||null}}catch(_){}
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
@@ -3070,6 +3059,20 @@ showLock(false);
     if(!snap.fromCache||snap.docs.length)saveLastOrders();
     if(!snap.metadata.hasPendingWrites)setStatus(canWrite?"Синхронизировано":"Только просмотр");
   },err=>{setStatus("Связь с хранилищем потеряна, обнови страницу");});
+  // personal view settings (lock, folded cards) and the old mark-all backup: read alongside the live data, not before it
+  (async()=>{try{
+    const uid=await user?.id?.();
+    if(uid){
+      prefRef=db.doc("prefs/"+uid);
+      const s=await withTimeout(prefRef.get(),3000,{exists:false});
+      if(s.exists){
+        const p=s.data()||{};
+        if(typeof p.locked==="boolean"){locked=p.locked;try{localStorage.setItem("orders-locked",locked?"1":"0")}catch(_){}}
+        applyLock();render();armAutoLock();
+      }
+    }
+  }catch(_){}})();
+  (async()=>{try{const b=await withTimeout(db.doc("meta/markBackup").get(),3000,{exists:false});if(b.exists){markBackup=(b.data()||{}).orders||null;updateBulkUI()}}catch(_){}})();
 })();
 </script>
 
