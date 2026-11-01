@@ -1938,8 +1938,12 @@ function clipScroll(w,to){
 function clipShow(n){
   document.querySelectorAll("#dtbody td.clamp>.cclip").forEach(w=>{if(w.classList.contains("open")||(n&&w.contains(n)))return;if(w.scrollTop)clipScroll(w,0)});
   const w=n&&n.closest(".cclip");if(!w||w.classList.contains("open")||!w.closest("td.clamp"))return;
-  const y=n.offsetTop-w.offsetTop-(w.clientHeight-n.offsetHeight)/2; // offsets are from the cell
-  clipScroll(w,Math.max(0,Math.min(y,w.scrollHeight-w.clientHeight)));
+  // already in sight (not under a faded edge): leave it where it is
+  const top=n.offsetTop-w.offsetTop,st=w.scrollTop,h=w.clientHeight;
+  const vis0=st+(st>1?16:0),vis1=st+h-(st+h<w.scrollHeight-1?18:0);
+  if(top>=vis0&&top+n.offsetHeight<=vis1)return;
+  const y=top-(h-n.offsetHeight)/2; // offsets are from the cell
+  clipScroll(w,Math.max(0,Math.min(y,w.scrollHeight-h)));
 }
 function cloudTop(c,w,h0,full){
   const top0=parseFloat(w.style.top)||0,tr=c.parentNode,first=tr.parentNode.firstElementChild,cy=c.getBoundingClientRect().top;
