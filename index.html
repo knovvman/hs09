@@ -1959,7 +1959,39 @@ function renderTable(ids){
   tbl.classList.toggle("all-done",allDone);
   syncHeadTable();
   body.querySelectorAll("textarea.comment").forEach(autosize);
+  spreadCols();
 }
+// the part columns get as wide as they can without any comment taking more lines than at the narrowest width:
+// the comment column only gives away room it doesn't use (found by halving, a few layout passes)
+const SPREAD_MAX=160;
+function spreadCols(){
+  const t=document.getElementById("dtable"),body=document.getElementById("dtbody");
+  if(!t||!t.offsetParent||!body)return;
+  const base=parseFloat(t.style.getPropertyValue("--part-w"))||0;if(!base||SPREAD_MAX<=base)return;
+  const cells=[...body.querySelectorAll("td.c-com")];
+  const tas=[...body.querySelectorAll("textarea.comment")];
+  const heights=()=>cells.map(c=>{let h=0;for(const k of c.children)h+=k.getBoundingClientRect().height;return Math.round(h)});
+  const box=t.parentNode,fits=()=>t.getBoundingClientRect().width<=box.clientWidth+1; // never wider than the card
+  const ok0=heights(); // the real layout at the narrowest part width: no comment may get taller than this
+  const same=()=>fits()&&heights().every((h,i)=>h<=ok0[i]+1);
+  const r0=body.querySelector("tr");
+  // apply a width the way the page shows it: the pinned header copy fixes the first row's cells, so free them, lay out, pin again
+  // trying a width: free the first row's pinned cells, set it, size the fields (heights read in one go, then written in one go)
+  const fit=()=>{tas.forEach(x=>{x.style.height="auto"});const hs=tas.map(x=>x.scrollHeight);tas.forEach((x,i)=>{x.style.height=(hs[i]+2)+"px"})};
+  const tryW=w=>{t.style.setProperty("--part-w",w+"px");fit()};
+  const apply=w=>{tryW(w);syncHeadTable();fit()}; // the page as shown: header copy pinned again
+  if(r0)[...r0.children].forEach(td=>{td.style.width=""});
+  // usually nothing has changed since the last time: keep the width found then if it still fits (one pass, no search)
+  const key=innerWidth+"|"+base+"|"+cells.length;
+  if(spreadLast&&spreadLast.key===key){apply(spreadLast.w);if(same())return;if(r0)[...r0.children].forEach(td=>{td.style.width=""})}
+  let lo=base,hi=SPREAD_MAX;
+  for(let i=0;i<7&&hi-lo>1;i++){const mid=Math.floor((lo+hi)/2);tryW(mid);if(same())lo=mid;else hi=mid}
+  apply(lo);
+  while(lo>base&&!same()){lo=Math.max(base,lo-2);if(r0)[...r0.children].forEach(td=>{td.style.width=""});apply(lo)} // safety: never leave a comment taller than before
+  spreadLast={key,w:lo};
+}
+let spreadLast=null;
+{let st=0;window.addEventListener("resize",()=>{clearTimeout(st);st=setTimeout(()=>{const t=document.getElementById("dtable");if(t&&t.offsetParent)render()},200)})}
 function syncHeadTable(){
   const tbl=document.getElementById("dtable"),head=document.getElementById("dthead"),clone=document.getElementById("dtHeadClone"),ht=document.getElementById("dtHeadTable");
   if(!tbl||!head||!clone||!ht)return;
