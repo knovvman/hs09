@@ -560,9 +560,10 @@ body.svc-open .wrap{padding-bottom:110px}
 .inst-ic{width:40px;height:40px;border-radius:10px;display:block}
 .inst-title{font-size:15px;font-weight:600;line-height:20px}
 .inst-text{margin-top:2px;font-size:13px;line-height:1.5;color:var(--muted)}
-.inst-text b{font-weight:600;color:var(--fg)}
+.inst-text b{font-weight:600;color:var(--fg);white-space:nowrap}
 .inst-text .mk-w{display:inline-flex;vertical-align:-3px;font-size:16px;color:var(--accent);margin:0 1px;--sw:2}
 .inst-text .ic-dots3,.inst-text .ic-dots{--sw:3.6}
+.inst-text .st-arr{color:var(--muted);font-size:13px;--sw:2.2;vertical-align:-1px}
 .inst-x{width:28px;height:28px;margin:-4px -2px 0 0;border:0;border-radius:999px;background:none;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 @media (hover:hover){.inst-x:hover{color:var(--fg);background:var(--none-bg)}}
 .inst-go{grid-column:2 / -1;justify-self:start;font:inherit;font-size:14px;font-weight:500;padding:7px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
@@ -2675,9 +2676,10 @@ function closeOnBackdrop(d,close){
    text.replaceChildren();go.hidden=how!=="native";
    if(how==="native")text.append("Откроется отдельным окном, без вкладок браузера.");
    // Safari 26 hides «Поделиться» behind ••• next to the address; older ones show it in the bar
-   // Safari 27: the page menu (three lines) left of the address -> Поделиться -> Показать больше -> Добавить на экран «Домой»
-   else if(how==="ios"&&iosVer>=27)text.append("Нажми ",I("lines")," слева от адреса, затем ",el("b",null,"«Поделиться»"),", ",el("b",null,"«Показать больше»")," и ",el("b",null,"«Добавить на экран „Домой“»"),".");
-   else if(how==="ios")text.append(...(iosNew?["Нажми ",I("dots3")," у адреса, затем ",el("b",null,"«Поделиться»")," и ",el("b",null,"«На экран „Домой“»"),"."]:["Нажми ",I("share")," ",el("b",null,"«Поделиться»"),", затем ",el("b",null,"«На экран „Домой“»"),"."]));
+   // short: [the button] → «Поделиться» → «На экран „Домой“» (Safari 27: ≡ left of the address, 26: ••• by it, older: the share icon)
+   else if(how==="ios"){const A=()=>{const e=I("arr");e.classList.add("st-arr");return e};
+     if(iosVer>=26)text.append("Нажми ",I(iosVer>=27?"lines":"dots3")," ",A()," ",el("b",null,"«Поделиться»")," ",A()," ",el("b",null,"«На экран „Домой“»"));
+     else text.append("Нажми ",I("share")," ",el("b",null,"«Поделиться»")," ",A()," ",el("b",null,"«На экран „Домой“»"))}
    else if(how==="mac")text.append("В меню ",el("b",null,"«Файл»")," выбери ",el("b",null,"«Добавить в Dock»"),".");
    else if(how==="android")text.append("Нажми ",I("dots")," в углу браузера, затем ",el("b",null,"«Добавить на главный экран»"),".");
    card.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>card.classList.add("show")));
