@@ -2555,6 +2555,9 @@ const FB_VER="10.12.2";
 const FB_CFG={apiKey:"AIzaSyAJffB7mOHpmdBoo06dajn70eiTUcEciRI",authDomain:"dyson-hs09.firebaseapp.com",projectId:"dyson-hs09",storageBucket:"dyson-hs09.firebasestorage.app",messagingSenderId:"74869124738",appId:"1:74869124738:web:34f8438002353401fb0e9b"};
 const ADMIN_UID="BD8l6QXbUThSwdUG83lD16cu2tx1";
 let FBX=null;
+// a start-up step that never answers (seen on iPhone: Safari's storage or the sign-in check can hang after the app
+// was in the background) must not keep the page on «Подключаюсь» forever: give up waiting after a few seconds
+function withTimeout(p,ms,fallback){return Promise.race([p,new Promise(r=>setTimeout(()=>r(fallback),ms))])}
 async function fbInit(){
   const base="https://www.gstatic.com/firebasejs/"+FB_VER+"/";
   const [A,Au,F]=await Promise.all([import(base+"firebase-app.js"),import(base+"firebase-auth.js"),import(base+"firebase-firestore.js")]);
@@ -2564,13 +2567,13 @@ async function fbInit(){
   try{fs=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}
   catch(_){fs=F.getFirestore(app)}
   const auth=Au.getAuth(app);
-  try{await Au.getRedirectResult(auth)}catch(e){authFoot(null,"Вход не удался: "+(e&&e.code||""))}
-  const u=await new Promise(r=>{const off=Au.onAuthStateChanged(auth,x=>{off();r(x)})});
+  try{await withTimeout(Au.getRedirectResult(auth),4000,null)}catch(e){authFoot(null,"Вход не удался: "+(e&&e.code||""))}
+  const u=await withTimeout(new Promise(r=>{const off=Au.onAuthStateChanged(auth,x=>{off();r(x)})}),6000,auth.currentUser||null);
   Au.onAuthStateChanged(auth,x=>{if((x&&x.uid)!==(u&&u.uid))location.reload()});
   const isAdmin=!!u&&u.uid===ADMIN_UID;
   // someone the owner gave access to by e-mail: the list in access/list is readable only by the owner and by people on it
   let isEditor=false;
-  if(u&&!isAdmin&&u.email&&u.emailVerified){try{const d=await F.getDoc(F.doc(fs,"access/list"));const l=d.exists()?(d.data()||{}).editors:null;isEditor=Array.isArray(l)&&l.includes(u.email.toLowerCase())}catch(_){}}
+  if(u&&!isAdmin&&u.email&&u.emailVerified){try{const d=await withTimeout(F.getDoc(F.doc(fs,"access/list")),4000,{exists:()=>false});const l=d.exists()?(d.data()||{}).editors:null;isEditor=Array.isArray(l)&&l.includes(u.email.toLowerCase())}catch(_){}}
   authFoot(u,null,{auth,Au,isAdmin,isEditor});
   // same shape the page already used: doc(path).get/set/update/delete, collection(name).onSnapshot
   const CODES={"permission-denied":"invalid_argument","resource-exhausted":"quota_exceeded"};
@@ -3041,7 +3044,7 @@ showLock(false);
     const uid=await user?.id?.();
     if(uid){
       prefRef=db.doc("prefs/"+uid);
-      const s=await prefRef.get();
+      const s=await withTimeout(prefRef.get(),3000,{exists:false});
       if(s.exists){
         const p=s.data()||{};
         if(typeof p.locked==="boolean")locked=p.locked;
@@ -3049,7 +3052,7 @@ showLock(false);
       }
     }
   }catch(_){}
-  try{const b=await db.doc("meta/markBackup").get();if(b.exists){markBackup=(b.data()||{}).orders||null}}catch(_){}
+  try{const b=await withTimeout(db.doc("meta/markBackup").get(),3000,{exists:false});if(b.exists){markBackup=(b.data()||{}).orders||null}}catch(_){}
   updateBulkUI();
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
