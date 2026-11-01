@@ -293,7 +293,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 #view-stats :is(.miss,.sg-row,.part){font-size:14px}
 #view-stats .miss{border-top:1px solid var(--line)}
 /* spares: part groups side by side, each with its count and every spare's note */
-#spareList{columns:3 210px;column-gap:24px}
+/* parts in reading order, left to right, then the next row; every row starts on one line, so the groups line up */
+#spareList{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));column-gap:24px;align-items:start}
 #view-stats .sgp{break-inside:avoid;-webkit-column-break-inside:avoid}
 #view-stats .sgp{border-top:1px solid var(--line);padding:9px 0 10px;min-width:0}
 #view-stats .sgp-head{display:flex;align-items:baseline;gap:10px;font-size:14px}
