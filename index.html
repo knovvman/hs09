@@ -1476,7 +1476,11 @@ document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)retu
 // Kept in meta/log as {items:[{id,at,t,...}]}, oldest first, the last LOG_MAX; anyone can read, only the owner writes.
 let hlog=[];const LOG_MAX=400,HIST_SHORT=6;
 function saveLog(){if(db)db.doc("meta/log").set({items:hlog}).catch(()=>{})}
-function logEvent(ev){ev.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);ev.at=Date.now();hlog=[...hlog,ev].slice(-LOG_MAX);renderHistory();saveLog();return ev.id}
+function logEvent(ev){ev.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);ev.at=ev.at||Date.now();hlog=[...hlog,ev].sort((a,b)=>a.at-b.at).slice(-LOG_MAX);renderHistory();saveLog();return ev.id}
+// entries added later by hand (owner's request), written once by the owner's page; ids keep them from repeating
+const LOG_BACKFILL=[{id:"bf-62945",t:"add",o:"62945",at:Date.parse("2026-10-28T18:57:00+03:00")}];
+function backfillLog(){if(sandbox||!db||!canWrite||!isOwnerUI())return;const miss=LOG_BACKFILL.filter(b=>!hlog.some(x=>x.id===b.id));if(!miss.length)return;
+  hlog=[...hlog,...miss.map(b=>({...b}))].sort((a,b)=>a.at-b.at).slice(-LOG_MAX);renderHistory();saveLog()}
 function unlogEvent(id){const n=hlog.filter(x=>x.id!==id);if(n.length===hlog.length)return;hlog=n;renderHistory();saveLog()}
 const partName=k=>(STAT_PARTS.find(p=>p[0]===k)||[k,k])[1];
 function hChip(k,s){const s0=SPARE_STATES.find(t=>t[0]===s)||SPARE_STATES[2];const c=el("span","hchip");const m=el("span","mk "+s0[0],s0[1]);m.title=s0[2];c.append(m,partName(k));return c}
@@ -1939,7 +1943,11 @@ function numEl(tag,id,o){
     try{
       const W=Math.min(1100,screen.availWidth-80),H=Math.min(820,screen.availHeight-80);
       const L=Math.round((screen.availLeft||0)+(screen.availWidth-W)/2),T=Math.round((screen.availTop||0)+(screen.availHeight-H)/2);
-      w=window.open(url,"hs09-crm","popup=yes,width="+W+",height="+H+",left="+L+",top="+T);
+      // the window is opened empty and only then sent to the order: an installed HelloClient app (Chrome / Safari
+      // "open links in the app") catches new windows that start on its address and would swallow the order behind
+      // everything; an existing window of ours just navigates, stays ours, and can be brought to the front
+      w=window.open("about:blank","hs09-crm","popup=yes,width="+W+",height="+H+",left="+L+",top="+T);
+      if(w){try{w.location.href=url}catch(_){w=null}}
     }catch(_){}
     if(w){crmWin=w;try{w.focus()}catch(_){}}
     else{try{window.open(url,"_blank","noopener")}catch(_){}}
@@ -2406,7 +2414,7 @@ async function fbInit(){
     set:b=>F.setDoc(r,b).catch(tr),
     update:b=>F.updateDoc(r,b).catch(tr),
     delete:()=>F.deleteDoc(r).catch(tr),
-    onSnapshot:(cb,eb)=>F.onSnapshot(r,d=>cb(wrap(d)),eb)}};
+    onSnapshot:(cb,eb)=>F.onSnapshot(r,d=>cb({...wrap(d),fromCache:!!(d.metadata&&d.metadata.fromCache)}),eb)}};
   const collection=n=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.collection(fs,n),{includeMetadataChanges:true},
     q=>cb({docs:q.docs.map(wrap),empty:q.empty,fromCache:q.metadata.fromCache,metadata:{hasPendingWrites:q.metadata.hasPendingWrites}}),eb)});
   return{db:{doc,collection},user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
@@ -2829,7 +2837,7 @@ showLock(false);
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
   try{db.doc("meta/statsNote").onSnapshot(d=>{const v=d.exists?String((d.data()||{}).text||""):"";if(sandbox){sandbox.liveNote=v;return}statsNote=v;renderStatsNote()},()=>{})}catch(_){}
-  try{db.doc("meta/log").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.t&&x.at):[];if(sandbox){sandbox.liveLog=list;return}hlog=list;renderHistory()},()=>{})}catch(_){}
+  try{db.doc("meta/log").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.t&&x.at):[];if(sandbox){sandbox.liveLog=list;return}hlog=list.sort((a,b)=>a.at-b.at);renderHistory();if(d.fromCache===false)backfillLog()},()=>{})}catch(_){}
   try{db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{})}catch(_){} // EXPERIMENT spares: never let this block the orders below
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists){const v=d.data();if(!v||!v.closed)next[d.id]=v}}); // closed orders are not shown or counted
