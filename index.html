@@ -908,6 +908,11 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
 .odlg-close{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:transparent;color:var(--accent);cursor:pointer}
 .odlg-close.ask{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .odlg-close+.odlg-del{margin-top:8px}
+/* "Закрыть заказ" and "Удалить заказ" side by side, half the row each (one of them alone takes the whole row) */
+.odlg-pair{display:flex;gap:8px;margin-top:14px}
+.odlg-pair>button{flex:1 1 0;min-width:0;margin:0!important}
+.odlg-pair>button[hidden]{display:none}
+.odlg-pair:not(:has(>button:not([hidden]))){display:none}
 /* phone: "Удалить" sits at the left of the Отмена / Сохранить row, far from the thumb's way to Сохранить */
 @media (max-width:899px){
   #noteForm{position:relative}
@@ -1162,8 +1167,7 @@ const MARKUP=`<div class="wrap">
       </div>
       <div class="odlg-msg" id="ordMsg" role="alert"></div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="ordCancel">Отмена</button><button type="submit" class="odlg-btn" id="ordSave">Добавить</button></div>
-      <button type="button" class="odlg-close" id="ordClose" hidden>Закрыть заказ</button>
-      <button type="button" class="odlg-del" id="ordDel" hidden>Удалить заказ</button>
+      <div class="odlg-pair"><button type="button" class="odlg-close" id="ordClose" hidden>Закрыть заказ</button><button type="button" class="odlg-del" id="ordDel" hidden>Удалить заказ</button></div>
     </form>
   </dialog>
   <!-- EXPERIMENT part-notes: start -->
