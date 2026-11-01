@@ -2048,37 +2048,10 @@ function numEl(tag,id,o){
   // checked at the moment of the click, so it always follows the lock as it is now
   e.addEventListener("click",ev=>{if(!editByNumber())return;ev.stopImmediatePropagation();ev.preventDefault();openOrderDlg(id)},true);
   if(!crm)return e;
-  const url="https://app.helloclient.by/order/"+crm;
-  e.title="Открыть заказ #"+id+" в HelloClient";
-  if(!deskLinks()){
-    // phone: a normal link (the app shows it in a sheet on top)
-    e.href=url;e.target="_blank";e.rel="noopener noreferrer";
-    e.addEventListener("click",ev=>ev.stopPropagation());
-    return e;
-  }
-  // computer: no plain link here, otherwise Claude also opens a new tab on every click;
-  // the order opens in one small window on top, and later clicks reuse that window
-  e.setAttribute("role","link");e.tabIndex=0;e.dataset.href=url;
-  e.title="Ctrl — открыть в браузере";
-  const go=ev=>{
-    ev.stopPropagation();ev.preventDefault();
-    if(ev.ctrlKey||ev.metaKey||ev.shiftKey){try{window.open(url,"_blank","noopener")}catch(_){}return}
-    try{if(crmWin&&!crmWin.closed){crmWin.location.href=url;try{crmWin.focus()}catch(_){}return}}catch(_){crmWin=null}
-    let w=null;
-    try{
-      const W=Math.min(1100,screen.availWidth-80),H=Math.min(820,screen.availHeight-80);
-      const L=Math.round((screen.availLeft||0)+(screen.availWidth-W)/2),T=Math.round((screen.availTop||0)+(screen.availHeight-H)/2);
-      // the window is opened empty and only then sent to the order: an installed HelloClient app (Chrome / Safari
-      // "open links in the app") catches new windows that start on its address and would swallow the order behind
-      // everything; an existing window of ours just navigates, stays ours, and can be brought to the front
-      w=window.open("about:blank","hs09-crm","popup=yes,width="+W+",height="+H+",left="+L+",top="+T);
-      if(w){try{w.location.href=url}catch(_){w=null}}
-    }catch(_){}
-    if(w){crmWin=w;try{w.focus()}catch(_){}}
-    else{try{window.open(url,"_blank","noopener")}catch(_){}}
-  };
-  e.addEventListener("click",go);
-  e.addEventListener("keydown",ev=>{if(ev.key==="Enter")go(ev)});
+  // the simplest thing that always works, everywhere: a plain link into one named tab/window ("hs09-crm"), so every
+  // order opens in the same place instead of a new tab each time (no rel=noopener: it would stop that reuse)
+  e.href="https://app.helloclient.by/order/"+crm;e.target="hs09-crm";
+  e.addEventListener("click",ev=>ev.stopPropagation()); // a tap on the number doesn't also fold/unfold the phone card
   return e;
 }
 let crmWin=null;
