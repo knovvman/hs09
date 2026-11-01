@@ -902,6 +902,12 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .odlg-close{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:transparent;color:var(--accent);cursor:pointer}
 .odlg-close.ask{background:var(--accent);color:var(--card);border-color:var(--accent)}
 .odlg-close+.odlg-del{margin-top:8px}
+/* phone: "Удалить" sits at the left of the Отмена / Сохранить row, far from the thumb's way to Сохранить */
+@media (max-width:899px){
+  #noteForm{position:relative}
+  #noteForm #noteDel{position:absolute;left:12px;bottom:16px;width:auto;margin:0;padding:9px 6px;border-color:transparent;background:none}
+  #noteForm #noteDel .nd-w{display:none}
+}
 .odlg-del{display:block;width:100%;margin-top:14px;padding:9px 12px;font:inherit;font-size:14px;border-radius:10px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);background:transparent;color:var(--bad);cursor:pointer;transition:background-color .2s ease,color .2s ease}
 .odlg-del.ask{background:var(--bad);color:var(--card);border-color:var(--bad)}
 .odlg-del[hidden]{display:none}
@@ -1160,7 +1166,7 @@ const MARKUP=`<div class="wrap">
         <textarea id="noteText" class="note-text" rows="3" maxlength="300" autocomplete="off"></textarea>
       </div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="noteCancel">Отмена</button><button type="submit" class="odlg-btn" id="noteSave">Сохранить</button></div>
-      <button type="button" class="odlg-del" id="noteDel" hidden>Удалить заметку</button>
+      <button type="button" class="odlg-del" id="noteDel" hidden>Удалить<span class="nd-w"> заметку</span></button>
     </form>
   </dialog>
   <div class="note-tip" id="noteTip" role="tooltip"></div>
@@ -1365,8 +1371,10 @@ lockBtn.addEventListener("click",()=>setLocked(!locked));
 // iOS still pinch-zooms despite user-scalable=no; block its gesture events too (phone only)
 ["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>{if(!deskNow())e.preventDefault()},{passive:false}));
 // the lock closes by itself after 60 s with no clicks, taps or typing; it waits while a dialog is open or a text is being typed
-const AUTO_LOCK_MS=60000;let autoLockT=0;
-function armAutoLock(){clearTimeout(autoLockT);if(!locked&&document.body.classList.contains("admin"))autoLockT=setTimeout(autoLockNow,AUTO_LOCK_MS)}
+// the lock closes itself after a minute without actions on the computer, after 30 seconds on the phone
+const AUTO_LOCK_MS=60000,AUTO_LOCK_PHONE_MS=30000;let autoLockT=0;
+const autoLockMs=()=>{try{return matchMedia("(max-width: 899px)").matches?AUTO_LOCK_PHONE_MS:AUTO_LOCK_MS}catch(_){return AUTO_LOCK_MS}};
+function armAutoLock(){clearTimeout(autoLockT);if(!locked&&document.body.classList.contains("admin"))autoLockT=setTimeout(autoLockNow,autoLockMs())}
 function autoLockNow(){
   if(locked)return;
   const ae=document.activeElement,typing=ae&&(ae.tagName==="TEXTAREA"||ae.tagName==="INPUT")&&!ae.readOnly;
