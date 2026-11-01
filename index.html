@@ -524,6 +524,45 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable td.c-com.clamp>.cclip.open{position:absolute;z-index:6;-webkit-mask-image:none;mask-image:none;background:var(--card);border-radius:4px;box-shadow:0 0 0 6px var(--card),0 0 0 7px var(--line),0 14px 34px -6px rgba(0,0,0,.4);transition:max-height .25s ease}
 }
 /* EXPERIMENT even-rows: end */
+/* history: a short feed on the Parts tab and the whole feed in a panel that slides in from the right */
+.hist-btn{display:none}
+@media (min-width:900px){
+  header .hist-btn{order:4;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);cursor:pointer;position:relative;top:7px;align-self:center;margin-right:-12px;transition:color .2s ease,background-color .2s ease,transform .15s ease}
+  header .hist-btn:active{transform:scale(.9)}
+}
+@media (hover:hover){header .hist-btn:hover{color:var(--fg)}}
+.hist-all{border:0;background:none;padding:2px 0;font:inherit;font-size:13px;color:var(--accent);cursor:pointer}
+@media (hover:hover){.hist-all:hover{text-decoration:underline;text-underline-offset:3px}}
+#histList{columns:3 320px;column-gap:28px}
+#histList>.hitem{break-inside:avoid}
+#histList .ht{min-width:84px}
+.hitem{display:grid;grid-template-columns:auto 22px minmax(0,1fr);column-gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:20px}
+.hd-day+.hitem,.hd-list>.hitem:first-child{border-top:0}
+.ht{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:40px}
+.hic{width:20px;height:20px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;line-height:1;background:var(--none-bg);color:var(--muted)}
+.hi-add .hic{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.hi-close .hic{background:var(--ok-bg,color-mix(in srgb,var(--ok) 16%,transparent));color:var(--ok)}
+.hb b{font-weight:600}
+.hsub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:2px;font-size:13px;color:var(--muted)}
+.hchip{display:inline-flex;align-items:center;gap:4px;color:var(--fg)}
+.hchip .mk{font-weight:700}.hchip .mk.ok{color:var(--ok)}.hchip .mk.bad{color:var(--bad)}.hchip .mk.q{color:var(--warn);font-family:var(--font-mono)}
+.hsub .arr{color:var(--muted)}
+.hist-empty{font-size:13px;color:var(--muted);padding-top:2px}
+.hdrawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(420px,100vw);height:100dvh;max-height:none;max-width:none;box-sizing:border-box;border:0;border-left:1px solid var(--line);padding:0;background:var(--card);color:var(--fg);box-shadow:-20px 0 60px rgba(0,0,0,.28);font-family:var(--font-body)}
+.hdrawer[open]{display:flex;flex-direction:column;animation:hdIn .3s cubic-bezier(.2,.8,.2,1)}
+.hdrawer.out{animation:hdOut .22s ease-in forwards}
+.hdrawer::backdrop{background:rgba(10,14,18,.32);animation:hdFade .3s ease}
+.hdrawer.out::backdrop{animation:hdFade .22s ease reverse forwards}
+@keyframes hdIn{from{transform:translateX(100%)}}
+@keyframes hdOut{to{transform:translateX(100%)}}
+@keyframes hdFade{from{opacity:0}}
+.hd-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 10px 22px}
+.hd-head h2{margin:0;font-size:18px;font-weight:600}
+.hd-x{width:32px;height:32px;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+@media (hover:hover){.hd-x:hover{color:var(--fg)}}
+.hd-list{flex:1;overflow:auto;padding:0 22px 22px;overscroll-behavior:contain}
+.hd-day{position:sticky;top:0;background:var(--card);padding:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1}
+@media (prefers-reduced-motion:reduce){.hdrawer[open],.hdrawer.out,.hdrawer::backdrop{animation:none}}
 /* table details for every desktop width (were stuck inside the 900–1180 block by mistake) */
 @media (min-width:900px){
   .dtable .comment{margin-top:0;font-size:14px;padding:6px 8px;min-height:32px;background:transparent}
@@ -584,7 +623,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (max-width:899px){
   #view-stats{display:flex;flex-direction:column}
   .stats-left{display:contents}
-  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-total{order:5}#view-stats .stats-note{order:6}
+  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-total{order:5}#view-stats .stats-note{order:6}#view-stats .stats-hist{order:7}
   #view-stats>*,.stats-left>*{flex-shrink:0}
   .stats-left>.hero{margin-top:10px}
 }
@@ -597,6 +636,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   #view-stats>section.stats-total{grid-column:3;grid-row:2;margin-top:0}
   #view-stats>section.stats-spare[hidden]+section.stats-total{grid-column:1 / -1}
   #view-stats>section.stats-note{grid-column:1 / -1;grid-row:3;margin-top:0}
+  #view-stats>section.stats-hist{grid-column:1 / -1;grid-row:4;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
   .stats-miss{flex:1 0 auto;display:flex;flex-direction:column}
   #statsMissing{flex:1 0 auto;display:flex;flex-direction:column}
@@ -907,6 +947,7 @@ const MARKUP=`<div class="wrap">
       <h1>Dyson HS09</h1>
     </div>
     <span class="status" id="status"><span>Подключаюсь<span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span></span>
+    <button class="hist-btn" id="histBtn" type="button" aria-label="История" title="История"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 4.5V9h4.5"/><path d="M12 7.5V12l3 2"/></svg></button>
     <div class="theme" role="radiogroup" aria-label="Тема">
       <span class="theme-ind" aria-hidden="true"></span>
       <button role="radio" data-mode="auto" title="Как в системе" aria-label="Тема как в системе"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg></button>
@@ -1006,6 +1047,10 @@ const MARKUP=`<div class="wrap">
       <table class="tot-table" id="spareTotals"></table>
     </section>
     <!-- EXPERIMENT spares: end -->
+    <section class="panel stats-hist" id="statsHist">
+      <div class="spare-head"><h2 class="panel-title">История</h2><button type="button" class="hist-all" id="histAll">Вся история</button></div>
+      <div id="histList"></div>
+    </section>
     <section class="panel stats-note" id="statsNoteBox" hidden>
       <h2 class="panel-title">P.&nbsp;S.</h2>
       <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="1" placeholder="Приписка ко всей вкладке" aria-label="P. S. — приписка ко всей вкладке «Запчасти»"></textarea>
@@ -1044,6 +1089,10 @@ const MARKUP=`<div class="wrap">
   </dialog>
   <div class="note-tip" id="noteTip" role="tooltip"></div>
   <!-- EXPERIMENT spares: start -->
+  <dialog id="histDlg" class="hdrawer" aria-labelledby="histTitle">
+    <div class="hd-head"><h2 id="histTitle">История</h2><button type="button" class="hd-x" id="histClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="hd-list" id="histFull"></div>
+  </dialog>
   <dialog id="spareDlg" class="odlg" aria-labelledby="spareTitle">
     <form id="spareForm" class="odlg-box" novalidate>
       <h2 id="spareTitle" class="odlg-title">Запчасть вне заказов</h2>
@@ -1412,10 +1461,64 @@ document.getElementById("spareForm").addEventListener("submit",e=>{
   const note=document.getElementById("spareNote").value.replace(/\s+/g," ").trim().slice(0,200);
   const item={id:sEdit?sEdit.id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:sPick.k,s:sPick.s||"bad",note};
   const next=sEdit?spares.map(x=>x.id===item.id?item:x):[...spares,item];
+  if(!sEdit)logEvent({t:"sadd",k:item.k,s:item.s,note});
+  else if(sEdit.k!==item.k||sEdit.s!==item.s||(sEdit.note||"")!==note)logEvent({t:"sedit",k:item.k,s:item.s,note,pk:sEdit.k,ps:sEdit.s});
   closeSpareDlg();saveSpares(next);
 });
-document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)return;const id=sEdit.id;closeSpareDlg();saveSpares(spares.filter(x=>x.id!==id))});
+document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)return;const x=sEdit,id=x.id;logEvent({t:"sdel",k:x.k,s:x.s,note:x.note||""});closeSpareDlg();saveSpares(spares.filter(x=>x.id!==id))});
 // EXPERIMENT spares: end
+// history: big moves only — new orders, closed orders (with the parts that went to "Вне заказов"), hand changes in "Вне заказов".
+// Kept in meta/log as {items:[{id,at,t,...}]}, oldest first, the last LOG_MAX; anyone can read, only the owner writes.
+let hlog=[];const LOG_MAX=400,HIST_SHORT=6;
+function saveLog(){if(db)db.doc("meta/log").set({items:hlog}).catch(()=>{})}
+function logEvent(ev){ev.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);ev.at=Date.now();hlog=[...hlog,ev].slice(-LOG_MAX);renderHistory();saveLog();return ev.id}
+function unlogEvent(id){const n=hlog.filter(x=>x.id!==id);if(n.length===hlog.length)return;hlog=n;renderHistory();saveLog()}
+const partName=k=>(STAT_PARTS.find(p=>p[0]===k)||[k,k])[1];
+function hChip(k,s){const s0=SPARE_STATES.find(t=>t[0]===s)||SPARE_STATES[2];const c=el("span","hchip");const m=el("span","mk "+s0[0],s0[1]);m.title=s0[2];c.append(m,partName(k));return c}
+const MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+function dayLabel(t){const d=new Date(t),n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),b=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),df=Math.round((a-b)/864e5);
+  return df===0?"Сегодня":df===1?"Вчера":d.getDate()+" "+MONTHS[d.getMonth()]+(d.getFullYear()!==n.getFullYear()?" "+d.getFullYear():"")}
+const hhmm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+function histItem(x,withDay){
+  const r=el("div","hitem hi-"+x.t),b=el("div","hb"),line=el("div","hl1");
+  const ICON={add:"+",close:"✓",sadd:"+",sdel:"−",sedit:"↻"};
+  let time=hhmm(x.at);if(withDay){const dl=dayLabel(x.at),d=new Date(x.at);if(dl!=="Сегодня")time=(dl==="Вчера"?"вчера":d.getDate()+" "+MONTHS[d.getMonth()].slice(0,3))+" "+time}
+  r.append(el("span","ht",time),el("span","hic",ICON[x.t]||"•"),b);
+  const ord=n=>{const e=el("b",null,"#"+n);return e};
+  const sub=el("div","hsub");
+  if(x.t==="add"){line.append("Новый заказ ",ord(x.o))}
+  else if(x.t==="close"){line.append("Закрыт заказ ",ord(x.o));
+    if(x.parts&&x.parts.length){sub.append("во «Вне заказов»:");x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}}
+  else if(x.t==="sadd"){line.append("Добавлено во «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
+  else if(x.t==="sdel"){line.append("Убрано из «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
+  else if(x.t==="sedit"){line.append("Изменено во «Вне заказов»");
+    if(x.pk!==x.k||x.ps!==x.s)sub.append(hChip(x.pk,x.ps),el("span","arr","→"));sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
+  b.append(line);if(sub.childNodes.length)b.append(sub);
+  return r;
+}
+function renderHistory(){
+  const list=document.getElementById("histList"),all=document.getElementById("histAll");if(!list)return;
+  const items=hlog.slice().reverse();
+  all.hidden=items.length<=HIST_SHORT;
+  if(!items.length)list.replaceChildren(el("div","hist-empty","Пока пусто"));
+  else list.replaceChildren(...items.slice(0,HIST_SHORT).map(x=>histItem(x,true)));
+  const dlg=document.getElementById("histDlg");if(dlg&&dlg.open)renderHistFull();
+}
+function renderHistFull(){
+  const box=document.getElementById("histFull");if(!box)return;
+  const items=hlog.slice().reverse(),out=[];let day=null;
+  items.forEach(x=>{const d=dayLabel(x.at);if(d!==day){day=d;out.push(el("div","hd-day",d))}out.push(histItem(x,false))});
+  box.replaceChildren(...(out.length?out:[el("div","hist-empty","Пока пусто")]));
+}
+{const d=document.getElementById("histDlg");
+ const open=()=>{renderHistFull();d.classList.remove("out");try{d.showModal()}catch(_){d.setAttribute("open","")}document.getElementById("histFull").scrollTop=0};
+ const close=()=>{if(!d.open||d.classList.contains("out"))return;if(reduceMotion()){d.close();return}d.classList.add("out");setTimeout(()=>{d.classList.remove("out");try{d.close()}catch(_){d.removeAttribute("open")}},220)};
+ document.getElementById("histBtn").addEventListener("click",open);
+ document.getElementById("histAll").addEventListener("click",open);
+ document.getElementById("histClose").addEventListener("click",close);
+ d.addEventListener("cancel",e=>{e.preventDefault();close()});
+ closeOnBackdrop(d,close);}
+renderHistory();
 function renderStats(ids){
   const n=ids.length;
   const st=STAT_PARTS.map(([k,name])=>{
@@ -2069,7 +2172,7 @@ let sandbox=null;
 const FAKE_DB={doc:()=>({update:async()=>{},set:async()=>{},delete:async()=>{},get:async()=>({exists:false,data:()=>({})})}),collection:()=>({onSnapshot:()=>()=>{}})};
 function enterSandbox(){
   if(sandbox||!db)return;
-  sandbox={realDb:db,orders:JSON.parse(JSON.stringify(orders)),spares:JSON.parse(JSON.stringify(spares)),note:statsNote,liveOrders:null,liveSpares:null,liveNote:null};
+  sandbox={realDb:db,orders:JSON.parse(JSON.stringify(orders)),spares:JSON.parse(JSON.stringify(spares)),note:statsNote,hlog:hlog.slice(),liveOrders:null,liveSpares:null,liveNote:null,liveLog:null};
   db=FAKE_DB;document.body.classList.add("sandbox");document.getElementById("sbBar").hidden=false;
   updateBulkUI();render();toast("Режим проверки: меняй что угодно, при выходе всё вернётся");
 }
@@ -2077,7 +2180,7 @@ async function exitSandbox(){
   if(!sandbox)return;
   try{await flushComments()}catch(_){}
   const sb=sandbox;sandbox=null;db=sb.realDb;
-  orders=sb.liveOrders||sb.orders;spares=sb.liveSpares||sb.spares;statsNote=sb.liveNote!=null?sb.liveNote:sb.note;statsNoteDraft=null;{const t=document.getElementById("statsNote");if(t){t.value=statsNote;autosize(t)}}
+  orders=sb.liveOrders||sb.orders;spares=sb.liveSpares||sb.spares;hlog=sb.liveLog||sb.hlog;renderHistory();statsNote=sb.liveNote!=null?sb.liveNote:sb.note;statsNoteDraft=null;{const t=document.getElementById("statsNote");if(t){t.value=statsNote;autosize(t)}}
   Object.keys(drafts).forEach(k=>delete drafts[k]);
   document.body.classList.remove("sandbox");document.getElementById("sbBar").hidden=true;
   updateBulkUI();render();toast("Вернул всё как было");setStatus(canWrite?"Синхронизировано":"Только просмотр");
@@ -2426,6 +2529,7 @@ function addOrder(){
   closeOrderDlg();render();
   db.doc("orders/"+n).set(doc).then(()=>setStatus("Сохранено"),e=>{delete orders[n];render();writeErr("Не удалось добавить заказ #"+n)(e)});
   toast("Заказ #"+n+" добавлен");
+  logEvent({t:"add",o:n});
   requestAnimationFrame(()=>{
     const target=isDesk()?[...document.querySelectorAll("#dtbody tr")].find(tr=>tr.querySelector(".num")&&tr.querySelector(".num").textContent==="#"+n):[...grid.children].find(c=>{const x=c.querySelector(".card-head .num");return x&&x.textContent==="#"+n});
     const beh=reduceMotion()?"auto":"smooth";
@@ -2489,8 +2593,10 @@ function closeOrder(){
   const before=spares;
   if(moved.length)saveSpares([...spares,...moved]);else render();
   enqueue(id,()=>db.doc("orders/"+id).update({closed:true,closedAt:at})).then(()=>setStatus("Сохранено"),e=>{orders[id]=copy;render();writeErr("Не удалось закрыть заказ #"+id)(e)});
+  const lid=logEvent({t:"close",o:id,parts:moved.map(x=>[x.k,x.s])});
   toast("Заказ #"+id+" закрыт","Вернуть",()=>{
     if(orders[id]){toast("Заказ #"+id+" уже есть");return}
+    unlogEvent(lid);
     seenIds.add(id);orders[id]=copy;
     const ids=new Set(moved.map(x=>x.id));
     if(moved.length)saveSpares(spares.filter(x=>!ids.has(x.id)));else render();
@@ -2699,6 +2805,7 @@ showLock(false);
   // guests see the live data read-only, without the lock (as on the offline page)
   showLock(canWrite);
   try{db.doc("meta/statsNote").onSnapshot(d=>{const v=d.exists?String((d.data()||{}).text||""):"";if(sandbox){sandbox.liveNote=v;return}statsNote=v;renderStatsNote()},()=>{})}catch(_){}
+  try{db.doc("meta/log").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.t&&x.at):[];if(sandbox){sandbox.liveLog=list;return}hlog=list;renderHistory()},()=>{})}catch(_){}
   try{db.doc("meta/spares").onSnapshot(d=>{const v=d.exists?(d.data()||{}).items:null;const list=Array.isArray(v)?v.filter(x=>x&&x.k):[];if(sandbox){sandbox.liveSpares=list;return}spares=list;render()},()=>{})}catch(_){} // EXPERIMENT spares: never let this block the orders below
   db.collection("orders").onSnapshot(snap=>{
     const next={};snap.docs.forEach(d=>{if(d.exists){const v=d.data();if(!v||!v.closed)next[d.id]=v}}); // closed orders are not shown or counted
