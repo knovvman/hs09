@@ -49,9 +49,8 @@ h1{font-size:20px;margin:0;font-weight:600;text-wrap:balance}
 @media (max-width:899px){html{touch-action:pan-x pan-y}input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:max(16px,1em)!important}}
 @media (hover:hover){body.tab-moving :is(#dtableWrap,#hdrOrders,#grid){pointer-events:none}}
 /* EXPERIMENT legend: the marks themselves in their colours, no colour squares */
-.legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:15px;font-weight:700;line-height:1}
-.legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn);font-family:var(--font-mono)}
-.legend .lg.none::before{content:"";width:12px;height:3px;border-radius:2px;background:var(--none)}
+.legend .lg{display:inline-flex;align-items:center;justify-content:center;min-width:12px;font-size:14px;line-height:1;--sw:3}
+.legend .lg.ok{color:var(--ok)}.legend .lg.bad{color:var(--bad)}.legend .lg.q{color:var(--warn)}.legend .lg.none{color:var(--none)}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
 button{font:inherit;cursor:pointer}
@@ -81,10 +80,21 @@ button{font:inherit;cursor:pointer}
 .chosen{border:0;background:none;padding:0 4px;min-width:44px;min-height:36px;font-size:22px;font-weight:700;line-height:1;border-radius:7px;cursor:pointer}
 .chosen.ok{color:var(--ok)}.chosen.bad{color:var(--bad)}.chosen.none{color:var(--none)}
 /* "нет в наличии": drawn as a short bar with rounded ends (the — glyph has sharp corners) */
-.chosen.none{font-size:0!important}
-.chosen.none::before{content:"";display:inline-block;vertical-align:middle;width:18px;height:3.5px;border-radius:2px;background:currentColor}
-.dtable .chosen.none::before{width:16px;height:3px}
-.dtable td.c-part.note-hit>.chosen.none::before{height:3.8px}.chosen.q{color:var(--warn);font-family:var(--font-mono)}
+.chosen.q{color:var(--warn)}
+/* drawn marks: a 1em square in the current colour, so a font-size rule sizes it; stroke weight per mark */
+.mk-ic{display:block;width:1em;height:1em;flex-shrink:0;overflow:visible}
+.mk-ic path{stroke-width:var(--sw,2.6);transition:stroke-width .3s ease}
+.ic-none path{stroke-width:calc(var(--sw,2.6) + .7px)}
+.ic-q path{stroke-width:calc(var(--sw,2.6) + .3px)}
+.mk-w{display:inline-flex;align-items:center;justify-content:center;line-height:1;vertical-align:middle}
+.chosen,.seg button{display:inline-flex;align-items:center;justify-content:center}
+.seg button .mk-ic{--sw:2.4}
+.mk-w.ok{color:var(--ok)}.mk-w.bad{color:var(--bad)}.mk-w.q{color:var(--warn)}.mk-w.none{color:var(--none)}
+.spare-pick button{display:inline-flex;align-items:center;gap:5px}
+.spare-pick button .mk-w{font-size:13px;--sw:2.8}
+.hchip .mk-w{font-size:12px;--sw:3}.sg-st .mk-w{font-size:12px;--sw:3}
+.spare .mk-w{--sw:2.8}
+.hsub .arr{font-size:13px;--sw:2.2;color:var(--muted)}
 .card-head{align-items:center;cursor:pointer;user-select:none;margin-bottom:6px}
 .card.collapsed .card-head{margin-bottom:0}
 .head-left{display:flex;align-items:center;gap:6px;min-width:0}
@@ -227,7 +237,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 .sg-arrow{width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:rotate(-45deg);transition:transform .25s ease;flex:0 0 auto;margin:0 2px}
 .sg.open .sg-arrow{transform:rotate(45deg)}
 .sg-name{color:var(--fg);flex:1 1 auto}
-.sg-st{display:inline-flex;align-items:baseline;gap:3px;font-size:12px;color:var(--muted)}
+.sg-st{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
 .sg-st .mk{font-weight:700;font-size:13px}.sg-st .mk.ok{color:var(--ok)}.sg-st .mk.bad{color:var(--bad)}.sg-st .mk.q{color:var(--warn);font-family:var(--font-mono)}
 .sg-st .sg-c{margin-right:6px;font-variant-numeric:tabular-nums}
 .sg-n{font-family:var(--font-mono);font-size:16px;color:var(--fg);min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
@@ -309,6 +319,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
 @media (max-width:1279px){
   #view-stats .tot-table .h-full{display:none}
   #view-stats .tot-table .h-short{display:inline}
+  #view-stats .tot-table .h-short.mk-w{display:inline-flex;font-size:13px;--sw:3;vertical-align:-1px}
   #view-stats .tot-table th.h-ok,#view-stats .tot-table th.h-bad{font-size:14px}
   #view-stats .tot-table :is(th,td){padding-left:8px}
   #view-stats .tot-table td.tn{white-space:normal;padding-left:0}
@@ -878,8 +889,8 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   .dtable .cbox.has-notes:focus-within{outline:none}
   /* a hovered part note in the comment: a soft rounded background fades in under that part's value (the whole cell stays plain) */
   /* a hovered part note makes that part's value stand out: its lines thicken and it grows a little, both easing in and out */
-  .dtable tbody td.c-part>:first-child{-webkit-text-stroke:1.8px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
-  .dtable td.c-part.note-hit>:first-child{-webkit-text-stroke-color:currentColor;transform:scale(1.26)}
+  .dtable tbody td.c-part>:first-child{transition:transform .3s ease}
+  .dtable td.c-part.note-hit>:first-child{transform:scale(1.26);--sw:3.4}
   /* the order number reacts the same way to the order's own note */
   .dtable tbody td.c-num .num{display:inline-block;-webkit-text-stroke:.7px transparent;transition:transform .3s ease,-webkit-text-stroke-color .3s ease}
   .dtable td.c-num.note-hit .num{-webkit-text-stroke-color:currentColor;transform:scale(1.1)}
@@ -1015,10 +1026,10 @@ const MARKUP=`<div class="wrap">
     <div class="import-actions"><button id="importSave" class="btn">Сохранить</button><button id="importCancel" class="btn ghost">Отмена</button></div>
   </div>
   <div class="legend">
-      <span><b class="lg ok">✓</b>работает</span>
-      <span><b class="lg bad">✗</b>не работает</span>
-      <span><b class="lg none" aria-label="—"></b>нет в наличии</span>
-      <span><b class="lg q">?</b>не проверено</span>
+      <span><b class="lg ok mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg></b>работает</span>
+      <span><b class="lg bad mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></b>не работает</span>
+      <span><b class="lg none mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12h17"/></svg></b>нет в наличии</span>
+      <span><b class="lg q mk-w"><svg class="mk-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1"/></svg></b>не проверено</span>
     </div>
 
   <div class="tools">
@@ -1263,6 +1274,12 @@ const PARTS=[
 const LOCS=[["babushkina","ББ"],["mp","МП"]];
 const KINDS=[["warranty","Гарантия"],["ours","Наш"]];
 const STATES=[["ok","✓","Работает"],["bad","✗","Не работает"],["none","—","Нет в наличии"],["q","?","Не проверено"]];
+// every mark and small symbol is drawn (SVG, 1em square, current colour), never a font glyph: glyphs sit differently
+// in different fonts and systems (a "+" on iPhone sat low). New symbols go here too.
+const ICON_PATHS={ok:"M4.5 12.5l5 5L19.5 7",bad:"M6.5 6.5l11 11M17.5 6.5l-11 11",none:"M3.5 12h17",
+  q:"M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1",arr:"M4.5 12h14M13.5 7l5 5-5 5"};
+function iconSVG(k){return '<svg class="mk-ic ic-'+k+'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="'+(ICON_PATHS[k]||"")+'"/></svg>'}
+function icon(k,cls){const e=document.createElement("span");e.className=(cls?cls+" ":"")+"mk-w";e.innerHTML=iconSVG(k);return e}
 const grid=document.getElementById("grid"),empty=document.getElementById("empty"),statusEl=document.getElementById("status");
 let db=null,orders={},canWrite=true;
 const queues={};
@@ -1447,12 +1464,12 @@ function renderSpares(st,n){
     const g=el("div","sgp");
     const head=el("div","sgp-head");
     const states=el("span","sg-st");
-    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c&&its.length>1){states.append(el("span","mk "+v,mk),el("span","sg-c",String(c)))}});
+    SPARE_STATES.forEach(([v,mk])=>{const c=its.filter(x=>x.s===v).length;if(c&&its.length>1){states.append(icon(v,"mk "+v),el("span","sg-c",String(c)))}});
     const nb=el("b","sg-n",String(its.length));nb.append(el("small",null," шт."));head.append(el("span","sg-name",name),states,nb);
     const lst=el("div","sgp-items");
     (open||its.length<=SPARE_SHOW+1?its:its.slice(0,SPARE_SHOW)).forEach(x=>{
       const s0=SPARE_STATES.find(t=>t[0]===x.s)||SPARE_STATES[2];
-      const r=el("div","spare");const mk=el("span","mk "+s0[0],s0[1]);mk.title=s0[2];
+      const r=el("div","spare");const mk=icon(s0[0],"mk "+s0[0]);mk.title=s0[2];
       r.append(mk,el("span","nt"+(x.note?"":" none"),x.note||"без заметки"));
       r.addEventListener("click",()=>{if(isOwnerUI()&&editable())openSpareDlg(x)});
       lst.append(r)});
@@ -1463,7 +1480,7 @@ function renderSpares(st,n){
   }));
   // right: a plain table of everything on hand — in orders, outside them, total, working
   if(tot&&st){
-    const hr=document.createElement("tr");[["",""],["в заказах","заказ"],["вне","вне"],["всего","всего"],["рабочих","✓"],["нерабочих","✗"]].forEach(([full,sh],i)=>{const h=el("th",i===4?"h-ok":i===5?"h-bad":null);h.append(el("span","h-full",full),el("span","h-short",sh));hr.append(h)});
+    const hr=document.createElement("tr");[["",""],["в заказах","заказ"],["вне","вне"],["всего","всего"],["рабочих","✓"],["нерабочих","✗"]].forEach(([full,sh],i)=>{const h=el("th",i===4?"h-ok":i===5?"h-bad":null);h.append(el("span","h-full",full),i>=4?icon(i===4?"ok":"bad","h-short"):el("span","h-short",sh));hr.append(h)});
     const th=document.createElement("thead");th.append(hr);
     const tb=document.createElement("tbody");
     st.forEach(c=>{const tr=document.createElement("tr");const inO=c.inOrders+c.bad;
@@ -1475,7 +1492,8 @@ const sDlg=document.getElementById("spareDlg");let sEdit=null,sPick={k:null,s:nu
 function pickers(){
   const mk=(boxId,list,key,label)=>{const b=document.getElementById(boxId);b.replaceChildren(...list.map(([v,a,c])=>{const t=document.createElement("button");t.type="button";t.textContent=label(a,c);t.setAttribute("aria-pressed",sPick[key]===v?"true":"false");t.addEventListener("click",()=>{sPick[key]=v;pickers()});return t}))};
   mk("sparePart",STAT_PARTS.map(([k,n])=>[k,n]),"k",a=>a);
-  mk("spareState",SPARE_STATES,"s",(a,c)=>a+" "+c);
+  mk("spareState",SPARE_STATES,"s",(a,c)=>c);
+  document.querySelectorAll("#spareState button").forEach((b,i)=>{const w=icon(SPARE_STATES[i][0],"mk "+SPARE_STATES[i][0]);b.prepend(w)});
 }
 function openSpareDlg(x){
   sEdit=x||null;sPick={k:x?x.k:null,s:x?x.s:"bad"};pickers();
@@ -1533,7 +1551,7 @@ function backfillLog(){if(sandbox||!db||!canWrite||!isOwnerUI())return;const mis
   hlog=[...hlog,...miss.map(b=>({...b}))].sort((a,b)=>a.at-b.at).slice(-LOG_MAX);renderHistory();saveLog()}
 function unlogEvent(id){const n=hlog.filter(x=>x.id!==id);if(n.length===hlog.length)return;hlog=n;renderHistory();saveLog()}
 const partName=k=>(STAT_PARTS.find(p=>p[0]===k)||[k,k])[1];
-function hChip(k,s){const s0=SPARE_STATES.find(t=>t[0]===s)||SPARE_STATES[2];const c=el("span","hchip");const m=el("span","mk "+s0[0],s0[1]);m.title=s0[2];c.append(m,partName(k));return c}
+function hChip(k,s){const s0=SPARE_STATES.find(t=>t[0]===s)||SPARE_STATES[2];const c=el("span","hchip");const m=icon(s0[0],"mk "+s0[0]);m.title=s0[2];c.append(m,partName(k));return c}
 const MONTHS=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
 function dayLabel(t){const d=new Date(t),n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime(),b=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),df=Math.round((a-b)/864e5);
   return df===0?"Сегодня":df===1?"Вчера":d.getDate()+" "+MONTHS[d.getMonth()]+(d.getFullYear()!==n.getFullYear()?" "+d.getFullYear():"")}
@@ -1553,7 +1571,7 @@ function histItem(x,withDay){
   else if(x.t==="sadd"){line.append("Добавлено во «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   else if(x.t==="sdel"){line.append("Убрано из «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   else if(x.t==="sedit"){line.append("Изменено во «Вне заказов»");
-    if(x.pk!==x.k||x.ps!==x.s)sub.append(hChip(x.pk,x.ps),el("span","arr","→"));sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
+    if(x.pk!==x.k||x.ps!==x.s)sub.append(hChip(x.pk,x.ps),icon("arr","arr"));sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   b.append(line);if(sub.childNodes.length)b.append(sub);
   return r;
 }
@@ -1835,9 +1853,9 @@ function kindCell(id,o){
   KINDS.forEach(([v,text])=>seg.append(mkBtn("kind-pick "+v,text,null,()=>setPart(id,"kind",v))));return seg;
 }
 function partCell(id,o,k,label){
-  if(o[k]){const st=STATES.find(x=>x[0]===o[k]);const b=mkBtn("chosen "+o[k],st?st[1]:"?",(st?st[2]:""),()=>setPart(id,k,null));b.setAttribute("aria-label",label+": "+(st?st[2]:""));return b}
+  if(o[k]){const st=STATES.find(x=>x[0]===o[k]);const b=mkBtn("chosen "+o[k],"",(st?st[2]:""),()=>setPart(id,k,null));b.innerHTML=iconSVG(st?o[k]:"q");b.setAttribute("aria-label",label+": "+(st?st[2]:""));return b}
   const seg=document.createElement("div");seg.className="seg";
-  STATES.forEach(([v,sym,title])=>{const b=mkBtn(v,sym,title,()=>setPart(id,k,v));b.setAttribute("aria-label",label+": "+title);seg.append(b)});
+  STATES.forEach(([v,sym,title])=>{const b=mkBtn(v,"",title,()=>setPart(id,k,v));b.innerHTML=iconSVG(v);b.setAttribute("aria-label",label+": "+title);seg.append(b)});
   return seg;
 }
 function commentBox(id,o,scope){
@@ -2151,7 +2169,7 @@ function card(id,o){
     const l=document.createElement("div");l.className="label";l.textContent=label;
     if(o[k]){
       const st=STATES.find(s=>s[0]===o[k]);
-      const ic=document.createElement("button");ic.className="chosen "+o[k];ic.textContent=st[1];
+      const ic=document.createElement("button");ic.className="chosen "+o[k];ic.innerHTML=iconSVG(o[k]);
       ic.title=st[2];
       ic.setAttribute("aria-label",`${label}: ${st[2]}. Сбросить`);
       ic.disabled=!editable();
@@ -2160,7 +2178,7 @@ function card(id,o){
     }
     const seg=document.createElement("div");seg.className="seg";seg.setAttribute("role","group");seg.setAttribute("aria-label",label);
     for(const [v,sym,title] of STATES){
-      const b=document.createElement("button");b.className=v;b.textContent=sym;b.title=title;
+      const b=document.createElement("button");b.className=v;b.innerHTML=iconSVG(v);b.title=title;
       b.setAttribute("aria-label",`${label}: ${title}`);
       b.setAttribute("aria-pressed",o[k]===v?"true":"false");
       b.disabled=!editable();
