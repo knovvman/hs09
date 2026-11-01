@@ -507,7 +507,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable .chosen{min-width:28px;min-height:28px;font-size:20px}
   .dtable .loc,.dtable .seg .loc{min-height:28px;min-width:40px;padding:2px 8px;font-size:12px}
   .dtable .chosen-kind,.dtable .seg .kind-pick{min-height:28px;padding:2px 4px;font-size:12px;width:66px;min-width:66px}
-  .dtable td.c-com{min-width:170px;width:30%;padding-right:12px}
+  .dtable td.c-com{min-width:170px;width:30%;padding-right:7px} /* text ends 16px from the card's edge, like the order number starts */
   /* narrow "where"/"type": unchosen buttons stack; part columns share one width (the widest header, set from JS as --part-w); the comment takes the rest */
   .dtable :is(th,td).c-loc,.dtable :is(th,td).c-kind{white-space:nowrap}
   .dtable td.c-loc>.seg,.dtable td.c-kind>.seg{display:inline-flex;flex-direction:column;gap:2px}
@@ -518,6 +518,8 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable:not(.all-done) :is(th,td).c-num{width:calc(var(--part-w,90px) + 12px);min-width:calc(var(--part-w,90px) + 12px)}
   /* EXPERIMENT narrow-cols: start — the order column just fits its number, the comment gets the rest */
   .dtable:not(.all-done) :is(th,td).c-num{width:96px;min-width:96px}
+  /* viewers have no link / pencil icon after the number: the column just fits it, so "Где" comes closer */
+  body:not(.admin) .dtable:not(.all-done) :is(th,td).c-num{width:84px;min-width:84px;padding-left:16px!important;padding-right:6px!important;text-align:left}
   .dtable th.c-part{letter-spacing:.025em;padding-left:7px;padding-right:7px}
   /* EXPERIMENT narrow-cols: end */
   /* Where and Type a little narrower than the rest, so МП and Наш sit closer */
@@ -534,7 +536,7 @@ body.svc-open .wrap{padding-bottom:110px}
   .dtable:not(.all-done) :is(th,td).c-num{width:90px;min-width:90px} /* EXPERIMENT narrow-cols */
   .dtable td{padding-left:4px;padding-right:4px}
   .dtable th.c-num,.dtable td.c-num{padding-left:6px;padding-right:6px}
-  .dtable td.c-com{min-width:110px;padding-right:10px}
+  .dtable td.c-com{min-width:110px;padding-right:7px}
   .dtable th.c-com{padding-left:8px}
 }
 /* "install the app": a small card at the bottom for visitors in a browser — a real install button where the browser offers one
