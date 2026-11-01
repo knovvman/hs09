@@ -1496,7 +1496,7 @@ function renderSpares(st,n){
   if(!box)return;
   const own=isOwnerUI(),can=own&&editable();
   // the owner always sees the block and its + (faded while locked), so nothing appears or jumps when the lock is toggled
-  add.hidden=!own;add.disabled=!can;box.hidden=!spares.length&&!own;
+  add.hidden=!own;add.disabled=!(own&&canAddOrder()); // adding works with the lock closed, like adding an orderbox.hidden=!spares.length&&!own;
   // one group per part kind: name and count on top, then every spare with its state and where it came from;
   // a long group shows SPARE_SHOW of them and folds the rest behind "ещё N"
   const SPARE_SHOW=4;
