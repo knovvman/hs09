@@ -1989,6 +1989,11 @@ function clampRows(body){
     c.classList.toggle("clamp",w.scrollHeight>CLIP_H+1);clipFade(w);
     w.style.top=Math.round((c.clientHeight-Math.min(w.scrollHeight,CLIP_H))/2)+"px"; // centred in the row
     if(!c.dataset.cl){c.dataset.cl=1;w.addEventListener("scroll",()=>clipFade(w),{passive:true});
+      // the wheel / trackpad scrolls a closed cut comment under the pointer; at its ends the page scrolls as usual
+      w.addEventListener("wheel",e=>{if(!c.classList.contains("clamp")||w.classList.contains("open")||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
+        const max=w.scrollHeight-w.clientHeight,d=e.deltaMode===1?e.deltaY*20:e.deltaY;
+        if((d<0&&w.scrollTop<=0)||(d>0&&w.scrollTop>=max-1))return;
+        e.preventDefault();cancelAnimationFrame(w._sa||0);clearTimeout(clipT);w.scrollTop=Math.max(0,Math.min(max,w.scrollTop+d))},{passive:false});
       w.addEventListener("input",()=>{if(w.classList.contains("open"))w.style.maxHeight=w.scrollHeight+"px"})}
   });
   // the page redraws on every data update: an open comment comes back open, without animating again
