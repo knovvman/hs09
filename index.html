@@ -2892,8 +2892,37 @@ function mobLit(card,k){
   mobLitKey=null;
   if(!card||same||!k||k==="order")return;
   const r=card.querySelector(".row.r-"+k),n=card.querySelector('.cnote[data-k="'+k+'"]');
-  requestAnimationFrame(()=>{if(r)r.classList.add("lit");if(n)n.classList.add("lit")}); // both in one frame
+  requestAnimationFrame(()=>{if(r)r.classList.add("lit");if(n)n.classList.add("lit");if(n)revealNote(r,n)}); // both in one frame
   mobLitKey={card,k};
+}
+// phone: the lit note is off screen -> glide down so the whole comment of that order shows;
+// if that would push the tapped part row up under the header, glide only as far as the note itself
+let glideRun=0;
+function glide(v,dy){
+  const id=++glideRun;if(Math.abs(dy)<1)return;
+  if(reduceMotion()){v.scrollTop+=dy;return}
+  const y0=v.scrollTop,max=v.scrollHeight-v.clientHeight,to=Math.max(0,Math.min(max,y0+dy)),d=to-y0;if(Math.abs(d)<1)return;
+  const T=Math.min(650,Math.max(320,Math.abs(d)*0.9)),t0=performance.now(),ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const stop=()=>{glideRun++;off()},off=()=>{v.removeEventListener("touchstart",stop);v.removeEventListener("wheel",stop)};
+  v.addEventListener("touchstart",stop,{passive:true});v.addEventListener("wheel",stop,{passive:true}); // a finger takes over at once
+  const step=now=>{if(id!==glideRun)return;const t=Math.min(1,(now-t0)/T);v.scrollTop=y0+d*ease(t);if(t<1)requestAnimationFrame(step);else off()};
+  requestAnimationFrame(step);
+}
+function revealNote(r,n){
+  const v=VIEW.orders;if(!v||isDesk())return;
+  const hm=document.getElementById("hdrMob"),vr=v.getBoundingClientRect();
+  const top=(hm&&hm.offsetParent?hm.getBoundingClientRect().bottom:vr.top)+8;
+  // keep clear of the floating lock / wrench in the bottom corner
+  let bottom=Math.min(vr.bottom,window.innerHeight)-14;
+  document.querySelectorAll("body>.lock,.svc-toggle").forEach(b=>{if(b.offsetParent&&getComputedStyle(b).position==="fixed"){const br=b.getBoundingClientRect();if(br.width&&br.top<bottom+14)bottom=Math.min(bottom,br.top-10)}});
+  const nb=n.getBoundingClientRect();
+  if(nb.top>=top&&nb.bottom<=bottom)return; // already on screen
+  if(nb.top<top){glide(v,nb.top-top);return}
+  const box=(n.closest(".cbox")||n.parentNode).getBoundingClientRect(),rt=r?r.getBoundingClientRect().top:nb.top;
+  let dy=box.bottom-bottom;
+  if(rt-dy<top)dy=nb.bottom-bottom;          // whole comment would hide the part: just the note
+  if(nb.top-dy<top)dy=nb.top-top;            // a very long note: its start
+  glide(v,dy);
 }
 document.addEventListener("click",e=>{if(mobLitKey&&!(e.target.closest&&e.target.closest("#grid .row,#grid .cnote")))mobLit(null)},true);
 // phone: the card head shows only a "Бывший <номер>" mention from the order's own note (e.g. "Бывший 5118"), after the location/type chips;
