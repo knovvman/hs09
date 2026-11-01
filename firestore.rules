@@ -4,13 +4,26 @@ service cloud.firestore {
     function isOwner() {
       return request.auth != null && request.auth.uid == "BD8l6QXbUThSwdUG83lD16cu2tx1";
     }
-    // orders and the service backup: everyone can read, only the owner can change
+    // people the owner gave access to by e-mail (access/list {editors:[...]}, kept by the owner on the site);
+    // they can change marks, comments, notes, add and close orders, "Вне заказов" and P. S., but not delete orders
+    function isEditor() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/access/list)
+        && request.auth.token.email.lower() in get(/databases/$(database)/documents/access/list).data.editors;
+    }
     match /orders/{id} {
       allow read: if true;
-      allow write: if isOwner();
+      allow create, update: if isOwner() || isEditor();
+      allow delete: if isOwner();
     }
     match /meta/{id} {
       allow read: if true;
+      allow write: if isOwner() || (isEditor() && id in ["spares", "statsNote", "log"]);
+    }
+    // the access list: the owner reads and changes it; a person on it may read it (that's how the page knows them)
+    match /access/{id} {
+      allow read: if isOwner() || (request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in resource.data.editors);
       allow write: if isOwner();
     }
     // each signed-in person's own view settings (lock, folded cards)

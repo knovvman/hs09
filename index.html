@@ -818,6 +818,15 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .odlg-msg{font-size:13px;color:var(--bad);margin:2px 0 10px}
 .odlg-msg:empty{display:none}
 .odlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.acc-hint{margin:-6px 0 12px;font-size:13px;line-height:1.45;color:var(--muted)}
+.acc-list{display:flex;flex-direction:column;margin-bottom:10px}
+.acc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:15px;overflow-wrap:anywhere}
+.acc-row:first-child{border-top:0}
+.acc-row button{flex-shrink:0;border:0;background:none;padding:4px 2px;font:inherit;font-size:13px;color:var(--bad);cursor:pointer}
+.acc-empty{font-size:13px;color:var(--muted);padding:4px 0 6px}
+.acc-add{display:flex;gap:8px;margin-bottom:4px}
+.acc-add .odlg-btn{flex-shrink:0}
+#accMsg:empty{display:none}
 .odlg-btn{font:inherit;font-size:15px;font-weight:500;border-radius:10px;padding:9px 16px;border:1px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
 .odlg-btn.ghost{background:transparent;color:var(--accent)}
 .odlg-btn:disabled{opacity:.5;cursor:default}
@@ -1015,6 +1024,7 @@ const MARKUP=`<div class="wrap">
     <button class="svc-btn" id="sbMarkAll" hidden>Отметить все</button>
     <button class="svc-btn" id="sbClearAll" hidden>Снять все</button>
     <button class="svc-btn" id="sandboxBtn">Проверка</button>
+    <button class="svc-btn" id="accessBtn" hidden>Доступ</button>
   </div>
   <div class="sb-bar" id="sbBar" hidden><span>Режим проверки — изменения не сохраняются</span><button type="button" id="sbExit">Выйти</button></div>
   <div class="dtable-wrap" id="dtableWrap"><table class="dtable" id="dtable"><thead id="dthead"></thead><tbody id="dtbody"></tbody></table></div>
@@ -1090,6 +1100,16 @@ const MARKUP=`<div class="wrap">
   <dialog id="histDlg" class="hdrawer" aria-labelledby="histTitle">
     <div class="hd-head"><h2 id="histTitle">История</h2><button type="button" class="hd-x" id="histClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="hd-list" id="histFull"></div>
+  </dialog>
+  <dialog id="accDlg" class="odlg" aria-labelledby="accTitle">
+    <form id="accForm" class="odlg-box" novalidate>
+      <h2 id="accTitle" class="odlg-title">Доступ</h2>
+      <p class="acc-hint">Отметки, комментарии, заметки, новые и закрытые заказы, «Вне заказов» и P.&nbsp;S. Без гаечного ключа и удаления заказов.</p>
+      <div class="acc-list" id="accList"></div>
+      <div class="odlg-field acc-add"><input id="accEmail" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="почта Google" aria-label="Почта Google"><button type="submit" class="odlg-btn" id="accAdd">Добавить</button></div>
+      <div class="odlg-msg" id="accMsg"></div>
+      <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="accClose">Готово</button></div>
+    </form>
   </dialog>
   <dialog id="spareDlg" class="odlg" aria-labelledby="spareTitle">
     <form id="spareForm" class="odlg-box" novalidate>
@@ -1463,6 +1483,26 @@ document.getElementById("spareForm").addEventListener("submit",e=>{
 });
 document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)return;const x=sEdit,id=x.id;logEvent({t:"sdel",k:x.k,s:x.s,note:x.note||""});closeSpareDlg();saveSpares(spares.filter(x=>x.id!==id))});
 // EXPERIMENT spares: end
+// access by e-mail (owner only): access/list {editors:[lower-case e-mails]}; firestore.rules lets these people edit
+{const d=document.getElementById("accDlg"),list=document.getElementById("accList"),inp=document.getElementById("accEmail"),msg=document.getElementById("accMsg");
+ let eds=[],busy=false;
+ const draw=()=>{list.replaceChildren(...(eds.length?eds.map(m=>{const r=el("div","acc-row");const x=el("button",null,"Убрать");x.type="button";
+   x.addEventListener("click",()=>save(eds.filter(e=>e!==m)));r.append(el("span",null,m),x);return r}):[el("div","acc-empty","Пока никого")]))};
+ const save=async next=>{if(busy)return;busy=true;const before=eds;eds=next;draw();msg.textContent="";
+   try{await db.doc("access/list").set({editors:next});setStatus("Сохранено")}catch(e){eds=before;draw();msg.textContent="Не сохранилось — проверь связь"}busy=false};
+ const close=()=>{try{d.close()}catch(_){d.removeAttribute("open")}};
+ document.getElementById("accessBtn").addEventListener("click",async()=>{
+   if(!IS_OWNER||!db||sandbox)return;msg.textContent="";inp.value="";inp.classList.remove("bad");
+   try{const g=await db.doc("access/list").get();eds=g.exists&&Array.isArray((g.data()||{}).editors)?g.data().editors:[]}catch(_){eds=[]}
+   draw();try{d.showModal()}catch(_){d.setAttribute("open","")}setTimeout(()=>inp.focus(),30)});
+ document.getElementById("accForm").addEventListener("submit",e=>{e.preventDefault();
+   const m=inp.value.trim().toLowerCase();
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){inp.classList.add("bad");msg.textContent="Это не похоже на почту";inp.focus();return}
+   inp.classList.remove("bad");if(eds.includes(m)){msg.textContent="Уже есть";return}
+   inp.value="";save([...eds,m]);inp.focus()});
+ inp.addEventListener("input",()=>{inp.classList.remove("bad");msg.textContent=""});
+ document.getElementById("accClose").addEventListener("click",close);
+ closeOnBackdrop(d,close);}
 // history: big moves only — new orders, closed orders (with the parts that went to "Вне заказов"), hand changes in "Вне заказов".
 // Kept in meta/log as {items:[{id,at,t,...}]}, oldest first, the last LOG_MAX; anyone can read, only the owner writes.
 let hlog=[];const LOG_MAX=400;
@@ -2161,6 +2201,7 @@ function updateBulkUI(){
   const box=document.getElementById("bulkTools");if(!box)return;
   const w=!!db&&canWrite;
   ["markAll","restoreAll","sandboxBtn"].forEach(id=>{const b=document.getElementById(id);if(b)b.hidden=!w});
+  {const a=document.getElementById("accessBtn");if(a){a.hidden=!w||!IS_OWNER||!!sandbox}}
   // the real "mark all" is retired: marking everything is done in the sandbox ("Отметить все / Снять все" there, nothing saved);
   // "restore" stays only while an old real mark-all is still waiting to be undone
   document.getElementById("markAll").hidden=true;
@@ -2344,7 +2385,10 @@ async function fbInit(){
   const u=await new Promise(r=>{const off=Au.onAuthStateChanged(auth,x=>{off();r(x)})});
   Au.onAuthStateChanged(auth,x=>{if((x&&x.uid)!==(u&&u.uid))location.reload()});
   const isAdmin=!!u&&u.uid===ADMIN_UID;
-  authFoot(u,null,{auth,Au,isAdmin});
+  // someone the owner gave access to by e-mail: the list in access/list is readable only by the owner and by people on it
+  let isEditor=false;
+  if(u&&!isAdmin&&u.email&&u.emailVerified){try{const d=await F.getDoc(F.doc(fs,"access/list"));const l=d.exists()?(d.data()||{}).editors:null;isEditor=Array.isArray(l)&&l.includes(u.email.toLowerCase())}catch(_){}}
+  authFoot(u,null,{auth,Au,isAdmin,isEditor});
   // same shape the page already used: doc(path).get/set/update/delete, collection(name).onSnapshot
   const CODES={"permission-denied":"invalid_argument","resource-exhausted":"quota_exceeded"};
   const tr=e=>{const x=new Error(e&&e.message);x.code=CODES[e&&e.code]||(e&&e.code);throw x};
@@ -2357,17 +2401,17 @@ async function fbInit(){
     onSnapshot:(cb,eb)=>F.onSnapshot(r,d=>cb({...wrap(d),fromCache:!!(d.metadata&&d.metadata.fromCache)}),eb)}};
   const collection=n=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.collection(fs,n),{includeMetadataChanges:true},
     q=>cb({docs:q.docs.map(wrap),empty:q.empty,fromCache:q.metadata.fromCache,metadata:{hasPendingWrites:q.metadata.hasPendingWrites}}),eb)});
-  return{db:{doc,collection},user:{can:async()=>isAdmin,isOwner:async()=>isAdmin,id:async()=>u?u.uid:null}};
+  return{db:{doc,collection},user:{can:async()=>isAdmin||isEditor,isOwner:async()=>isAdmin,isEditor:async()=>isEditor,id:async()=>u?u.uid:null}};
 }
 function authFoot(u,err,ctx){
   const btn=document.getElementById("acctBtn");if(!btn)return;
   if(err){setStatus(err);return}
   if(!ctx)return;
-  const {auth,Au,isAdmin}=ctx;
+  const {auth,Au,isAdmin,isEditor}=ctx;
   btn.hidden=false;
   const label=t=>{btn.title=t;btn.setAttribute("aria-label",t)};
   let askT=0;
-  const idle=()=>{btn.classList.remove("ask");label(u?(isAdmin?"Владелец: ":"Вошёл: ")+(u.email||"")+(isAdmin?"":" — только просмотр")+". Нажми, чтобы выйти":"Вход для владельца")};
+  const idle=()=>{btn.classList.remove("ask");label(u?(isAdmin?"Владелец: ":isEditor?"Редактор: ":"Вошёл: ")+(u.email||"")+(isAdmin||isEditor?"":" — только просмотр")+". Нажми, чтобы выйти":"Вход")};
   btn.classList.toggle("in",!!u);idle();
   btn.onclick=async()=>{
     if(u){
@@ -2440,7 +2484,7 @@ function openOrderDlg(id){
   dlgNum.value="";dlgNum.classList.remove("bad");
   dlgLink.value=hasCrm(o)?"https://app.helloclient.by/order/"+o.crm:"";
   dlgSave.textContent=id?"Сохранить":"Добавить";dlgSave.disabled=false;
-  dlgDel.hidden=!id;document.getElementById("ordClose").hidden=!id;resetDel();
+  dlgDel.hidden=!id||!IS_OWNER;document.getElementById("ordClose").hidden=!id;resetDel();
   dlgMsg.textContent="";dlgShowCheck();
   try{dlg.showModal()}catch(_){dlg.setAttribute("open","")}
   // a new order starts with the number; an existing one with the link (unless it already has one)
@@ -2547,7 +2591,7 @@ function deleteOrder(){
 }
 document.getElementById("ordForm").addEventListener("submit",e=>{e.preventDefault();if(!db||!editable()){closeOrderDlg();return}dlgMsg.textContent="";if(dlgId)saveOrderLink();else addOrder()});
 document.getElementById("ordCancel").addEventListener("click",closeOrderDlg);
-dlgDel.addEventListener("click",()=>{if(db&&editable())deleteOrder()});
+dlgDel.addEventListener("click",()=>{if(db&&editable()&&IS_OWNER)deleteOrder()});
 // closing a finished order: it leaves the list and every count; its working parts are gone with it,
 // its non-working (and unchecked) boards and power supply move to "Вне заказов" with a note where they came from
 function closeOrder(){
@@ -2726,6 +2770,7 @@ nDlg.addEventListener("close",()=>{nFor=null});
   document.addEventListener("transitionend",later);
   later();
 }
+var IS_OWNER=false; // the owner's own account (service key, deleting orders, access list); editors have body.admin.editor
 setSvc(false,false);
 updateBulkUI();
 // the lock is an owner control: hidden while the page is still finding out who is looking
@@ -2739,7 +2784,14 @@ showLock(false);
     if(w===false)canWrite=false;
   }catch(_){}
   db=FBX?FBX.db:null;
+  try{if(db&&!(await user?.isOwner?.())&&await user?.isEditor?.()){
+    // an editor: the same editing as the owner, without the service key (no sandbox, no service buttons, no deleting orders)
+    document.body.classList.add("admin","editor");
+    document.getElementById("addOrderBtn").hidden=false;
+    armAutoLock();
+  }}catch(_){}
   try{if(db&&await user?.isOwner?.()){
+    IS_OWNER=true;
     document.body.classList.add("admin");
     document.getElementById("svcToggle").hidden=false;
     document.getElementById("addOrderBtn").hidden=false;
