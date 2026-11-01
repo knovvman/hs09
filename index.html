@@ -531,16 +531,18 @@ body.svc-open .wrap{padding-bottom:110px}
 /* EXPERIMENT even-rows: end */
 /* history: a short feed on the Parts tab and the whole feed in a panel that slides in from the right */
 .hist-btn{display:none}
+@media (max-width:899px){
+  header>.hist-btn{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:40px;height:40px;padding:0;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
+  header>.hist-btn:active{transform:scale(.9)}
+  header>.hist-btn svg{width:20px;height:20px}
+  .hd-head{padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .hd-list{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+}
 @media (min-width:900px){
   header .hist-btn{order:4;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:0;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);cursor:pointer;position:relative;top:7px;align-self:center;margin-right:-12px;transition:color .2s ease,background-color .2s ease,transform .15s ease}
   header .hist-btn:active{transform:scale(.9)}
 }
 @media (hover:hover){header .hist-btn:hover{color:var(--fg)}}
-.hist-all{border:0;background:none;padding:2px 0;font:inherit;font-size:13px;color:var(--accent);cursor:pointer}
-@media (hover:hover){.hist-all:hover{text-decoration:underline;text-underline-offset:3px}}
-#histList{columns:3 320px;column-gap:28px}
-#histList>.hitem{break-inside:avoid}
-#histList .ht{min-width:84px}
 .hitem{display:grid;grid-template-columns:auto 22px minmax(0,1fr);column-gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line);font-size:14px;line-height:20px}
 .hd-day+.hitem,.hd-list>.hitem:first-child{border-top:0}
 .ht{font-family:var(--font-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:40px}
@@ -628,7 +630,7 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 @media (max-width:899px){
   #view-stats{display:flex;flex-direction:column}
   .stats-left{display:contents}
-  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-total{order:5}#view-stats .stats-note{order:6}#view-stats .stats-hist{order:7}
+  #view-stats .hero{order:1}#view-stats .stats-parts{order:2}#view-stats .stats-miss{order:3}#view-stats .stats-spare{order:4}#view-stats .stats-total{order:5}#view-stats .stats-note{order:6}
   #view-stats>*,.stats-left>*{flex-shrink:0}
   .stats-left>.hero{margin-top:10px}
 }
@@ -641,7 +643,6 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
   #view-stats>section.stats-total{grid-column:3;grid-row:2;margin-top:0}
   #view-stats>section.stats-spare[hidden]+section.stats-total{grid-column:1 / -1}
   #view-stats>section.stats-note{grid-column:1 / -1;grid-row:3;margin-top:0}
-  #view-stats>section.stats-hist{grid-column:1 / -1;grid-row:4;margin-top:0}
   .stats-parts .bar-legend{margin-top:auto}
   .stats-miss{flex:1 0 auto;display:flex;flex-direction:column}
   #statsMissing{flex:1 0 auto;display:flex;flex-direction:column}
@@ -707,10 +708,10 @@ header.mob-on~.views #view-orders>.hdr-mob{display:block}
 .acct-btn.in{color:var(--accent);border-color:var(--accent)}
 .acct-btn.ask{color:var(--bad);border-color:var(--bad)}
 .acct-btn.ask .ic-user{display:none}.acct-btn.ask .ic-out{display:inline}
-@media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto}
+@media (max-width:899px){header{grid-template-columns:auto minmax(0,1fr) auto auto auto}
   /* owner: the key sits before the theme button; the status keeps its place on the title line */
-  header:has(>#svcToggle:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto;column-gap:6px}
-  header:has(>#svcToggle:not([hidden]))>:is(.svc-toggle,.theme-btn,.acct-btn){width:36px!important;height:36px!important}
+  header:has(>#svcToggle:not([hidden])){grid-template-columns:auto minmax(0,1fr) auto auto auto auto;column-gap:6px}
+  header:has(>#svcToggle:not([hidden]))>:is(.svc-toggle,.theme-btn,.acct-btn,.hist-btn){width:36px!important;height:36px!important}
   header>.svc-toggle{width:40px;height:40px;flex-shrink:0}
 }
 /* very narrow phones: "+ Добавить" without the second word */
@@ -1052,10 +1053,6 @@ const MARKUP=`<div class="wrap">
       <table class="tot-table" id="spareTotals"></table>
     </section>
     <!-- EXPERIMENT spares: end -->
-    <section class="panel stats-hist" id="statsHist">
-      <div class="spare-head"><h2 class="panel-title">История</h2><button type="button" class="hist-all" id="histAll">Вся история</button></div>
-      <div id="histList"></div>
-    </section>
     <section class="panel stats-note" id="statsNoteBox" hidden>
       <h2 class="panel-title">P.&nbsp;S.</h2>
       <textarea class="comment stats-note-text" id="statsNote" data-id="tab" data-scope="s" rows="1" placeholder="Приписка ко всей вкладке" aria-label="P. S. — приписка ко всей вкладке «Запчасти»"></textarea>
@@ -1474,7 +1471,7 @@ document.getElementById("spareDel").addEventListener("click",()=>{if(!sEdit)retu
 // EXPERIMENT spares: end
 // history: big moves only — new orders, closed orders (with the parts that went to "Вне заказов"), hand changes in "Вне заказов".
 // Kept in meta/log as {items:[{id,at,t,...}]}, oldest first, the last LOG_MAX; anyone can read, only the owner writes.
-let hlog=[];const LOG_MAX=400,HIST_SHORT=6;
+let hlog=[];const LOG_MAX=400;
 function saveLog(){if(db)db.doc("meta/log").set({items:hlog}).catch(()=>{})}
 function logEvent(ev){ev.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);ev.at=ev.at||Date.now();hlog=[...hlog,ev].sort((a,b)=>a.at-b.at).slice(-LOG_MAX);renderHistory();saveLog();return ev.id}
 // entries added later by hand (owner's request), written once by the owner's page; ids keep them from repeating
@@ -1505,14 +1502,7 @@ function histItem(x,withDay){
   b.append(line);if(sub.childNodes.length)b.append(sub);
   return r;
 }
-function renderHistory(){
-  const list=document.getElementById("histList"),all=document.getElementById("histAll");if(!list)return;
-  const items=hlog.slice().reverse();
-  all.hidden=items.length<=HIST_SHORT;
-  if(!items.length)list.replaceChildren(el("div","hist-empty","Пока пусто"));
-  else list.replaceChildren(...items.slice(0,HIST_SHORT).map(x=>histItem(x,true)));
-  const dlg=document.getElementById("histDlg");if(dlg&&dlg.open)renderHistFull();
-}
+function renderHistory(){const dlg=document.getElementById("histDlg");if(dlg&&dlg.open)renderHistFull()}
 function renderHistFull(){
   const box=document.getElementById("histFull");if(!box)return;
   const items=hlog.slice().reverse(),out=[];let day=null;
@@ -1523,7 +1513,6 @@ function renderHistFull(){
  const open=()=>{renderHistFull();d.classList.remove("out");try{d.showModal()}catch(_){d.setAttribute("open","")}document.getElementById("histFull").scrollTop=0};
  const close=()=>{if(!d.open||d.classList.contains("out"))return;if(reduceMotion()){d.close();return}d.classList.add("out");setTimeout(()=>{d.classList.remove("out");try{d.close()}catch(_){d.removeAttribute("open")}},220)};
  document.getElementById("histBtn").addEventListener("click",open);
- document.getElementById("histAll").addEventListener("click",open);
  document.getElementById("histClose").addEventListener("click",close);
  d.addEventListener("cancel",e=>{e.preventDefault();close()});
  closeOnBackdrop(d,close);}
