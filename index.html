@@ -615,7 +615,9 @@ body.svc-open .wrap{padding-bottom:110px}
 @keyframes hdFade{from{opacity:0}}
 .hd-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 10px 22px}
 .hd-head h2{margin:0;font-size:18px;font-weight:600}
-.hd-x{width:32px;height:32px;border:0;border-radius:999px;background:var(--none-bg);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+/* a dialog opens with focus on its title, not on the first button: iOS drew a focus ring around the close cross */
+dialog h2[tabindex]{outline:none}
+.hd-x{width:32px;height:32px;border:0;border-radius:999px;background:var(--none-bg);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(0,0,0,.12);color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 @media (hover:hover){.hd-x:hover{color:var(--fg)}}
 .hd-list{flex:1;overflow:auto;padding:0 22px 22px;overscroll-behavior:contain}
 .hd-day{position:sticky;top:0;background:var(--card);padding:14px 0 6px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);z-index:1}
@@ -1160,7 +1162,7 @@ const MARKUP=`<div class="wrap">
   </div>
   <dialog id="ordDlg" class="odlg" aria-labelledby="ordTitle">
     <form id="ordForm" class="odlg-box" novalidate>
-      <h2 id="ordTitle" class="odlg-title">Новый заказ</h2>
+      <h2 id="ordTitle" tabindex="-1" autofocus class="odlg-title">Новый заказ</h2>
       <div class="odlg-field" id="ordNumField">
         <label for="ordNum">Номер заказа</label>
         <input id="ordNum" inputmode="numeric" autocomplete="off" maxlength="8">
@@ -1178,7 +1180,7 @@ const MARKUP=`<div class="wrap">
   <!-- EXPERIMENT part-notes: start -->
   <dialog id="noteDlg" class="odlg" aria-labelledby="noteTitle">
     <form id="noteForm" class="odlg-box" novalidate>
-      <h2 id="noteTitle" class="odlg-title">Заметка</h2>
+      <h2 id="noteTitle" tabindex="-1" autofocus class="odlg-title">Заметка</h2>
       <div class="odlg-field">
         <label for="noteText" id="noteSub"></label>
         <textarea id="noteText" class="note-text" rows="3" maxlength="300" autocomplete="off"></textarea>
@@ -1190,12 +1192,12 @@ const MARKUP=`<div class="wrap">
   <div class="note-tip" id="noteTip" role="tooltip"></div>
   <!-- EXPERIMENT spares: start -->
   <dialog id="histDlg" class="hdrawer" aria-labelledby="histTitle">
-    <div class="hd-head"><h2 id="histTitle">История</h2><button type="button" class="hd-x" id="histClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="hd-head"><h2 id="histTitle" tabindex="-1" autofocus>История</h2><button type="button" class="hd-x" id="histClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="hd-list" id="histFull"></div>
   </dialog>
   <dialog id="accDlg" class="odlg" aria-labelledby="accTitle">
     <form id="accForm" class="odlg-box" novalidate>
-      <h2 id="accTitle" class="odlg-title">Доступ</h2>
+      <h2 id="accTitle" tabindex="-1" autofocus class="odlg-title">Доступ</h2>
       <p class="acc-hint">Отметки, комментарии, заметки, новые и закрытые заказы, «Вне заказов» и P.&nbsp;S. Без гаечного ключа и удаления заказов.</p>
       <div class="acc-list" id="accList"></div>
       <div class="odlg-field acc-add"><input id="accEmail" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="почта Google" aria-label="Почта Google"><button type="submit" class="odlg-btn" id="accAdd">Добавить</button></div>
@@ -1205,7 +1207,7 @@ const MARKUP=`<div class="wrap">
   </dialog>
   <dialog id="spareDlg" class="odlg" aria-labelledby="spareTitle">
     <form id="spareForm" class="odlg-box" novalidate>
-      <h2 id="spareTitle" class="odlg-title">Запчасть вне заказов</h2>
+      <h2 id="spareTitle" tabindex="-1" autofocus class="odlg-title">Запчасть вне заказов</h2>
       <div class="spare-pick" id="sparePart" role="group" aria-label="Запчасть"></div>
       <div class="spare-pick" id="spareState" role="group" aria-label="Состояние"></div>
       <div class="odlg-field"><label for="spareNote">Откуда</label><textarea id="spareNote" class="note-text" rows="3" autocomplete="off" maxlength="200"></textarea></div>
