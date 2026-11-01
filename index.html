@@ -98,7 +98,9 @@ button{font:inherit;cursor:pointer}
 .mk-w.ok{color:var(--ok)}.mk-w.bad{color:var(--bad)}.mk-w.q{color:var(--warn)}.mk-w.none{color:var(--none)}
 .spare-pick button{display:inline-flex;align-items:center;gap:5px}
 .spare-pick button .mk-w{font-size:13px;--sw:2.8}
-.hchip .mk-w{font-size:12px;--sw:3}.sg-st .mk-w{font-size:12px;--sw:3}
+.hchip .mk-w{font-size:12px;--sw:3}
+/* the small "?" is a thin shape in a pale colour: a heavier stroke keeps it as visible as the ✗ next to it */
+.hchip .mk-w.q,.sg-st .mk-w.q,.spare .mk-w.q{--sw:3.6}.sg-st .mk-w{font-size:12px;--sw:3}
 .spare .mk-w{--sw:2.8}
 .hsub .arr{font-size:13px;--sw:2.2;color:var(--muted)}
 .card-head{align-items:center;cursor:pointer;user-select:none;margin-bottom:6px}
@@ -598,6 +600,7 @@ body.svc-open .wrap{padding-bottom:110px}
 .hi-close .hic{background:var(--ok-bg,color-mix(in srgb,var(--ok) 16%,transparent));color:var(--ok)}
 .hb b{font-weight:600}
 .hsub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:2px;font-size:13px;color:var(--muted)}
+.hsub.hcol{flex-direction:column;align-items:flex-start;gap:3px}
 .hchip{display:inline-flex;align-items:center;gap:4px;color:var(--fg)}
 .hchip .mk{font-weight:700}.hchip .mk.ok{color:var(--ok)}.hchip .mk.bad{color:var(--bad)}.hchip .mk.q{color:var(--warn);font-family:var(--font-mono)}
 .hsub .arr{color:var(--muted)}
@@ -1605,7 +1608,7 @@ function histItem(x,withDay){
   const sub=el("div","hsub");
   if(x.t==="add"){line.append("Новый заказ ",ord(x.o))}
   else if(x.t==="close"){line.append("Закрыт заказ ",ord(x.o));
-    if(x.parts&&x.parts.length){sub.append(x.parts.length>1?"Перенесены во «Вне заказов»:":"Перенесена во «Вне заказов»:");x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}
+    if(x.parts&&x.parts.length){sub.classList.add("hcol");sub.append(el("span",null,x.parts.length>1?"Перенесены во «Вне заказов»:":"Перенесена во «Вне заказов»:"));x.parts.forEach(([k,s])=>sub.append(hChip(k,s)))}
     else sub.append("Во «Вне заказов» ничего не перенесено")}
   else if(x.t==="sadd"){line.append("Добавлено во «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
   else if(x.t==="sdel"){line.append("Убрано из «Вне заказов»");sub.append(hChip(x.k,x.s));if(x.note)sub.append(x.note)}
