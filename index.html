@@ -1343,7 +1343,7 @@ const STATES=[["ok","✓","Работает"],["bad","✗","Не работае�
 const ICON_PATHS={ok:"M4.5 12.5l5 5L19.5 7",bad:"M6.5 6.5l11 11M17.5 6.5l-11 11",none:"M3.5 12h17",
   q:"M8.6 8.9a3.5 3.5 0 1 1 5.3 3c-1.1.65-1.9 1.4-1.9 2.6v.5M12 19.4v.1",arr:"M4.5 12h14M13.5 7l5 5-5 5",
   share:"M12 3.5v11M8 7.5l4-4 4 4M7.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-1",
-  dots:"M12 5.5v.1M12 12v.1M12 18.5v.1",dots3:"M5.5 12h.1M12 12h.1M18.5 12h.1",plusbox:"M12 8.5v7M8.5 12h7M6.5 4.5h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z"};
+  dots:"M12 5.5v.1M12 12v.1M12 18.5v.1",dots3:"M5.5 12h.1M12 12h.1M18.5 12h.1",lines:"M5 7h14M5 12h14M5 17h14",plusbox:"M12 8.5v7M8.5 12h7M6.5 4.5h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z"};
 function iconSVG(k){return '<svg class="mk-ic ic-'+k+'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="'+(ICON_PATHS[k]||"")+'"/></svg>'}
 function icon(k,cls){const e=document.createElement("span");e.className=(cls?cls+" ":"")+"mk-w";e.innerHTML=iconSVG(k);return e}
 const grid=document.getElementById("grid"),empty=document.getElementById("empty"),statusEl=document.getElementById("status");
@@ -2666,7 +2666,7 @@ function closeOnBackdrop(d,close){
  const off=()=>{const v=st();if(!v.n)return false;const wait=v.n>=2?30*864e5:864e5;if(Date.now()-v.t<wait)return true;if(v.n>=2)try{localStorage.removeItem(KEY)}catch(_){}return false};
  const ua=navigator.userAgent||"",touchMac=/Macintosh/.test(ua)&&navigator.maxTouchPoints>1;
  const ios=/iPhone|iPad|iPod/.test(ua)||touchMac,android=/Android/.test(ua);
- const iosNew=(+((ua.match(/Version\/(\d+)/)||[])[1]||0)>=26)||(+((ua.match(/OS (\d+)_/)||[])[1]||0)>=26);
+ const iosVer=Math.max(+((ua.match(/Version\/(\d+)/)||[])[1]||0),+((ua.match(/OS (\d+)_/)||[])[1]||0)),iosNew=iosVer>=26;
  const macSafari=!ios&&/Macintosh/.test(ua)&&/Safari\//.test(ua)&&!/Chrome|Chromium|Edg|Firefox|OPR/.test(ua);
  let native=null,shown=false;
  const I=k=>{const e=icon(k);return e};
@@ -2675,6 +2675,8 @@ function closeOnBackdrop(d,close){
    text.replaceChildren();go.hidden=how!=="native";
    if(how==="native")text.append("Откроется отдельным окном, без вкладок браузера.");
    // Safari 26 hides «Поделиться» behind ••• next to the address; older ones show it in the bar
+   // Safari 27: the page menu (three lines) left of the address -> Поделиться -> Показать больше -> Добавить на экран «Домой»
+   else if(how==="ios"&&iosVer>=27)text.append("Нажми ",I("lines")," слева от адреса, затем ",el("b",null,"«Поделиться»"),", ",el("b",null,"«Показать больше»")," и ",el("b",null,"«Добавить на экран „Домой“»"),".");
    else if(how==="ios")text.append(...(iosNew?["Нажми ",I("dots3")," у адреса, затем ",el("b",null,"«Поделиться»")," и ",el("b",null,"«На экран „Домой“»"),"."]:["Нажми ",I("share")," ",el("b",null,"«Поделиться»"),", затем ",el("b",null,"«На экран „Домой“»"),"."]));
    else if(how==="mac")text.append("В меню ",el("b",null,"«Файл»")," выбери ",el("b",null,"«Добавить в Dock»"),".");
    else if(how==="android")text.append("Нажми ",I("dots")," в углу браузера, затем ",el("b",null,"«Добавить на главный экран»"),".");
