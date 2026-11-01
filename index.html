@@ -1193,7 +1193,7 @@ const MARKUP=`<div class="wrap">
       <h2 id="spareTitle" class="odlg-title">Запчасть вне заказов</h2>
       <div class="spare-pick" id="sparePart" role="group" aria-label="Запчасть"></div>
       <div class="spare-pick" id="spareState" role="group" aria-label="Состояние"></div>
-      <div class="odlg-field"><label for="spareNote">Откуда</label><input id="spareNote" autocomplete="off" maxlength="200"></div>
+      <div class="odlg-field"><label for="spareNote">Откуда</label><textarea id="spareNote" class="note-text" rows="3" autocomplete="off" maxlength="200"></textarea></div>
       <div class="odlg-actions"><button type="button" class="odlg-btn ghost" id="spareCancel">Отмена</button><button type="submit" class="odlg-btn" id="spareSave">Сохранить</button></div>
       <button type="button" class="odlg-del" id="spareDel" hidden>Удалить</button>
     </form>
@@ -1555,9 +1555,10 @@ function pickers(){
 }
 function openSpareDlg(x){
   sEdit=x||null;sPick={k:x?x.k:null,s:x?x.s:"bad"};pickers();
-  document.getElementById("spareNote").value=x?x.note||"":"";
+  const sn=document.getElementById("spareNote");sn.value=x?x.note||"":"";growField(sn);
   document.getElementById("spareDel").hidden=!x;
   try{sDlg.showModal()}catch(_){sDlg.setAttribute("open","")}
+  growField(document.getElementById("spareNote"));
 }
 function closeSpareDlg(){try{sDlg.close()}catch(_){sDlg.removeAttribute("open")}sEdit=null}
 async function saveSpares(next){
@@ -2557,6 +2558,8 @@ const ADMIN_UID="BD8l6QXbUThSwdUG83lD16cu2tx1";
 let FBX=null;
 // a start-up step that never answers (seen on iPhone: Safari's storage or the sign-in check can hang after the app
 // was in the background) must not keep the page on «Подключаюсь» forever: give up waiting after a few seconds
+// a note field grows with its text past three lines (up to 40% of the screen, then scrolls)
+function growField(t){if(!t||!t.offsetParent)return;t.style.height="auto";t.style.height=(t.scrollHeight+2)+"px"}
 function withTimeout(p,ms,fallback){return Promise.race([p,new Promise(r=>setTimeout(()=>r(fallback),ms))])}
 async function fbInit(){
   const base="https://www.gstatic.com/firebasejs/"+FB_VER+"/";
@@ -2952,10 +2955,11 @@ function openNoteDlg(id,k){
   noteSize();
   setTimeout(()=>{try{nText.focus({preventScroll:true})}catch(_){nText.focus()}const e=nText.value.length;try{nText.setSelectionRange(e,e)}catch(_){}},30);
 }
-// grows with the text past three lines (up to 40% of the screen, then scrolls)
-function noteSize(){nText.style.height="auto";nText.style.height=Math.max(nText.scrollHeight+2,0)+"px"}
+function noteSize(){growField(nText)}
 nText.addEventListener("input",noteSize);
 nText.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();document.getElementById("noteForm").requestSubmit()}});
+{const sn=document.getElementById("spareNote");sn.addEventListener("input",()=>growField(sn));
+ sn.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){e.preventDefault();document.getElementById("spareForm").requestSubmit()}});}
 function closeNoteDlg(){try{nDlg.close()}catch(_){nDlg.removeAttribute("open")}nFor=null}
 async function setNote(id,k,val){
   if(!db||!orders[id])return;
