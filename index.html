@@ -812,7 +812,11 @@ header>.acct-btn[hidden]{display:inline-flex!important;visibility:hidden;pointer
   body>.lock:active{transform:scale(.92)}
 
   header .status{justify-self:stretch;align-items:stretch;min-width:0;max-width:100%;overflow:hidden;box-sizing:border-box;margin-right:0!important;padding-right:4px}
-  header .status span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}}
+  header .status span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+  /* phone: a status that doesn't fit wraps onto a second line (by words) instead of being cut;
+     two lines stay within the height of the title */
+  header .status{align-self:center}
+  header .status>span:first-child{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.15;text-wrap:balance;overflow-wrap:normal;word-break:keep-all}}
 @media (min-width:900px){header .acct-btn{order:9;width:28px;height:28px;border:0;background:var(--none-bg);position:relative;top:7px}
   header .acct-btn.in{background:color-mix(in srgb,var(--accent) 16%,transparent)}
   header .acct-btn.ask{background:var(--bad-bg)}}
@@ -1461,10 +1465,14 @@ function paintStatus(t,sub){
   if(sub){const b=document.createElement("span");b.textContent=sub;parts.push(b)}
   const same=statusEl.textContent===t+(sub||"");
   clearTimeout(statusFadeT);
-  if(same||!statusEl.childNodes.length||reduceMotionT()){statusEl.classList.remove("st-out");statusEl.replaceChildren(...parts);return}
+  if(same||!statusEl.childNodes.length||reduceMotionT()){statusEl.classList.remove("st-out");statusEl.replaceChildren(...parts);fitStatus();return}
   statusEl.classList.add("st-out");
-  statusFadeT=setTimeout(()=>{statusEl.replaceChildren(...parts);statusEl.classList.remove("st-out")},STATUS_FADE);
+  statusFadeT=setTimeout(()=>{statusEl.replaceChildren(...parts);fitStatus();statusEl.classList.remove("st-out")},STATUS_FADE);
 }
+// phone: the status wraps onto two lines; a word still too wide for its column makes the font a bit smaller (down to 9px)
+function fitStatus(){const a=statusEl&&statusEl.firstElementChild;if(!a)return;a.style.fontSize="";
+  if(matchMedia("(min-width: 900px)").matches||!a.offsetParent)return;let f=11;while(f>9&&(a.scrollWidth>a.clientWidth+.5||a.scrollHeight>a.clientHeight+.5)){f-=.5;a.style.fontSize=f+"px"}}
+window.addEventListener("resize",()=>fitStatus());
 function setStatus(t,sub){
   if(typeof sandbox!=="undefined"&&sandbox&&/^(Сохранено|Комментарий сохранён)$/.test(t))t="Не сохранено — проверка";
   const note=/^(Сохранено|Комментарий сохранён|Не сохранено — проверка)$/.test(t);
